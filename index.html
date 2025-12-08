@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>VehicleWebsiteBuilder</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- NOTIFICATION / TOAST -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- MODAL (Generic) -->
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <span id="closeModal" class="close-btn">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- FACEBOOK POPUP MODAL -->
+    <div id="fbModal" class="modal-overlay hidden">
+        <div class="modal-content fb-content">
+            <span onclick="document.getElementById('fbModal').classList.add('hidden')" class="close-btn">&times;</span>
+            <h3>Like us on Facebook!</h3>
+            <div id="fbLinkContainer"></div>
+        </div>
+    </div>
+
+    <!-- ADMIN AD MODAL -->
+    <div id="adModal" class="modal-overlay hidden">
+        <div class="modal-content ad-content">
+            <span onclick="document.getElementById('adModal').classList.add('hidden')" class="close-btn">&times;</span>
+            <div id="adDisplayArea"></div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         PLATFORM VIEWS (Builder Side)
+    ========================================== -->
+    <div id="platformApp">
+        <!-- Navigation -->
+        <nav class="main-nav">
+            <div class="logo">VehicleWebsiteBuilder</div>
+            <div class="nav-links">
+                <a href="#" id="navHome">Home</a>
+                <a href="#" id="navDashboard" class="hidden">Dashboard</a>
+                <a href="#" id="navLogin">Login</a>
+                <a href="#" id="navLogout" class="hidden">Logout</a>
+            </div>
+        </nav>
+
+        <!-- Landing Page -->
+        <section id="landingPage" class="view-section active">
+            <div class="hero">
+                <h1>Build Your Powerful Vehicle Sales Website</h1>
+                <p>100% Powerful Content. Invite vehicle sellers to build their website here.</p>
+                <button id="btnGetStarted" class="btn-primary">Create Account / Login</button>
+            </div>
+            <div class="features">
+                <div class="card">
+                    <i class="fa-solid fa-car"></i>
+                    <h3>Add Vehicles</h3>
+                    <p>Easy management system</p>
+                </div>
+                <div class="card">
+                    <i class="fa-solid fa-paintbrush"></i>
+                    <h3>Customize Site</h3>
+                    <p>Responsive templates</p>
+                </div>
+                <div class="card">
+                    <i class="fa-solid fa-users"></i>
+                    <h3>Connect</h3>
+                    <p>Find other sellers</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Auth Section -->
+        <section id="authSection" class="view-section hidden">
+            <div class="auth-container">
+                <h2>Welcome Back</h2>
+                <input type="email" id="authEmail" placeholder="Email">
+                <input type="password" id="authPass" placeholder="Password">
+                <button id="btnLogin" class="btn-primary">Login</button>
+                <button id="btnSignup" class="btn-secondary">Sign Up</button>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="dashboardSection" class="view-section hidden">
+            <div class="dash-layout">
+                <aside class="dash-sidebar">
+                    <button data-tab="profile" class="dash-nav active"><i class="fa-solid fa-user"></i> Profile</button>
+                    <button data-tab="addVehicle" class="dash-nav"><i class="fa-solid fa-plus"></i> Add Vehicle</button>
+                    <button data-tab="myVehicles" class="dash-nav"><i class="fa-solid fa-car"></i> My Vehicles</button>
+                    <button data-tab="myWebsite" class="dash-nav"><i class="fa-solid fa-globe"></i> My Website</button>
+                    <button data-tab="sellers" class="dash-nav"><i class="fa-solid fa-handshake"></i> Connect</button>
+                    <button data-tab="admin" id="adminTabBtn" class="dash-nav hidden"><i class="fa-solid fa-lock"></i> Admin</button>
+                </aside>
+                
+                <main class="dash-content">
+                    <!-- 1. Profile -->
+                    <div id="tab-profile" class="dash-tab active">
+                        <h2>User Profile</h2>
+                        <div class="form-group">
+                            <label>Profile Photo</label>
+                            <input type="file" id="profilePhotoInput">
+                            <img id="profilePreview" src="" class="img-preview hidden">
+                        </div>
+                        <input type="text" id="profPhone" placeholder="Phone Number (Required)">
+                        <input type="text" id="profWhatsapp" placeholder="WhatsApp Number (Required)">
+                        <textarea id="profAddress" placeholder="Address (Required)"></textarea>
+                        <button id="btnSaveProfile" class="btn-primary">Save Profile</button>
+                    </div>
+
+                    <!-- 2. Add Vehicle -->
+                    <div id="tab-addVehicle" class="dash-tab">
+                        <h2>Add New Vehicle</h2>
+                        <form id="addVehicleForm">
+                            <select id="vCategory" required></select>
+                            <input type="text" id="vBrand" placeholder="Brand (e.g. Land Rover)" required>
+                            <input type="text" id="vModel" placeholder="Model (e.g. Range Rover)" required>
+                            <input type="text" id="vTrim" placeholder="Trim / Edition">
+                            <input type="number" id="vYear" placeholder="Year (e.g. 2012)" required>
+                            <input type="text" id="vCondition" placeholder="Condition (e.g. Brand New)">
+                            <select id="vTransmission" required>
+                                <option value="">Select Transmission</option>
+                                <option value="Automatic">Automatic</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Tiptronic">Tiptronic</option>
+                            </select>
+                            <input type="text" id="vBody" placeholder="Body Type (e.g. SUV)">
+                            <select id="vFuel" required>
+                                <option value="">Select Fuel</option>
+                                <option value="Petrol">Petrol</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Hybrid">Hybrid</option>
+                                <option value="Electric">Electric</option>
+                            </select>
+                            <input type="text" id="vEngine" placeholder="Engine Capacity (e.g. 2000cc)">
+                            <input type="number" id="vMileage" placeholder="Mileage (km)" required>
+                            <select id="vBook">
+                                <option value="Original">Original Book</option>
+                                <option value="Duplicate">Duplicate Book</option>
+                            </select>
+                            <select id="vFinance">
+                                <option value="no">✔️ This vehicle has no active finance agreement.</option>
+                                <option value="yes">✔️ This vehicle has an active finance agreement.</option>
+                            </select>
+                            <textarea id="vDesc" maxlength="2500" placeholder="Description (Max 500 words)"></textarea>
+                            <input type="text" id="vYoutube" placeholder="YouTube Link">
+                            <input type="number" id="vPrice" placeholder="Price (Required)" required>
+                            
+                            <label>Upload Photos (Max 10)</label>
+                            <input type="file" id="vPhotos" multiple accept="image/*">
+                            <div id="vPhotoPreviewGrid" class="grid-preview"></div>
+
+                            <button type="submit" class="btn-primary">Publish Vehicle</button>
+                        </form>
+                    </div>
+
+                    <!-- 3. My Vehicles -->
+                    <div id="tab-myVehicles" class="dash-tab">
+                        <h2>My Vehicles</h2>
+                        <div class="search-bar">
+                            <input type="text" id="myVSearch" placeholder="Search by Brand/Model...">
+                            <select id="myVSort">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                            </select>
+                        </div>
+                        <div id="myVehiclesList" class="vehicle-grid"></div>
+                    </div>
+
+                    <!-- 4. My Website -->
+                    <div id="tab-myWebsite" class="dash-tab">
+                        <h2>Website Builder</h2>
+                        <div class="link-display">
+                            <p>Your Website Link: <a href="#" id="userSiteLink" target="_blank">Loading...</a></p>
+                        </div>
+                        <div class="editor-section">
+                            <h3>Branding</h3>
+                            <label>Favicon</label>
+                            <input type="file" id="webFavicon">
+                            <button id="rmFavicon" class="btn-sm hidden">Remove</button>
+                            
+                            <label>Logo</label>
+                            <input type="file" id="webLogo">
+                            <button id="rmLogo" class="btn-sm hidden">Remove</button>
+
+                            <input type="text" id="webSaleName" placeholder="Vehicle Sale Name">
+                        </div>
+
+                        <div class="editor-section">
+                            <h3>Navigation Style</h3>
+                            <select id="webNavStyle">
+                                <option value="style1">Style 01: Center Align (Logo top, Name bottom)</option>
+                                <option value="style2">Style 02: Left Align</option>
+                            </select>
+                        </div>
+
+                        <div class="editor-section">
+                            <h3>Hero Section</h3>
+                            <input type="text" id="webHeroTitle" placeholder="Hero Title (Welcome to...)">
+                            <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
+                        </div>
+
+                        <div class="editor-section">
+                            <h3>Content Sections</h3>
+                            <label>About Us (Max 500 words)</label>
+                            <textarea id="webAbout"></textarea>
+                            
+                            <label>Why Choose Us (Auto-generated/Editable)</label>
+                            <textarea id="webWhy"></textarea>
+                            
+                            <label>Gallery (Max 10 images)</label>
+                            <input type="file" id="webGallery" multiple>
+                            <div id="webGalleryPreview" class="grid-preview"></div>
+
+                            <label>Facebook Page Link</label>
+                            <input type="text" id="webFbLink" placeholder="https://facebook.com/yourpage">
+                        </div>
+
+                        <button id="btnSaveWebsite" class="btn-primary">Save & Publish Changes</button>
+                    </div>
+
+                    <!-- 5. Connect -->
+                    <div id="tab-sellers" class="dash-tab">
+                        <h2>Connect with Sellers</h2>
+                        <div id="sellersGrid" class="sellers-grid"></div>
+                    </div>
+
+                    <!-- 6. Admin -->
+                    <div id="tab-admin" class="dash-tab">
+                        <h2>Admin Panel</h2>
+                        <div class="admin-tools">
+                            <h3>Manage Users</h3>
+                            <div id="adminUserList"></div>
+                            
+                            <h3>Ads Manager</h3>
+                            <input type="file" id="adminAdImage">
+                            <button id="btnUploadAd" class="btn-primary">Upload Ad</button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </section>
+    </div>
+
+    <!-- =========================================
+         GENERATED USER WEBSITE VIEW
+    ========================================== -->
+    <div id="generatedSite" class="hidden">
+        <!-- Dynamic Header -->
+        <header id="genHeader"></header>
+        
+        <!-- Hero -->
+        <section id="genHero" class="gen-hero"></section>
+
+        <!-- All Vehicles -->
+        <section id="genVehicles" class="gen-section">
+            <h2 class="sec-title">Our Vehicles</h2>
+            <!-- Filter Categories displayed dynamically -->
+            <div id="genCatFilter" class="cat-filter"></div>
+            <div id="genVehicleGrid" class="vehicle-grid"></div>
+        </section>
+
+        <!-- About Us -->
+        <section id="genAbout" class="gen-section alt-bg">
+            <h2 class="sec-title">About Us</h2>
+            <div id="genAboutContent" class="text-content"></div>
+        </section>
+
+        <!-- Why Choose Us -->
+        <section id="genWhy" class="gen-section">
+            <h2 class="sec-title">Why Choose Us</h2>
+            <div id="genWhyContent" class="cards-grid"></div>
+        </section>
+
+        <!-- Gallery -->
+        <section id="genGallery" class="gen-section alt-bg">
+            <h2 class="sec-title">Gallery</h2>
+            <div class="slider-container">
+                <div id="genGalleryTrack" class="slider-track"></div>
+            </div>
+        </section>
+
+        <!-- Happy Customers -->
+        <section id="genCustomers" class="gen-section">
+            <h2 class="sec-title">Happy Customers</h2>
+            <div class="cards-grid">
+                <div class="review-card">⭐⭐⭐⭐⭐<p>"Great service!"</p></div>
+                <div class="review-card">⭐⭐⭐⭐⭐<p>"Best prices in town."</p></div>
+                <div class="review-card">⭐⭐⭐⭐⭐<p>"Highly recommended."</p></div>
+            </div>
+        </section>
+
+        <!-- Contact Us -->
+        <section id="genContact" class="gen-section alt-bg">
+            <h2 class="sec-title">Contact Us</h2>
+            <div id="genContactDetails" class="contact-box"></div>
+            <div id="genMap" class="map-box">
+                <!-- Placeholder for map -->
+                <p>Google Map Loading...</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="genFooter"></footer>
+
+        <!-- Floating Buttons -->
+        <a href="#" id="genWhatsappFloat" class="float-wa" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
