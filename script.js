@@ -1,4 +1,6 @@
-// 1. FIREBASE CONFIG
+// ==========================================
+// 1. CONFIG & INIT
+// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBUjzMFao9BS3uXBOW3qYrLVqHaGn8qIk4", 
   authDomain: "onlineshop-30cd1.firebaseapp.com",
@@ -9,573 +11,485 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// 2. STATE & CONSTANTS
-let currentUser = null;
-const CATEGORIES = [
-    "Car", "SUV / Crossover", "Van", "Pickup", "Lorry / Truck", "Bus / Coach",
-    "Motorcycle", "Scooter / Moped", "Three-wheeler", "Tractor / Agricultural",
-    "Construction / Heavy equipment", "Trailer", "Recreational Vehicle (RV)", 
-    "ATV / UTV", "Special-purpose vehicles", "Marine"
-];
-
-// 3. UTILITY FUNCTIONS
-const showLoader = (show = true) => {
-    document.getElementById('globalLoader').classList.toggle('hidden', !show);
+// Global State
+const state = {
+    user: null,
+    isAdmin: false,
+    categories: [
+        "Car", "SUV / Crossover", "Van", "Pickup", "Lorry / Truck", "Bus / Coach",
+        "Motorcycle", "Scooter / Moped", "Three-wheeler", "Tractor / Agricultural",
+        "Construction / Heavy equipment", "Trailer", "RV / Camper", 
+        "ATV / UTV", "Special-purpose", "Marine"
+    ]
 };
 
-const showToast = (msg, type = 'success') => {
-    const box = document.getElementById('toastBox');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerText = msg;
-    box.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+// UI Helpers
+const ui = {
+    showLoader: (show, text = "Processing...") => {
+        const el = document.getElementById('loader');
+        document.getElementById('loaderText').innerText = text;
+        show ? el.classList.remove('hidden') : el.classList.add('hidden');
+    },
+    toast: (msg, type = 'success') => {
+        const div = document.createElement('div');
+        div.className = `toast ${type}`;
+        div.innerText = msg;
+        document.getElementById('toastContainer').appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+    },
+    showView: (id) => {
+        document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    },
+    switchTab: (id) => {
+        document.querySelectorAll('.dash-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        
+        // Find button that maps to this tab and activate it
+        // (Simple logic for demo)
+        const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick').includes(id));
+        if(btn) btn.classList.add('active');
+
+        // Load specific data
+        if(id === 'tabMyVehicles') app.loadMyVehicles();
+        if(id === 'tabConnect') app.loadConnect();
+        if(id === 'tabProfile') app.loadProfile();
+        if(id === 'tabWebsite') app.loadWebsiteSettings();
+    },
+    closeModal: () => document.getElementById('modalOverlay').classList.add('hidden')
 };
 
-// Image Compression Logic (Provided by user, wrapped in Promise)
+// Image Compression (User Provided Logic wrapped in Promise)
 const compressImage = async (file) => {
-    if(file.size <= 1024 * 1024) return file; // < 1MB
-    
-    return new Promise((resolve) => {
+    if (file.size <= 1024 * 1024) return file; // Return original if < 1MB
+    return new Promise((resolve, reject) => {
         const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.src = url;
+        img.src = URL.createObjectURL(file);
         img.onload = async () => {
             const canvas = document.createElement('canvas');
-            const maxWidth = 1200; 
+            const maxWidth = 1200;
             const scale = Math.min(1, maxWidth / img.width);
             canvas.width = Math.round(img.width * scale);
             canvas.height = Math.round(img.height * scale);
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
+            
             let quality = 0.8;
             let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-            
             while (blob.size > 100 * 1024 && quality > 0.2) {
                 quality -= 0.1;
                 blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
             }
             resolve(blob);
         };
+        img.onerror = reject;
     });
 };
 
-// 4. ROUTING & INIT
-document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sellerId = urlParams.get('seller');
-
-    if (sellerId) {
-        // Mode: Generated Site
-        document.getElementById('appContainer').classList.add('hidden');
-        document.getElementById('siteContainer').classList.remove('hidden');
-        renderUserSite(sellerId);
-    } else {
-        // Mode: Builder Platform
-        initPlatform();
-    }
-});
-
-function initPlatform() {
-    // Populate Selects
-    const catSel = document.getElementById('vCat');
-    CATEGORIES.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c; opt.innerText = c;
-        catSel.appendChild(opt);
-    });
-
-    // Auth Listener
-    auth.onAuthStateChanged(user => {
-        currentUser = user;
-        showLoader(false);
-        if (user) {
-            document.getElementById('viewLanding').classList.add('hidden');
-            document.getElementById('viewAuth').classList.add('hidden');
-            document.getElementById('viewDashboard').classList.remove('hidden');
-            document.getElementById('navLoginBtn').classList.add('hidden');
-            document.getElementById('navLogoutBtn').classList.remove('hidden');
-            
-            document.getElementById('dashUserEmail').innerText = user.email;
-            if(user.email === 'admin@vehiclebuilder.com') { // Basic admin check
-                document.getElementById('adminBtn').classList.remove('hidden');
-            }
-            
-            loadProfileData();
-            loadWebsiteSettings();
-        } else {
-            document.getElementById('navLoginBtn').classList.remove('hidden');
-            document.getElementById('navLogoutBtn').classList.add('hidden');
-            document.getElementById('viewDashboard').classList.add('hidden');
-            document.getElementById('viewLanding').classList.remove('hidden');
-        }
-    });
-
-    // Navigation Events
-    document.querySelectorAll('.menu-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.dash-panel').forEach(p => p.classList.remove('active'));
-            
-            btn.classList.add('active');
-            const target = btn.dataset.target;
-            document.getElementById(target).classList.add('active');
-            
-            if(target === 'panelMyVehicles') loadMyVehicles();
-            if(target === 'panelConnect') loadConnect();
-        });
-    });
-
-    document.getElementById('navLoginBtn').addEventListener('click', () => {
-        document.getElementById('viewLanding').classList.add('hidden');
-        document.getElementById('viewAuth').classList.remove('hidden');
-    });
-
-    document.getElementById('navLogoutBtn').addEventListener('click', () => auth.signOut());
-    document.getElementById('getStartedBtn').addEventListener('click', () => document.getElementById('navLoginBtn').click());
-}
-
-// 5. AUTH LOGIC
-document.getElementById('doLogin').addEventListener('click', async () => {
-    const e = document.getElementById('emailInput').value;
-    const p = document.getElementById('passwordInput').value;
-    try {
-        showLoader(true);
-        await auth.signInWithEmailAndPassword(e, p);
-    } catch(err) {
-        showToast(err.message, 'error');
-        showLoader(false);
-    }
-});
-
-document.getElementById('doSignup').addEventListener('click', async () => {
-    const e = document.getElementById('emailInput').value;
-    const p = document.getElementById('passwordInput').value;
-    try {
-        showLoader(true);
-        const cred = await auth.createUserWithEmailAndPassword(e, p);
-        // Create initial user doc
-        await db.collection('users').doc(cred.user.uid).set({
-            email: e, createdAt: new Date()
-        });
-        showToast('Account created!');
-    } catch(err) {
-        showToast(err.message, 'error');
-        showLoader(false);
-    }
-});
-
-// 6. DASHBOARD LOGIC
-// --- Profile ---
-async function loadProfileData() {
-    const doc = await db.collection('users').doc(currentUser.uid).get();
-    if(doc.exists) {
-        const d = doc.data();
-        document.getElementById('upPhone').value = d.phone || '';
-        document.getElementById('upWhatsapp').value = d.whatsapp || '';
-        document.getElementById('upAddress').value = d.address || '';
-        if(d.photo) document.getElementById('dashProfileImg').src = d.photo;
-    }
-}
-
-document.getElementById('saveProfileBtn').addEventListener('click', async () => {
-    showLoader(true);
-    try {
-        const file = document.getElementById('upPhoto').files[0];
-        let photoUrl = null;
-        if(file) {
-            const blob = await compressImage(file);
-            const ref = storage.ref(`profiles/${currentUser.uid}`);
-            await ref.put(blob);
-            photoUrl = await ref.getDownloadURL();
-        }
-
-        const data = {
-            phone: document.getElementById('upPhone').value,
-            whatsapp: document.getElementById('upWhatsapp').value,
-            address: document.getElementById('upAddress').value
-        };
-        if(photoUrl) data.photo = photoUrl;
-
-        await db.collection('users').doc(currentUser.uid).set(data, {merge: true});
-        showToast('Profile Saved');
-    } catch(err) {
-        showToast(err.message, 'error');
-    }
-    showLoader(false);
-});
-
-// --- Add Vehicle ---
-document.getElementById('addVehicleForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    showLoader(true);
-    try {
-        // Upload images first
-        const files = document.getElementById('vPhotos').files;
-        const imgUrls = [];
-        for(let i=0; i<Math.min(files.length, 10); i++) {
-            const blob = await compressImage(files[i]);
-            const ref = storage.ref(`vehicles/${currentUser.uid}/${Date.now()}_${i}.jpg`);
-            await ref.put(blob);
-            imgUrls.push(await ref.getDownloadURL());
-        }
-
-        const vData = {
-            uid: currentUser.uid,
-            cat: document.getElementById('vCat').value,
-            brand: document.getElementById('vBrand').value,
-            model: document.getElementById('vModel').value,
-            trim: document.getElementById('vTrim').value,
-            year: document.getElementById('vYear').value,
-            cond: document.getElementById('vCond').value,
-            trans: document.getElementById('vTrans').value,
-            fuel: document.getElementById('vFuel').value,
-            price: document.getElementById('vPrice').value,
-            mil: document.getElementById('vMil').value,
-            body: document.getElementById('vBody').value,
-            eng: document.getElementById('vEng').value,
-            book: document.getElementById('vBook').value,
-            fin: document.getElementById('vFinance').value,
-            desc: document.getElementById('vDesc').value,
-            tube: document.getElementById('vTube').value,
-            imgs: imgUrls,
-            ts: firebase.firestore.FieldValue.serverTimestamp(),
-            published: false
-        };
-
-        await db.collection('vehicles').add(vData);
-        document.getElementById('addVehicleForm').reset();
-        document.getElementById('vPhotoPreview').innerHTML = '';
-        showToast('Vehicle Added. Please publish it from "My Vehicles"');
-    } catch(err) {
-        showToast(err.message, 'error');
-    }
-    showLoader(false);
-});
-
-// Image Preview for Form
-document.getElementById('vPhotos').addEventListener('change', (e) => {
-    const box = document.getElementById('vPhotoPreview');
-    box.innerHTML = '';
-    Array.from(e.target.files).slice(0,10).forEach(file => {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        box.appendChild(img);
-    });
-});
-
-// --- My Vehicles ---
-async function loadMyVehicles() {
-    const list = document.getElementById('myVehiclesGrid');
-    list.innerHTML = '<p class="text-center">Loading...</p>';
-    
-    // Simplistic fetching (sorting handled in UI for small datasets or needs index)
-    const snap = await db.collection('vehicles').where('uid', '==', currentUser.uid).get();
-    
-    list.innerHTML = '';
-    if(snap.empty) {
-        list.innerHTML = '<p class="text-center">No vehicles added yet.</p>';
-        return;
-    }
-
-    snap.forEach(doc => {
-        const v = doc.data();
-        const card = document.createElement('div');
-        card.className = 'dash-card';
-        card.innerHTML = `
-            <img src="${v.imgs && v.imgs.length ? v.imgs[0] : 'https://via.placeholder.com/300'}" loading="lazy">
-            <div class="card-body">
-                <h4>${v.brand} ${v.model}</h4>
-                <p>Rs. ${v.price}</p>
-                <small>${v.published ? '<span style="color:var(--success)">● Published</span>' : '<span style="color:var(--danger)">● Draft</span>'}</small>
-            </div>
-            <div class="card-actions">
-                <button class="btn-text" onclick="togglePublish('${doc.id}', ${v.published})">
-                    ${v.published ? 'Unpublish' : 'Publish'}
-                </button>
-                <button class="btn-text" style="color:var(--danger)" onclick="deleteVehicle('${doc.id}')">Delete</button>
-            </div>
-        `;
-        list.appendChild(card);
-    });
-}
-
-window.togglePublish = async (id, currentStatus) => {
-    showLoader(true);
-    await db.collection('vehicles').doc(id).update({ published: !currentStatus });
-    loadMyVehicles();
-    showLoader(false);
-};
-
-window.deleteVehicle = async (id) => {
-    if(!confirm("Are you sure?")) return;
-    showLoader(true);
-    await db.collection('vehicles').doc(id).delete();
-    loadMyVehicles();
-    showLoader(false);
-};
-
-// --- Website Settings ---
-window.openSubTab = (id) => {
-    document.querySelectorAll('.sub-tab').forEach(t => t.classList.add('hidden'));
-    document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-    document.getElementById(id).classList.remove('hidden');
-    event.target.classList.add('active');
-};
-
-async function loadWebsiteSettings() {
-    const doc = await db.collection('sites').doc(currentUser.uid).get();
-    const link = `${window.location.origin}${window.location.pathname}?seller=${currentUser.uid}`;
-    document.getElementById('mySiteLink').href = link;
-    document.getElementById('mySiteLink').innerText = link;
-
-    if(doc.exists) {
-        const d = doc.data();
-        document.getElementById('wsName').value = d.name || '';
-        document.getElementById('wsNavStyle').value = d.navStyle || '1';
-        document.getElementById('wsHeroTitle').value = d.heroTitle || '';
-        document.getElementById('wsHeroSub').value = d.heroSub || '';
-        document.getElementById('wsAbout').value = d.about || '';
-        document.getElementById('wsWhy').value = d.why || '';
-        document.getElementById('wsFb').value = d.fb || '';
-        document.getElementById('wsCustomDomain').value = d.customDomain || '';
-    }
-}
-
-document.getElementById('saveWebsiteBtn').addEventListener('click', async () => {
-    showLoader(true);
-    try {
-        // Upload logic for Logo/Favicon/Gallery omitted for brevity but same as Profile
-        const data = {
-            name: document.getElementById('wsName').value,
-            navStyle: document.getElementById('wsNavStyle').value,
-            heroTitle: document.getElementById('wsHeroTitle').value,
-            heroSub: document.getElementById('wsHeroSub').value,
-            about: document.getElementById('wsAbout').value,
-            why: document.getElementById('wsWhy').value,
-            fb: document.getElementById('wsFb').value,
-            customDomain: document.getElementById('wsCustomDomain').value
-        };
-        await db.collection('sites').doc(currentUser.uid).set(data, {merge: true});
-        showToast('Website Settings Saved');
-    } catch(err) {
-        showToast(err.message, 'error');
-    }
-    showLoader(false);
-});
-
-// --- Connect ---
-async function loadConnect() {
-    const list = document.getElementById('sellersList');
-    list.innerHTML = 'Loading...';
-    const snap = await db.collection('sites').get();
-    list.innerHTML = '';
-    snap.forEach(doc => {
-        const s = doc.data();
-        const d = document.createElement('div');
-        d.className = 'dash-card';
-        d.innerHTML = `
-            <div class="card-body">
-                <h3>${s.name || 'Unnamed Sale'}</h3>
-                <button class="btn btn-primary mt-4" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Website</button>
-            </div>
-        `;
-        list.appendChild(d);
-    });
-}
-
-// 7. PUBLIC SITE RENDERER
-async function renderUserSite(uid) {
-    showLoader(true);
-    try {
-        const [siteDoc, userDoc] = await Promise.all([
-            db.collection('sites').doc(uid).get(),
-            db.collection('users').doc(uid).get()
-        ]);
-
-        if(!siteDoc.exists) throw new Error("Site not found");
-        
-        const s = siteDoc.data();
-        const u = userDoc.data();
-
-        // 1. Navbar
-        const header = document.getElementById('siteHeader');
-        let navHtml = '';
-        const menuHtml = `
-            <div class="site-menu">
-                <a href="#siteVehicles">Vehicles</a>
-                <a href="#siteAbout">About</a>
-                <a href="#siteGallery">Gallery</a>
-                <a href="#siteContact">Contact</a>
-            </div>
-            <div class="mobile-toggle" onclick="document.querySelector('.site-menu').classList.toggle('open')">☰</div>
-        `;
-
-        if(s.navStyle === '2') {
-            navHtml = `
-                <div class="nav-style-2">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        ${s.logo ? `<img src="${s.logo}">` : ''}
-                        <h3>${s.name || 'Car Sale'}</h3>
-                    </div>
-                    ${menuHtml}
-                </div>
-            `;
-        } else {
-            navHtml = `
-                <div class="nav-style-1">
-                    <div class="logo-area">
-                        ${s.logo ? `<img src="${s.logo}">` : ''}
-                        <h3>${s.name || 'Car Sale'}</h3>
-                    </div>
-                    ${menuHtml}
-                </div>
-            `;
-        }
-        header.innerHTML = navHtml;
-
-        // Scroll Hide Nav
-        let lastScroll = 0;
-        window.addEventListener('scroll', () => {
-            const current = window.pageYOffset;
-            if (current > lastScroll && current > 100) {
-                header.style.top = '-100px';
-            } else {
-                header.style.top = '0';
-            }
-            lastScroll = current;
+// ==========================================
+// 2. MAIN APP LOGIC
+// ==========================================
+const app = {
+    init: () => {
+        // Populate Categories
+        const sel = document.getElementById('vCat');
+        state.categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c; opt.innerText = c;
+            sel.appendChild(opt);
         });
 
-        // 2. Hero
-        const hero = document.getElementById('siteHero');
-        hero.innerHTML = `<h1>${s.heroTitle || 'Welcome'}</h1><p>${s.heroSub || 'Best prices in town'}</p>`;
-        hero.style.backgroundImage = "url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80')";
-
-        // 3. Vehicles
-        const vSnap = await db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get();
-        const grid = document.getElementById('siteVehicleGrid');
-        const filters = document.getElementById('siteCatFilters');
-        const cats = new Set();
-        
-        vSnap.forEach(doc => {
-            const v = doc.data();
-            cats.add(v.cat);
-            const card = document.createElement('div');
-            card.className = `dash-card filter-item`;
-            card.dataset.cat = v.cat;
-            card.innerHTML = `
-                <img src="${v.imgs[0]}" onclick="openVModal('${doc.id}')" style="cursor:pointer">
-                <div class="card-body">
-                    <h4>${v.brand} ${v.model}</h4>
-                    <p class="text-success font-bold">Rs. ${v.price}</p>
-                    <button class="btn btn-primary full-width mt-4" onclick="openVModal('${doc.id}')">View Details</button>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-
-        // Category Filters
-        filters.innerHTML = `<button class="cat-btn active" onclick="filterV('all')">All</button>`;
-        cats.forEach(c => {
-            const btn = document.createElement('button');
-            btn.className = 'cat-btn';
-            btn.innerText = c;
-            btn.onclick = () => filterV(c);
-            filters.appendChild(btn);
-        });
-
-        // 4. Content
-        document.getElementById('siteAboutContent').innerText = s.about || 'About content...';
-        document.getElementById('siteWhyContent').innerHTML = (s.why || 'Reliable\nAffordable').split('\n').map(t => `<div class="feature-card"><h4>${t}</h4></div>`).join('');
-        
-        // 5. Contact
-        document.getElementById('siteContactInfo').innerHTML = `
-            <h3>Get In Touch</h3>
-            <p><i class="fa fa-phone"></i> ${u.phone}</p>
-            <p><i class="fa fa-map-marker"></i> ${u.address}</p>
-        `;
-        
-        if(u.whatsapp) {
-            const wa = document.getElementById('floatWhatsapp');
-            wa.href = `https://wa.me/${u.whatsapp}`;
-            wa.classList.remove('hidden');
-        }
-
-        // 6. Facebook Logic
-        if(s.fb) {
-            window.addEventListener('scroll', () => {
-                if(window.scrollY > document.body.scrollHeight * 0.5 && !sessionStorage.getItem('fbShown')) {
-                    document.getElementById('fbModal').classList.remove('hidden');
-                    document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Visit Page</a>`;
-                    sessionStorage.setItem('fbShown', 'true');
+        // Auth Listener
+        auth.onAuthStateChanged(user => {
+            state.user = user;
+            if (user) {
+                document.getElementById('dashEmail').innerText = user.email;
+                ui.showView('viewDashboard');
+                document.getElementById('btnLoginNav').classList.add('hidden');
+                document.getElementById('btnLogoutNav').classList.remove('hidden');
+                
+                // Admin Check (Simple)
+                if(user.email === 'admin@vehiclebuilder.com') {
+                    state.isAdmin = true;
+                    document.getElementById('navAdmin').classList.remove('hidden');
                 }
-            });
-            document.getElementById('siteFooter').innerHTML = `<div class="text-center p-4 bg-dark text-white"><a href="${s.fb}" target="_blank" class="text-white">Visit our Facebook</a><br><small>Powered by VehicleWebsiteBuilder</small></div>`;
-        }
+                app.loadProfile();
+            } else {
+                ui.showView('viewLanding');
+                document.getElementById('btnLoginNav').classList.remove('hidden');
+                document.getElementById('btnLogoutNav').classList.add('hidden');
+            }
+        });
 
-        // 7. Admin Ads (Scroll 30%)
-        window.addEventListener('scroll', () => {
-            if(window.scrollY > document.body.scrollHeight * 0.3 && !sessionStorage.getItem('adShown')) {
-                document.getElementById('adModal').classList.remove('hidden');
-                document.getElementById('adDisplayArea').innerHTML = `
-                    <div class="text-center">
-                        <h3>Sponsored</h3>
-                        <div style="background:#eee; height:200px; display:flex; align-items:center; justify-content:center;">Ad Space Available</div>
-                        <button class="btn btn-primary mt-4">Learn More</button>
+        app.setupEventListeners();
+        
+        // CHECK URL FOR GENERATED SITE MODE
+        const params = new URLSearchParams(window.location.search);
+        const sellerId = params.get('seller');
+        if(sellerId) {
+            document.getElementById('platformApp').classList.add('hidden');
+            document.getElementById('generatedSite').classList.remove('hidden');
+            siteRenderer.load(sellerId);
+        }
+    },
+
+    setupEventListeners: () => {
+        // Auth Buttons
+        document.getElementById('btnLoginNav').onclick = () => ui.showView('viewAuth');
+        document.getElementById('btnLogoutNav').onclick = () => auth.signOut();
+        
+        document.getElementById('btnLogin').onclick = async () => {
+            const e = document.getElementById('authEmail').value;
+            const p = document.getElementById('authPass').value;
+            try {
+                ui.showLoader(true, "Logging in...");
+                await auth.signInWithEmailAndPassword(e, p);
+                ui.showLoader(false);
+            } catch(err) {
+                ui.showLoader(false);
+                ui.toast(err.message, 'error');
+            }
+        };
+
+        document.getElementById('btnSignup').onclick = async () => {
+            const e = document.getElementById('authEmail').value;
+            const p = document.getElementById('authPass').value;
+            try {
+                ui.showLoader(true, "Creating Account...");
+                const cred = await auth.createUserWithEmailAndPassword(e, p);
+                await db.collection('users').doc(cred.user.uid).set({
+                    email: e, createdAt: new Date()
+                });
+                ui.showLoader(false);
+                ui.toast("Account Created!");
+            } catch(err) {
+                ui.showLoader(false);
+                ui.toast(err.message, 'error');
+            }
+        };
+
+        // Profile Save
+        document.getElementById('saveProfile').onclick = async () => {
+            ui.showLoader(true, "Saving Profile...");
+            try {
+                let photoUrl = null;
+                const file = document.getElementById('profPhoto').files[0];
+                if(file) {
+                    const blob = await compressImage(file);
+                    const ref = storage.ref(`profiles/${state.user.uid}`);
+                    await ref.put(blob);
+                    photoUrl = await ref.getDownloadURL();
+                }
+                
+                const data = {
+                    phone: document.getElementById('profPhone').value,
+                    whatsapp: document.getElementById('profWhatsapp').value,
+                    address: document.getElementById('profAddress').value
+                };
+                if(photoUrl) data.photo = photoUrl;
+
+                await db.collection('users').doc(state.user.uid).set(data, {merge: true});
+                ui.toast("Profile Saved!");
+                if(photoUrl) document.getElementById('dashAvatar').innerHTML = `<img src="${photoUrl}">`;
+            } catch(e) { ui.toast(e.message, 'error'); }
+            ui.showLoader(false);
+        };
+
+        // Add Vehicle
+        document.getElementById('formAddVehicle').onsubmit = async (e) => {
+            e.preventDefault();
+            ui.showLoader(true, "Compressing & Uploading...");
+            try {
+                // Upload Images
+                const files = document.getElementById('vPhotos').files;
+                const imgUrls = [];
+                for(let i=0; i < Math.min(files.length, 10); i++) {
+                    const blob = await compressImage(files[i]);
+                    const ref = storage.ref(`vehicles/${state.user.uid}/${Date.now()}_${i}`);
+                    await ref.put(blob);
+                    imgUrls.push(await ref.getDownloadURL());
+                }
+
+                // Save Data
+                await db.collection('vehicles').add({
+                    uid: state.user.uid,
+                    category: document.getElementById('vCat').value,
+                    brand: document.getElementById('vBrand').value,
+                    model: document.getElementById('vModel').value,
+                    trim: document.getElementById('vTrim').value,
+                    year: document.getElementById('vYear').value,
+                    condition: document.getElementById('vCond').value,
+                    trans: document.getElementById('vTrans').value,
+                    fuel: document.getElementById('vFuel').value,
+                    price: document.getElementById('vPrice').value,
+                    mileage: document.getElementById('vMileage').value,
+                    desc: document.getElementById('vDesc').value,
+                    youtube: document.getElementById('vYoutube').value,
+                    images: imgUrls,
+                    published: true,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('formAddVehicle').reset();
+                document.getElementById('vPreview').innerHTML = '';
+                ui.toast("Vehicle Published!");
+                ui.switchTab('tabMyVehicles');
+            } catch(err) { ui.toast(err.message, 'error'); }
+            ui.showLoader(false);
+        };
+
+        // Website Save
+        document.getElementById('saveWebsite').onclick = async () => {
+            ui.showLoader(true);
+            try {
+                const data = {
+                    saleName: document.getElementById('webName').value,
+                    navStyle: document.getElementById('webNavStyle').value,
+                    heroTitle: document.getElementById('webHeroTitle').value,
+                    heroSub: document.getElementById('webHeroSub').value,
+                    about: document.getElementById('webAbout').value,
+                    why: document.getElementById('webWhy').value,
+                    fb: document.getElementById('webFb').value
+                };
+                
+                // Handle Logo upload similar to profile if needed (omitted for brevity)
+                await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
+                ui.toast("Website Settings Saved!");
+            } catch(e) { ui.toast(e.message, 'error'); }
+            ui.showLoader(false);
+        };
+    },
+
+    loadProfile: async () => {
+        const doc = await db.collection('users').doc(state.user.uid).get();
+        if(doc.exists) {
+            const d = doc.data();
+            document.getElementById('profPhone').value = d.phone || '';
+            document.getElementById('profWhatsapp').value = d.whatsapp || '';
+            document.getElementById('profAddress').value = d.address || '';
+            if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
+        }
+    },
+
+    loadMyVehicles: async () => {
+        const list = document.getElementById('myVehiclesList');
+        list.innerHTML = '<p>Loading...</p>';
+        const snap = await db.collection('vehicles').where('uid', '==', state.user.uid).get();
+        list.innerHTML = '';
+        snap.forEach(doc => {
+            const v = doc.data();
+            const el = document.createElement('div');
+            el.className = 'v-card';
+            el.innerHTML = `
+                <img src="${v.images[0] || 'https://via.placeholder.com/300'}" loading="lazy">
+                <div class="v-info">
+                    <h4>${v.brand} ${v.model}</h4>
+                    <p class="v-price">Rs. ${v.price}</p>
+                    <div class="v-actions">
+                        <button class="btn btn-primary btn-sm" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(el);
+        });
+    },
+
+    deleteVehicle: async (id) => {
+        if(!confirm("Are you sure?")) return;
+        ui.showLoader(true);
+        await db.collection('vehicles').doc(id).delete();
+        app.loadMyVehicles();
+        ui.showLoader(false);
+    },
+
+    loadWebsiteSettings: async () => {
+        const doc = await db.collection('sites').doc(state.user.uid).get();
+        const url = `${window.location.origin}${window.location.pathname}?seller=${state.user.uid}`;
+        document.getElementById('mySiteLink').innerText = url;
+        document.getElementById('mySiteLink').href = url;
+        
+        if(doc.exists) {
+            const d = doc.data();
+            document.getElementById('webName').value = d.saleName || '';
+            document.getElementById('webNavStyle').value = d.navStyle || '1';
+            document.getElementById('webHeroTitle').value = d.heroTitle || '';
+            document.getElementById('webHeroSub').value = d.heroSub || '';
+            document.getElementById('webAbout').value = d.about || '';
+            document.getElementById('webWhy').value = d.why || '';
+            document.getElementById('webFb').value = d.fb || '';
+        }
+    },
+
+    loadConnect: async () => {
+        const grid = document.getElementById('sellersGrid');
+        grid.innerHTML = 'Loading...';
+        const snap = await db.collection('sites').get();
+        grid.innerHTML = '';
+        snap.forEach(doc => {
+            const s = doc.data();
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <h3>${s.saleName || 'Car Sale'}</h3>
+                <button class="btn btn-outline mt-2" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>
+            `;
+            grid.appendChild(div);
+        });
+    }
+};
+
+// ==========================================
+// 3. GENERATED SITE LOGIC
+// ==========================================
+const siteRenderer = {
+    load: async (uid) => {
+        ui.showLoader(true, "Loading Website...");
+        try {
+            const [siteDoc, userDoc, vSnap] = await Promise.all([
+                db.collection('sites').doc(uid).get(),
+                db.collection('users').doc(uid).get(),
+                db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get()
+            ]);
+
+            if(!siteDoc.exists) throw new Error("Seller website not set up.");
+            const s = siteDoc.data();
+            const u = userDoc.data();
+
+            // Render Header
+            const header = document.getElementById('genHeader');
+            const menu = `
+                <div style="display:flex; gap:20px;">
+                    <a href="#genVehicles" style="text-decoration:none; color:#333; font-weight:600">Inventory</a>
+                    <a href="#genAbout" style="text-decoration:none; color:#333; font-weight:600">About</a>
+                    <a href="#genContact" style="text-decoration:none; color:#333; font-weight:600">Contact</a>
+                </div>
+            `;
+            
+            if(s.navStyle === '2') {
+                header.innerHTML = `<div class="navbar" style="justify-content:space-between"><h2>${s.saleName}</h2>${menu}</div>`;
+            } else {
+                header.innerHTML = `<div class="navbar" style="flex-direction:column"><h2>${s.saleName}</h2>${menu}</div>`;
+            }
+
+            // Hero
+            const hero = document.getElementById('genHero');
+            hero.innerHTML = `<h1>${s.heroTitle || 'Welcome'}</h1><p>${s.heroSub || 'Best Deals in Town'}</p>`;
+
+            // Vehicles
+            const grid = document.getElementById('genVehicleGrid');
+            const cats = new Set();
+            vSnap.forEach(doc => {
+                const v = doc.data();
+                cats.add(v.category);
+                const card = document.createElement('div');
+                card.className = 'v-card';
+                card.dataset.cat = v.category;
+                card.innerHTML = `
+                    <img src="${v.images[0]}" onclick="siteRenderer.openModal('${doc.id}')">
+                    <div class="v-info">
+                        <h4>${v.brand} ${v.model}</h4>
+                        <p class="v-price">Rs. ${v.price}</p>
                     </div>
                 `;
-                sessionStorage.setItem('adShown', 'true');
+                grid.appendChild(card);
+            });
+
+            // Filters
+            const filters = document.getElementById('genCatFilter');
+            filters.innerHTML = `<div class="chip active" onclick="siteRenderer.filter('all')">All</div>`;
+            cats.forEach(c => {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.innerText = c;
+                chip.onclick = (e) => siteRenderer.filter(c, e);
+                filters.appendChild(chip);
+            });
+
+            // Content
+            document.getElementById('genAboutContent').innerText = s.about || 'We are a trusted seller.';
+            const whyDiv = document.getElementById('genWhyGrid');
+            const reasons = (s.why || "Trusted\nBest Prices\nQuality").split('\n');
+            reasons.forEach(r => {
+                const d = document.createElement('div');
+                d.className = 'feat-card';
+                d.innerHTML = `<h3>${r}</h3>`;
+                whyDiv.appendChild(d);
+            });
+
+            // Contact
+            document.getElementById('genContactInfo').innerHTML = `
+                <p><i class="fa-solid fa-phone"></i> ${u.phone}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${u.address}</p>
+            `;
+            if(u.whatsapp) {
+                const wa = document.getElementById('floatWhatsapp');
+                wa.href = `https://wa.me/${u.whatsapp}`;
+                wa.classList.remove('hidden');
             }
+
+            // Facebook & Ads Scroll Logic
+            window.onscroll = () => {
+                const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+                
+                // Facebook Modal (>50%)
+                if(s.fb && scrollP > 50 && !sessionStorage.getItem('fbShown')) {
+                    document.getElementById('fbModal').classList.remove('hidden');
+                    document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Open Page</a>`;
+                    sessionStorage.setItem('fbShown', 'true');
+                }
+
+                // Ad Modal (>30%)
+                if(scrollP > 30 && !sessionStorage.getItem('adShown')) {
+                    document.getElementById('adModal').classList.remove('hidden');
+                    document.getElementById('adContentArea').innerHTML = `<h3 class="text-center">Sponsored Ad Space</h3><div style="background:#eee; height:150px; margin-top:10px;"></div>`;
+                    sessionStorage.setItem('adShown', 'true');
+                }
+            };
+
+        } catch(e) {
+            document.body.innerHTML = `<h2 class="text-center mt-2">Error: ${e.message}</h2>`;
+        }
+        ui.showLoader(false);
+    },
+
+    filter: (cat, e) => {
+        if(e) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+        }
+        document.querySelectorAll('#genVehicleGrid .v-card').forEach(card => {
+            card.style.display = (cat === 'all' || card.dataset.cat === cat) ? 'block' : 'none';
         });
+    },
 
-    } catch(e) {
-        document.body.innerHTML = `<h1 class="text-center mt-4">Error loading site: ${e.message}</h1>`;
+    openModal: async (vid) => {
+        ui.showLoader(true);
+        const doc = await db.collection('vehicles').doc(vid).get();
+        const v = doc.data();
+        ui.showLoader(false);
+
+        const modal = document.getElementById('modalOverlay');
+        modal.classList.remove('hidden');
+        document.getElementById('modalBody').innerHTML = `
+            <h2>${v.brand} ${v.model} (${v.year})</h2>
+            <img src="${v.images[0]}" style="width:100%; border-radius:8px; margin:10px 0;">
+            <div class="grid-2">
+                <p><strong>Price:</strong> Rs. ${v.price}</p>
+                <p><strong>Mileage:</strong> ${v.mileage} km</p>
+                <p><strong>Fuel:</strong> ${v.fuel}</p>
+                <p><strong>Trans:</strong> ${v.trans}</p>
+            </div>
+            <p class="mt-2">${v.desc}</p>
+            ${v.youtube ? `<a href="${v.youtube}" target="_blank" class="btn btn-primary mt-2 full-width text-center">Watch Video</a>` : ''}
+        `;
     }
-    showLoader(false);
-}
-
-// Filter Logic
-window.filterV = (cat) => {
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    document.querySelectorAll('.filter-item').forEach(el => {
-        el.style.display = (cat === 'all' || el.dataset.cat === cat) ? 'block' : 'none';
-    });
 };
 
-// Modal Logic
-window.openVModal = async (vid) => {
-    showLoader(true);
-    const doc = await db.collection('vehicles').doc(vid).get();
-    const v = doc.data();
-    showLoader(false);
-    
-    document.getElementById('modalOverlay').classList.remove('hidden');
-    document.getElementById('modalBody').innerHTML = `
-        <h2>${v.brand} ${v.model}</h2>
-        <div class="preview-grid" style="grid-template-columns: 1fr; margin-bottom:1rem;">
-            <img src="${v.imgs[0]}" style="height:300px; object-fit:contain; background:#000;">
-        </div>
-        <div class="form-grid">
-            <p><strong>Price:</strong> Rs. ${v.price}</p>
-            <p><strong>Year:</strong> ${v.year}</p>
-            <p><strong>Mileage:</strong> ${v.mil} km</p>
-            <p><strong>Fuel:</strong> ${v.fuel}</p>
-        </div>
-        <hr class="mt-4 mb-4">
-        <p>${v.desc}</p>
-        ${v.tube ? `<a href="${v.tube}" target="_blank" class="btn btn-primary mt-4">Watch Video</a>` : ''}
-    `;
-};
-
-window.closeModal = () => {
-    document.getElementById('modalOverlay').classList.add('hidden');
-};
+// Initialize App
+document.addEventListener('DOMContentLoaded', app.init);
