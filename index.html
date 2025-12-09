@@ -10,22 +10,39 @@
 </head>
 <body>
 
-    <!-- LOADER (Prevents FOUC) -->
+    <!-- LOADERS -->
     <div id="initLoader" class="init-loader">
         <div class="spinner"></div>
         <p>Loading Platform...</p>
     </div>
-
-    <!-- ACTION LOADER -->
     <div id="loader" class="loader-overlay hidden">
         <div class="spinner"></div>
         <p id="loaderText">Processing...</p>
     </div>
 
-    <!-- TOAST NOTIFICATIONS -->
+    <!-- TOAST -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- MODAL OVERLAY -->
+    <!-- 1. EDIT VEHICLE MODAL (New Feature) -->
+    <div id="editVehicleModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-modal" onclick="document.getElementById('editVehicleModal').classList.add('hidden')">&times;</button>
+            <h2>Edit Vehicle</h2>
+            <form id="formEditVehicle">
+                <input type="hidden" id="editVId"> <!-- Hidden ID storage -->
+                <div class="grid-2">
+                    <div class="form-group"><label>Brand</label><input type="text" id="editVBrand" required></div>
+                    <div class="form-group"><label>Model</label><input type="text" id="editVModel" required></div>
+                    <div class="form-group"><label>Price (Rs)</label><input type="number" id="editVPrice" required></div>
+                    <div class="form-group"><label>Mileage</label><input type="number" id="editVMileage" required></div>
+                </div>
+                <div class="form-group"><label>Description</label><textarea id="editVDesc" rows="4"></textarea></div>
+                <button type="submit" class="btn btn-primary full-width">Update Vehicle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- GENERIC MODAL -->
     <div id="modalOverlay" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-modal" onclick="ui.closeModal()">&times;</button>
@@ -33,15 +50,13 @@
         </div>
     </div>
 
-    <!-- ADMIN AD MODAL -->
+    <!-- ADMIN & FB MODALS -->
     <div id="adModal" class="modal-overlay hidden">
         <div class="modal-content ad-content">
             <button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button>
             <div id="adContentArea"></div>
         </div>
     </div>
-
-    <!-- FACEBOOK MODAL -->
     <div id="fbModal" class="modal-overlay hidden">
         <div class="modal-content fb-content text-center">
             <button class="close-modal" onclick="document.getElementById('fbModal').classList.add('hidden')">&times;</button>
@@ -52,7 +67,7 @@
     </div>
 
     <!-- =======================================================
-         PART 1: THE PLATFORM (Dashboard & Landing)
+         PART 1: THE PLATFORM
     ======================================================== -->
     <div id="platformApp">
         <nav class="navbar">
@@ -63,7 +78,6 @@
             </div>
         </nav>
 
-        <!-- View: Landing -->
         <section id="viewLanding" class="view">
             <div class="hero">
                 <h1>Create Your Professional Vehicle Sales Website</h1>
@@ -77,7 +91,6 @@
             </div>
         </section>
 
-        <!-- View: Auth -->
         <section id="viewAuth" class="view hidden">
             <div class="auth-container">
                 <h2>Welcome Back</h2>
@@ -92,54 +105,56 @@
             </div>
         </section>
 
-        <!-- View: Dashboard -->
         <section id="viewDashboard" class="view hidden">
             <div class="dash-layout">
-                <!-- Sidebar -->
                 <aside class="dash-sidebar">
                     <div class="user-info">
                         <div class="avatar-circle" id="dashAvatar"><i class="fa-solid fa-user"></i></div>
                         <span id="dashEmail">User</span>
                     </div>
                     <nav class="side-nav">
-                        <button onclick="ui.switchTab('tabProfile')" class="nav-item active" id="btnTabProfile"><i class="fa-solid fa-id-card"></i> Profile</button>
-                        <button onclick="ui.switchTab('tabAddVehicle')" class="nav-item" id="btnTabAdd"><i class="fa-solid fa-plus"></i> Add Vehicle</button>
-                        <button onclick="ui.switchTab('tabMyVehicles')" class="nav-item" id="btnTabList"><i class="fa-solid fa-list"></i> My Vehicles</button>
-                        <button onclick="ui.switchTab('tabWebsite')" class="nav-item" id="btnTabWeb"><i class="fa-solid fa-globe"></i> My Website</button>
-                        <button onclick="ui.switchTab('tabConnect')" class="nav-item" id="btnTabConnect"><i class="fa-solid fa-users"></i> Connect</button>
+                        <button onclick="ui.switchTab('tabProfile')" class="nav-item active"><i class="fa-solid fa-id-card"></i> Profile</button>
+                        <button onclick="ui.switchTab('tabAddVehicle')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Vehicle</button>
+                        <button onclick="ui.switchTab('tabMyVehicles')" class="nav-item"><i class="fa-solid fa-list"></i> My Vehicles</button>
+                        <button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-globe"></i> My Website</button>
+                        <button onclick="ui.switchTab('tabConnect')" class="nav-item"><i class="fa-solid fa-users"></i> Connect</button>
                         <button onclick="ui.switchTab('tabAdmin')" id="navAdmin" class="nav-item hidden"><i class="fa-solid fa-lock"></i> Admin</button>
                     </nav>
                 </aside>
 
-                <!-- Main Content (Tabs) -->
                 <main class="dash-content">
                     
-                    <!-- 1. Profile -->
+                    <!-- 1. PROFILE SECTION (Updated Text) -->
                     <div id="tabProfile" class="dash-tab active">
                         <h2>User Profile</h2>
                         <div class="card">
-                            <p class="text-sm text-secondary mb-2">Details for your "Contact Us" section.</p>
+                            <div class="alert-box">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <div>
+                                    <strong>Important:</strong> These details are <strong>REQUIRED</strong>. They will appear on your generated website's "Contact Us" section. Customers use this to call/message you.
+                                </div>
+                            </div>
                             <div class="form-group">
-                                <label>Profile Photo (User Must Upload)</label>
+                                <label>Profile Photo (Required)</label>
                                 <input type="file" id="profPhoto" accept="image/*">
                             </div>
                             <div class="form-group">
                                 <label>Phone Number (Required)</label>
-                                <input type="tel" id="profPhone">
+                                <input type="tel" id="profPhone" placeholder="+94 77 123 4567" required>
                             </div>
                             <div class="form-group">
                                 <label>WhatsApp Number (Required)</label>
-                                <input type="tel" id="profWhatsapp">
+                                <input type="tel" id="profWhatsapp" placeholder="94771234567 (No symbols)" required>
                             </div>
                             <div class="form-group">
                                 <label>Address (Required)</label>
-                                <textarea id="profAddress"></textarea>
+                                <textarea id="profAddress" placeholder="Your Car Sale Address" required></textarea>
                             </div>
-                            <button id="saveProfile" class="btn btn-primary">Save Profile</button>
+                            <button id="saveProfile" class="btn btn-primary">Save Profile Details</button>
                         </div>
                     </div>
 
-                    <!-- 2. Add Vehicle -->
+                    <!-- 2. ADD VEHICLE (Fixed 10 photos) -->
                     <div id="tabAddVehicle" class="dash-tab">
                         <h2>Add New Vehicle</h2>
                         <form id="formAddVehicle" class="card">
@@ -182,6 +197,7 @@
                                 <label>YouTube Link</label>
                                 <input type="url" id="vYoutube">
                             </div>
+                            <!-- FIXED: Multiple is essential -->
                             <div class="form-group">
                                 <label>Photos (Max 10)</label>
                                 <input type="file" id="vPhotos" multiple accept="image/*">
@@ -191,11 +207,11 @@
                         </form>
                     </div>
 
-                    <!-- 3. My Vehicles -->
+                    <!-- 3. MY VEHICLES (Fixed Search & Buttons) -->
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
                         <div class="filter-bar">
-                            <input type="text" id="searchV" placeholder="Search by brand...">
+                            <input type="text" id="searchV" placeholder="Search by brand or model...">
                             <select id="sortV">
                                 <option value="new">Newest First</option>
                                 <option value="old">Oldest First</option>
@@ -204,11 +220,10 @@
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- 4. My Website -->
+                    <!-- 4. MY WEBSITE (Preserved) -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Website Builder</h2>
                         
-                        <!-- Lock Screen -->
                         <div id="websiteLockScreen" class="lock-overlay">
                             <div class="lock-box">
                                 <i class="fa-solid fa-store"></i>
@@ -219,7 +234,6 @@
                             </div>
                         </div>
 
-                        <!-- Editor -->
                         <div id="websiteEditor" class="hidden">
                             <div class="info-banner">
                                 <i class="fa-solid fa-link"></i>
@@ -228,21 +242,10 @@
 
                             <div class="card">
                                 <h3>Branding</h3>
-                                <div class="form-group">
-                                    <label>Vehicle Sale Name</label>
-                                    <input type="text" id="webName">
-                                </div>
+                                <div class="form-group"><label>Sale Name</label><input type="text" id="webName"></div>
                                 <div class="grid-2">
-                                    <div class="form-group">
-                                        <label>Logo</label>
-                                        <input type="file" id="webLogo">
-                                        <button id="rmLogo" class="hidden btn-xs">Remove</button>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Favicon</label>
-                                        <input type="file" id="webFavicon">
-                                        <button id="rmFavicon" class="hidden btn-xs">Remove</button>
-                                    </div>
+                                    <div class="form-group"><label>Logo</label><input type="file" id="webLogo"></div>
+                                    <div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div>
                                 </div>
                                 <div class="form-group">
                                     <label>Navbar Style</label>
@@ -251,29 +254,26 @@
                                         <option value="2">Style 2: Left Align</option>
                                     </select>
                                 </div>
-
                                 <h3>Content</h3>
                                 <div class="form-group"><label>Hero Title</label><input type="text" id="webHeroTitle"></div>
                                 <div class="form-group"><label>Hero Subtitle</label><input type="text" id="webHeroSub"></div>
                                 <div class="form-group"><label>About Us</label><textarea id="webAbout" rows="5"></textarea></div>
                                 <div class="form-group"><label>Why Choose Us</label><textarea id="webWhy" rows="5"></textarea></div>
-                                
                                 <h3>Media</h3>
-                                <div class="form-group"><label>Gallery (Max 10)</label><input type="file" id="webGallery" multiple></div>
-                                <div class="form-group"><label>Facebook Page</label><input type="text" id="webFb" placeholder="https://facebook.com/yourpage"></div>
-
+                                <div class="form-group"><label>Gallery</label><input type="file" id="webGallery" multiple></div>
+                                <div class="form-group"><label>Facebook</label><input type="text" id="webFb"></div>
                                 <button id="saveWebsite" class="btn btn-success mt-4">Save & Publish</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 5. Connect -->
+                    <!-- 5. CONNECT -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Connect with Sellers</h2>
                         <div id="sellersGrid" class="sellers-grid"></div>
                     </div>
 
-                    <!-- 6. Admin -->
+                    <!-- 6. ADMIN -->
                     <div id="tabAdmin" class="dash-tab">
                         <h2>Admin Panel</h2>
                         <div class="card">
@@ -288,11 +288,10 @@
     </div>
 
     <!-- =======================================================
-         PART 2: THE GENERATED WEBSITE (Hidden by default)
+         PART 2: GENERATED WEBSITE
     ======================================================== -->
     <div id="generatedSite" class="hidden">
         <header id="genHeader"></header>
-        
         <section id="genHero" class="gen-hero">
             <div class="hero-overlay"></div>
             <div class="hero-content scroll-anim">
@@ -301,36 +300,25 @@
                 <a href="#genVehicles" class="hero-btn">See Vehicles</a>
             </div>
         </section>
-
         <section id="genVehicles" class="gen-section">
             <h2 class="sec-title scroll-anim">Our Vehicles</h2>
             <div id="genCatFilter" class="filter-chips scroll-anim"></div>
             <div id="genVehicleGrid" class="vehicle-grid scroll-anim"></div>
         </section>
-
         <section id="genAbout" class="gen-section bg-light">
             <div class="container-split">
-                <div class="text-block scroll-anim">
-                    <h2 class="sec-title-left">About Us</h2>
-                    <div id="genAboutContent"></div>
-                </div>
-                <div class="image-block scroll-anim">
-                    <!-- Default placeholder, updated if user uploads gallery -->
-                    <img src="https://images.unsplash.com/photo-1560179707-f14e90ef3dab?auto=format&fit=crop&w=800&q=80" id="genAboutImg">
-                </div>
+                <div class="text-block scroll-anim"><h2 class="sec-title-left">About Us</h2><div id="genAboutContent"></div></div>
+                <div class="image-block scroll-anim"><img src="https://images.unsplash.com/photo-1560179707-f14e90ef3dab?auto=format&fit=crop&w=800&q=80"></div>
             </div>
         </section>
-
         <section id="genWhy" class="gen-section bg-dark text-white">
             <h2 class="sec-title text-white scroll-anim">Why Choose Us</h2>
             <div id="genWhyGrid" class="features-grid scroll-anim"></div>
         </section>
-
         <section id="genGallery" class="gen-section">
             <h2 class="sec-title scroll-anim">Gallery</h2>
             <div id="genGalleryTrack" class="gallery-scroller scroll-anim"></div>
         </section>
-
         <section id="genReviews" class="gen-section bg-light">
             <h2 class="sec-title scroll-anim">Happy Customers</h2>
             <div class="reviews-grid scroll-anim">
@@ -339,7 +327,6 @@
                 <div class="review-card">⭐⭐⭐⭐⭐<p>"Best prices."</p></div>
             </div>
         </section>
-
         <section id="genContact" class="gen-section footer-section">
             <h2 class="sec-title text-white scroll-anim">Contact Us</h2>
             <div class="contact-layout scroll-anim">
@@ -350,7 +337,6 @@
             </div>
             <div id="genFooter" class="footer-bottom"></div>
         </section>
-
         <a href="#" id="floatWhatsapp" class="float-wa hidden" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
     </div>
 
