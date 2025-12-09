@@ -3,21 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VehicleWebsiteBuilder</title>
+    <title>VehicleBuilder</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- NOTIFICATIONS & LOADERS -->
+    <!-- 1. INITIAL LOADING SCREEN (Prevents Flashing) -->
+    <div id="initLoader" class="init-loader">
+        <div class="spinner"></div>
+        <p>Loading Dashboard...</p>
+    </div>
+
+    <!-- 2. ACTION LOADER (For saving/uploading) -->
     <div id="loader" class="loader-overlay hidden">
         <div class="spinner"></div>
         <p id="loaderText">Processing...</p>
     </div>
+
+    <!-- TOAST NOTIFICATIONS -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- MODALS -->
+    <!-- GENERIC MODAL -->
     <div id="modalOverlay" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-modal" onclick="ui.closeModal()">&times;</button>
@@ -25,7 +33,7 @@
         </div>
     </div>
 
-    <!-- AD & FACEBOOK MODALS (Preserved) -->
+    <!-- AD & FACEBOOK MODALS -->
     <div id="adModal" class="modal-overlay hidden">
         <div class="modal-content ad-content">
             <button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button>
@@ -55,16 +63,17 @@
         </nav>
 
         <!-- Landing View -->
-        <section id="viewLanding" class="view active">
+        <section id="viewLanding" class="view hidden">
             <div class="hero">
                 <h1>Create Your Professional Vehicle Sales Website</h1>
                 <p>Powerful, responsive, and easy to use. Start selling in minutes.</p>
                 <button class="btn btn-primary btn-lg" onclick="ui.showView('viewAuth')">Get Started</button>
             </div>
+            <!-- RENAMED CLASS TO FIX CSS CONFLICT -->
             <div class="features">
-                <div class="feat-card"><i class="fa-solid fa-mobile-screen"></i><h3>100% Mobile Ready</h3></div>
-                <div class="feat-card"><i class="fa-solid fa-bolt"></i><h3>Fast Performance</h3></div>
-                <div class="feat-card"><i class="fa-solid fa-wand-magic-sparkles"></i><h3>Auto Content</h3></div>
+                <div class="landing-card"><i class="fa-solid fa-mobile-screen"></i><h3>100% Mobile Ready</h3></div>
+                <div class="landing-card"><i class="fa-solid fa-bolt"></i><h3>Fast Performance</h3></div>
+                <div class="landing-card"><i class="fa-solid fa-wand-magic-sparkles"></i><h3>Auto Content</h3></div>
             </div>
         </section>
 
@@ -102,7 +111,7 @@
                 </aside>
 
                 <main class="dash-content">
-                    <!-- Tab: Profile (Preserved) -->
+                    <!-- Tab: Profile -->
                     <div id="tabProfile" class="dash-tab active">
                         <h2>User Profile</h2>
                         <div class="card">
@@ -127,7 +136,7 @@
                         </div>
                     </div>
 
-                    <!-- Tab: Add Vehicle (Preserved) -->
+                    <!-- Tab: Add Vehicle -->
                     <div id="tabAddVehicle" class="dash-tab">
                         <h2>Add New Vehicle</h2>
                         <form id="formAddVehicle" class="card">
@@ -164,7 +173,7 @@
                         </form>
                     </div>
 
-                    <!-- Tab: My Vehicles (Preserved with Search) -->
+                    <!-- Tab: My Vehicles -->
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
                         <div class="filter-bar">
@@ -177,11 +186,10 @@
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- Tab: Website Builder (IMPROVED & LOCKED) -->
+                    <!-- Tab: Website Builder -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Website Builder</h2>
                         
-                        <!-- Lock Screen -->
                         <div id="websiteLockScreen" class="lock-overlay">
                             <div class="lock-box">
                                 <i class="fa-solid fa-shop"></i>
@@ -192,7 +200,6 @@
                             </div>
                         </div>
 
-                        <!-- Unlocked Editor -->
                         <div id="websiteEditor" class="hidden">
                             <div class="info-banner">
                                 <i class="fa-solid fa-link"></i>
@@ -207,9 +214,8 @@
                                 </div>
                                 <div class="grid-2">
                                     <div class="form-group">
-                                        <label>Logo (Optional - We generate one if empty)</label>
+                                        <label>Logo (Optional)</label>
                                         <input type="file" id="webLogo">
-                                        <button id="rmLogo" class="btn btn-xs btn-outline hidden">Remove</button>
                                     </div>
                                     <div class="form-group">
                                         <label>Favicon</label>
@@ -219,12 +225,12 @@
                                 <div class="form-group">
                                     <label>Navigation Style</label>
                                     <select id="webNavStyle">
-                                        <option value="1">Style 1: Centered (Logo Top)</option>
+                                        <option value="1">Style 1: Centered</option>
                                         <option value="2">Style 2: Left Aligned</option>
                                     </select>
                                 </div>
 
-                                <h3>2. Content (Auto-filled)</h3>
+                                <h3>2. Content</h3>
                                 <div class="form-group">
                                     <label>Hero Title</label>
                                     <input type="text" id="webHeroTitle">
@@ -238,15 +244,11 @@
                                     <textarea id="webAbout" rows="5"></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label>Why Choose Us (One point per line)</label>
+                                    <label>Why Choose Us</label>
                                     <textarea id="webWhy" rows="5"></textarea>
                                 </div>
                                 
-                                <h3>3. Media & Social</h3>
-                                <div class="form-group">
-                                    <label>Gallery Images (Max 10)</label>
-                                    <input type="file" id="webGallery" multiple>
-                                </div>
+                                <h3>3. Social</h3>
                                 <div class="form-group">
                                     <label>Facebook Page Link</label>
                                     <input type="text" id="webFb" placeholder="https://facebook.com/yourpage">
@@ -257,13 +259,13 @@
                         </div>
                     </div>
 
-                    <!-- Tab: Connect (Preserved) -->
+                    <!-- Tab: Connect -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Connect with Sellers</h2>
                         <div id="sellersGrid" class="sellers-grid"></div>
                     </div>
 
-                    <!-- Tab: Admin (Preserved) -->
+                    <!-- Tab: Admin -->
                     <div id="tabAdmin" class="dash-tab">
                         <h2>Admin Panel</h2>
                         <div class="card">
@@ -278,13 +280,11 @@
     </div>
 
     <!-- =======================================================
-         PART 2: THE GENERATED SUPER WEBSITE
+         PART 2: THE GENERATED SITE
     ======================================================== -->
     <div id="generatedSite" class="hidden">
-        <!-- Navigation -->
         <header id="genHeader"></header>
         
-        <!-- Hero Section -->
         <section id="genHero" class="gen-hero">
             <div class="hero-overlay"></div>
             <div class="hero-content scroll-anim">
@@ -294,15 +294,12 @@
             </div>
         </section>
 
-        <!-- All Vehicles (Smart Categories) -->
         <section id="genVehicles" class="gen-section">
             <h2 class="sec-title scroll-anim">Our Collection</h2>
-            <!-- Categories will be injected here -->
             <div id="genCatFilter" class="filter-chips scroll-anim"></div>
             <div id="genVehicleGrid" class="vehicle-grid scroll-anim"></div>
         </section>
 
-        <!-- About Us -->
         <section id="genAbout" class="gen-section bg-light">
             <div class="container-split">
                 <div class="text-block scroll-anim">
@@ -310,61 +307,51 @@
                     <div id="genAboutContent"></div>
                 </div>
                 <div class="image-block scroll-anim">
-                    <img src="https://images.unsplash.com/photo-1560179707-f14e90ef3dab?auto=format&fit=crop&w=800&q=80" alt="Office">
+                    <img src="https://images.unsplash.com/photo-1560179707-f14e90ef3dab?auto=format&fit=crop&w=800&q=80" alt="About Image">
                 </div>
             </div>
         </section>
 
-        <!-- Why Choose Us -->
         <section id="genWhy" class="gen-section bg-dark text-white">
             <h2 class="sec-title text-white scroll-anim">Why Choose Us</h2>
             <div id="genWhyGrid" class="features-grid scroll-anim"></div>
         </section>
 
-        <!-- Gallery -->
         <section id="genGallery" class="gen-section">
             <h2 class="sec-title scroll-anim">Gallery</h2>
             <div id="genGalleryTrack" class="gallery-scroller scroll-anim"></div>
         </section>
 
-        <!-- Happy Customers (Card Type) -->
         <section id="genReviews" class="gen-section bg-light">
             <h2 class="sec-title scroll-anim">Happy Customers</h2>
             <div class="reviews-grid scroll-anim">
                 <div class="review-card">
                     <div class="stars">⭐⭐⭐⭐⭐</div>
-                    <p>"Excellent service! The vehicle was exactly as described."</p>
-                    <small>- Verified Buyer</small>
+                    <p>"Excellent service!"</p>
                 </div>
                 <div class="review-card">
                     <div class="stars">⭐⭐⭐⭐⭐</div>
-                    <p>"Fair prices and transparent documentation. Highly recommended."</p>
-                    <small>- Verified Buyer</small>
+                    <p>"Highly recommended."</p>
                 </div>
                 <div class="review-card">
                     <div class="stars">⭐⭐⭐⭐⭐</div>
-                    <p>"Great experience dealing with this sale. Very professional."</p>
-                    <small>- Verified Buyer</small>
+                    <p>"Great cars."</p>
                 </div>
             </div>
         </section>
 
-        <!-- Contact Us -->
         <section id="genContact" class="gen-section footer-section">
             <h2 class="sec-title text-white scroll-anim">Contact Us</h2>
             <div class="contact-layout scroll-anim">
                 <div id="genContactInfo" class="contact-details"></div>
                 <div id="genMap" class="map-box">
-                     <iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=Sri%20Lanka&t=&z=13&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>
+                    <iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=Sri%20Lanka&t=&z=13&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>
                 </div>
             </div>
             <div id="genFooter" class="footer-bottom"></div>
         </section>
 
-        <!-- Floating WhatsApp -->
-        <a href="#" id="floatWhatsapp" class="float-wa hidden" target="_blank">
-            <i class="fa-brands fa-whatsapp"></i>
-        </a>
+        <a href="#" id="floatWhatsapp" class="float-wa hidden" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
