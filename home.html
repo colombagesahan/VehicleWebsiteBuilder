@@ -3,31 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VehicleWebsiteBuilder - Central Hub</title>
+    <title>VehicleWebsiteBuilder - Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .hub-hero { text-align: center; padding: 4rem 1rem; background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; }
-        .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 4rem 5%; max-width: 1400px; margin: 0 auto; }
-        .role-card { background: white; padding: 2.5rem; border-radius: 12px; text-align: center; transition: transform 0.3s, box-shadow 0.3s; border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
-        .role-card:hover { transform: translateY(-10px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .role-icon { width: 80px; height: 80px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1.5rem; }
-        .role-card h3 { font-size: 1.5rem; margin-bottom: 1rem; color: #1e293b; }
-        .role-card p { color: #64748b; margin-bottom: 2rem; }
-        .role-btn { display: inline-block; padding: 0.8rem 1.5rem; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: 600; width: 100%; }
-        .role-btn:hover { background: #1d4ed8; }
-        .buyer-card { border: 2px solid #10b981; }
-        .buyer-card .role-icon { background: #d1fae5; color: #10b981; }
-        .buyer-card .role-btn { background: #10b981; }
+        .hub-body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+        .hub-hero { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 5rem 1rem; text-align: center; }
+        .hub-hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 1200px; margin: -50px auto 50px; padding: 0 20px; }
+        .role-card { background: white; padding: 2rem; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: transform 0.3s; border: 1px solid #e2e8f0; }
+        .role-card:hover { transform: translateY(-10px); border-color: #2563eb; }
+        .role-icon { font-size: 3rem; color: #2563eb; margin-bottom: 1.5rem; background: #eff6ff; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-left: auto; margin-right: auto; }
+        .role-btn { display: inline-block; width: 100%; padding: 12px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 15px; }
+        .role-btn:hover { background: #1e40af; }
+        /* Buyer Specific */
+        .card-buyer { border-top: 4px solid #10b981; }
+        .card-buyer .role-icon { color: #10b981; background: #d1fae5; }
+        .card-buyer .role-btn { background: #10b981; }
     </style>
 </head>
-<body>
+<body class="hub-body">
 
     <div class="hub-hero">
-        <h1>Welcome to VehicleWebsiteBuilder</h1>
-        <p>The Ultimate Ecosystem for the Automotive Industry</p>
-        <p style="margin-top:10px; opacity:0.8;">Choose your role to get started</p>
+        <h1>VehicleWebsiteBuilder Ecosystem</h1>
+        <p>The all-in-one platform for the automotive industry.</p>
     </div>
 
     <div class="hub-grid">
@@ -35,45 +35,41 @@
         <div class="role-card">
             <div class="role-icon"><i class="fa-solid fa-car"></i></div>
             <h3>Vehicle Sellers</h3>
-            <p>Build your professional car sale website, manage inventory, and connect with buyers.</p>
-            <a href="index.html?role=seller" class="role-btn">Create Seller Account</a>
+            <p>Create a professional website to sell cars, bikes, and trucks.</p>
+            <a href="index.html?role=seller" class="role-btn">Start Selling Vehicles</a>
         </div>
 
         <!-- 2. Parts Sellers -->
         <div class="role-card">
             <div class="role-icon"><i class="fa-solid fa-gears"></i></div>
             <h3>Parts Sellers</h3>
-            <p>List your auto parts, create a digital store, and reach mechanics and drivers.</p>
-            <a href="index.html?role=parts" class="role-btn">Create Parts Account</a>
+            <p>List auto parts and accessories with a dedicated online store.</p>
+            <a href="index.html?role=parts" class="role-btn">Start Selling Parts</a>
         </div>
 
-        <!-- 3. Finance & Insurance -->
-        <div class="role-card">
-            <div class="role-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-            <h3>Finance & Insurance</h3>
-            <p>Offer leasing, loans, and insurance packages directly to vehicle buyers.</p>
-            <a href="index.html?role=finance" class="role-btn">Create Finance Account</a>
-        </div>
-
-        <!-- 4. Service Providers -->
+        <!-- 3. Service Providers -->
         <div class="role-card">
             <div class="role-icon"><i class="fa-solid fa-wrench"></i></div>
             <h3>Service Providers</h3>
-            <p>Mechanics, Service Stations, and Detailing centers. Showcase your services.</p>
-            <a href="index.html?role=service" class="role-btn">Create Service Account</a>
+            <p>Mechanics & Service Stations. Showcase your services.</p>
+            <a href="index.html?role=service" class="role-btn">Create Service Profile</a>
+        </div>
+
+        <!-- 4. Finance / Insurance -->
+        <div class="role-card">
+            <div class="role-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+            <h3>Finance & Insurance</h3>
+            <p>Offer leasing and insurance packages to vehicle buyers.</p>
+            <a href="index.html?role=finance" class="role-btn">Create Finance Profile</a>
         </div>
 
         <!-- 5. Buyers -->
-        <div class="role-card buyer-card">
+        <div class="role-card card-buyer">
             <div class="role-icon"><i class="fa-solid fa-user-check"></i></div>
             <h3>Buyers</h3>
-            <p>Find vehicles, parts, and services. Compare prices and contact sellers easily.</p>
+            <p>Find vehicles, parts, and services. Connect with sellers.</p>
             <a href="index.html?role=buyer" class="role-btn">Join as Buyer</a>
         </div>
-    </div>
-
-    <div style="text-align:center; padding: 2rem; color: #64748b;">
-        &copy; 2024 VehicleWebsiteBuilder. All Rights Reserved.
     </div>
 
 </body>
