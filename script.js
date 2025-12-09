@@ -10,13 +10,11 @@ const firebaseConfig = {
   appId: "1:818252574868:web:8dd36825db589a886cc481"
 };
 
-// Initialize Firebase
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-// Global State
 const state = {
     user: null,
     isAdmin: false,
@@ -51,23 +49,53 @@ const ui = {
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         
-        // Find button that maps to this tab and activate it
-        // (Simple logic for demo)
         const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick').includes(id));
         if(btn) btn.classList.add('active');
 
-        // Load specific data
-        if(id === 'tabMyVehicles') app.loadMyVehicles();
-        if(id === 'tabConnect') app.loadConnect();
-        if(id === 'tabProfile') app.loadProfile();
-        if(id === 'tabWebsite') app.loadWebsiteSettings();
+        if(state.user) {
+            if(id === 'tabMyVehicles') app.loadMyVehicles();
+            if(id === 'tabConnect') app.loadConnect();
+            if(id === 'tabProfile') app.loadProfile();
+            if(id === 'tabWebsite') app.loadWebsiteSettings();
+        }
     },
-    closeModal: () => document.getElementById('modalOverlay').classList.add('hidden')
+    closeModal: () => document.getElementById('modalOverlay').classList.add('hidden'),
+    
+    // *** CRITICAL FIX: RESET DASHBOARD ***
+    resetDashboard: () => {
+        console.log("Resetting Dashboard...");
+        // Profile
+        document.getElementById('profPhone').value = '';
+        document.getElementById('profWhatsapp').value = '';
+        document.getElementById('profAddress').value = '';
+        document.getElementById('dashAvatar').innerHTML = '<i class="fa-solid fa-user"></i>';
+        document.getElementById('dashEmail').innerText = 'User';
+        
+        // Add Vehicle
+        document.getElementById('formAddVehicle').reset();
+        document.getElementById('vPreview').innerHTML = '';
+        
+        // Website
+        document.getElementById('webName').value = '';
+        document.getElementById('webHeroTitle').value = '';
+        document.getElementById('webHeroSub').value = '';
+        document.getElementById('webAbout').value = '';
+        document.getElementById('webWhy').value = '';
+        document.getElementById('webFb').value = '';
+        document.getElementById('mySiteLink').innerText = 'Generating...';
+        
+        // Lists
+        document.getElementById('myVehiclesList').innerHTML = '';
+        
+        // State
+        state.user = null;
+        state.isAdmin = false;
+        document.getElementById('navAdmin').classList.add('hidden');
+    }
 };
 
-// Image Compression (User Provided Logic wrapped in Promise)
 const compressImage = async (file) => {
-    if (file.size <= 1024 * 1024) return file; // Return original if < 1MB
+    if (file.size <= 1024 * 1024) return file;
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.src = URL.createObjectURL(file);
@@ -79,7 +107,6 @@ const compressImage = async (file) => {
             canvas.height = Math.round(img.height * scale);
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            
             let quality = 0.8;
             let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
             while (blob.size > 100 * 1024 && quality > 0.2) {
@@ -97,7 +124,6 @@ const compressImage = async (file) => {
 // ==========================================
 const app = {
     init: () => {
-        // Populate Categories
         const sel = document.getElementById('vCat');
         state.categories.forEach(c => {
             const opt = document.createElement('option');
@@ -105,22 +131,23 @@ const app = {
             sel.appendChild(opt);
         });
 
-        // Auth Listener
+        // AUTH LISTENER
         auth.onAuthStateChanged(user => {
-            state.user = user;
             if (user) {
+                state.user = user;
                 document.getElementById('dashEmail').innerText = user.email;
                 ui.showView('viewDashboard');
                 document.getElementById('btnLoginNav').classList.add('hidden');
                 document.getElementById('btnLogoutNav').classList.remove('hidden');
                 
-                // Admin Check (Simple)
                 if(user.email === 'admin@vehiclebuilder.com') {
                     state.isAdmin = true;
                     document.getElementById('navAdmin').classList.remove('hidden');
                 }
-                app.loadProfile();
+                app.loadProfile(); // Load NEW user data
             } else {
+                // LOGOUT DETECTED -> RESET EVERYTHING
+                ui.resetDashboard();
                 ui.showView('viewLanding');
                 document.getElementById('btnLoginNav').classList.remove('hidden');
                 document.getElementById('btnLogoutNav').classList.add('hidden');
@@ -129,7 +156,6 @@ const app = {
 
         app.setupEventListeners();
         
-        // CHECK URL FOR GENERATED SITE MODE
         const params = new URLSearchParams(window.location.search);
         const sellerId = params.get('seller');
         if(sellerId) {
@@ -140,7 +166,6 @@ const app = {
     },
 
     setupEventListeners: () => {
-        // Auth Buttons
         document.getElementById('btnLoginNav').onclick = () => ui.showView('viewAuth');
         document.getElementById('btnLogoutNav').onclick = () => auth.signOut();
         
@@ -174,7 +199,6 @@ const app = {
             }
         };
 
-        // Profile Save
         document.getElementById('saveProfile').onclick = async () => {
             ui.showLoader(true, "Saving Profile...");
             try {
@@ -201,12 +225,20 @@ const app = {
             ui.showLoader(false);
         };
 
-        // Add Vehicle
+        document.getElementById('vPhotos').addEventListener('change', (e) => {
+             const box = document.getElementById('vPreview');
+             box.innerHTML = '';
+             Array.from(e.target.files).slice(0,10).forEach(file => {
+                 const img = document.createElement('img');
+                 img.src = URL.createObjectURL(file);
+                 box.appendChild(img);
+             });
+        });
+
         document.getElementById('formAddVehicle').onsubmit = async (e) => {
             e.preventDefault();
             ui.showLoader(true, "Compressing & Uploading...");
             try {
-                // Upload Images
                 const files = document.getElementById('vPhotos').files;
                 const imgUrls = [];
                 for(let i=0; i < Math.min(files.length, 10); i++) {
@@ -216,7 +248,6 @@ const app = {
                     imgUrls.push(await ref.getDownloadURL());
                 }
 
-                // Save Data
                 await db.collection('vehicles').add({
                     uid: state.user.uid,
                     category: document.getElementById('vCat').value,
@@ -244,7 +275,6 @@ const app = {
             ui.showLoader(false);
         };
 
-        // Website Save
         document.getElementById('saveWebsite').onclick = async () => {
             ui.showLoader(true);
             try {
@@ -257,8 +287,6 @@ const app = {
                     why: document.getElementById('webWhy').value,
                     fb: document.getElementById('webFb').value
                 };
-                
-                // Handle Logo upload similar to profile if needed (omitted for brevity)
                 await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
                 ui.toast("Website Settings Saved!");
             } catch(e) { ui.toast(e.message, 'error'); }
@@ -267,6 +295,7 @@ const app = {
     },
 
     loadProfile: async () => {
+        if(!state.user) return;
         const doc = await db.collection('users').doc(state.user.uid).get();
         if(doc.exists) {
             const d = doc.data();
@@ -274,20 +303,31 @@ const app = {
             document.getElementById('profWhatsapp').value = d.whatsapp || '';
             document.getElementById('profAddress').value = d.address || '';
             if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
+        } else {
+            // New user, ensure fields are empty (Double check)
+            document.getElementById('profPhone').value = '';
+            document.getElementById('profWhatsapp').value = '';
+            document.getElementById('profAddress').value = '';
+            document.getElementById('dashAvatar').innerHTML = '<i class="fa-solid fa-user"></i>';
         }
     },
 
     loadMyVehicles: async () => {
+        if(!state.user) return;
         const list = document.getElementById('myVehiclesList');
         list.innerHTML = '<p>Loading...</p>';
         const snap = await db.collection('vehicles').where('uid', '==', state.user.uid).get();
         list.innerHTML = '';
+        if(snap.empty) {
+            list.innerHTML = '<p>No vehicles found. Add one!</p>';
+            return;
+        }
         snap.forEach(doc => {
             const v = doc.data();
             const el = document.createElement('div');
             el.className = 'v-card';
             el.innerHTML = `
-                <img src="${v.images[0] || 'https://via.placeholder.com/300'}" loading="lazy">
+                <img src="${v.images && v.images.length ? v.images[0] : 'https://via.placeholder.com/300'}" loading="lazy">
                 <div class="v-info">
                     <h4>${v.brand} ${v.model}</h4>
                     <p class="v-price">Rs. ${v.price}</p>
@@ -309,11 +349,12 @@ const app = {
     },
 
     loadWebsiteSettings: async () => {
-        const doc = await db.collection('sites').doc(state.user.uid).get();
+        if(!state.user) return;
         const url = `${window.location.origin}${window.location.pathname}?seller=${state.user.uid}`;
         document.getElementById('mySiteLink').innerText = url;
         document.getElementById('mySiteLink').href = url;
         
+        const doc = await db.collection('sites').doc(state.user.uid).get();
         if(doc.exists) {
             const d = doc.data();
             document.getElementById('webName').value = d.saleName || '';
@@ -323,6 +364,14 @@ const app = {
             document.getElementById('webAbout').value = d.about || '';
             document.getElementById('webWhy').value = d.why || '';
             document.getElementById('webFb').value = d.fb || '';
+        } else {
+            // New user clear
+            document.getElementById('webName').value = '';
+            document.getElementById('webHeroTitle').value = '';
+            document.getElementById('webHeroSub').value = '';
+            document.getElementById('webAbout').value = '';
+            document.getElementById('webWhy').value = '';
+            document.getElementById('webFb').value = '';
         }
     },
 
@@ -361,7 +410,6 @@ const siteRenderer = {
             const s = siteDoc.data();
             const u = userDoc.data();
 
-            // Render Header
             const header = document.getElementById('genHeader');
             const menu = `
                 <div style="display:flex; gap:20px;">
@@ -377,11 +425,9 @@ const siteRenderer = {
                 header.innerHTML = `<div class="navbar" style="flex-direction:column"><h2>${s.saleName}</h2>${menu}</div>`;
             }
 
-            // Hero
             const hero = document.getElementById('genHero');
             hero.innerHTML = `<h1>${s.heroTitle || 'Welcome'}</h1><p>${s.heroSub || 'Best Deals in Town'}</p>`;
 
-            // Vehicles
             const grid = document.getElementById('genVehicleGrid');
             const cats = new Set();
             vSnap.forEach(doc => {
@@ -400,7 +446,6 @@ const siteRenderer = {
                 grid.appendChild(card);
             });
 
-            // Filters
             const filters = document.getElementById('genCatFilter');
             filters.innerHTML = `<div class="chip active" onclick="siteRenderer.filter('all')">All</div>`;
             cats.forEach(c => {
@@ -411,21 +456,22 @@ const siteRenderer = {
                 filters.appendChild(chip);
             });
 
-            // Content
             document.getElementById('genAboutContent').innerText = s.about || 'We are a trusted seller.';
             const whyDiv = document.getElementById('genWhyGrid');
             const reasons = (s.why || "Trusted\nBest Prices\nQuality").split('\n');
+            whyDiv.innerHTML = ''; // Clear prev
             reasons.forEach(r => {
-                const d = document.createElement('div');
-                d.className = 'feat-card';
-                d.innerHTML = `<h3>${r}</h3>`;
-                whyDiv.appendChild(d);
+                if(r.trim()){
+                    const d = document.createElement('div');
+                    d.className = 'feat-card';
+                    d.innerHTML = `<h3>${r}</h3>`;
+                    whyDiv.appendChild(d);
+                }
             });
 
-            // Contact
             document.getElementById('genContactInfo').innerHTML = `
-                <p><i class="fa-solid fa-phone"></i> ${u.phone}</p>
-                <p><i class="fa-solid fa-location-dot"></i> ${u.address}</p>
+                <p><i class="fa-solid fa-phone"></i> ${u.phone || ''}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${u.address || ''}</p>
             `;
             if(u.whatsapp) {
                 const wa = document.getElementById('floatWhatsapp');
@@ -433,18 +479,15 @@ const siteRenderer = {
                 wa.classList.remove('hidden');
             }
 
-            // Facebook & Ads Scroll Logic
             window.onscroll = () => {
                 const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
                 
-                // Facebook Modal (>50%)
                 if(s.fb && scrollP > 50 && !sessionStorage.getItem('fbShown')) {
                     document.getElementById('fbModal').classList.remove('hidden');
                     document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Open Page</a>`;
                     sessionStorage.setItem('fbShown', 'true');
                 }
 
-                // Ad Modal (>30%)
                 if(scrollP > 30 && !sessionStorage.getItem('adShown')) {
                     document.getElementById('adModal').classList.remove('hidden');
                     document.getElementById('adContentArea').innerHTML = `<h3 class="text-center">Sponsored Ad Space</h3><div style="background:#eee; height:150px; margin-top:10px;"></div>`;
@@ -491,5 +534,4 @@ const siteRenderer = {
     }
 };
 
-// Initialize App
 document.addEventListener('DOMContentLoaded', app.init);
