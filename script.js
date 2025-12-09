@@ -1,6 +1,3 @@
-// ==========================================
-// 1. CONFIG & INIT
-// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBUjzMFao9BS3uXBOW3qYrLVqHaGn8qIk4", 
   authDomain: "onlineshop-30cd1.firebaseapp.com",
@@ -26,10 +23,11 @@ const state = {
     ]
 };
 
-// UI Helpers
-const ui = {
+// GLOBAL UI HELPERS
+window.ui = {
     showLoader: (show, text = "Processing...") => {
         const el = document.getElementById('loader');
+        if(!el) return;
         document.getElementById('loaderText').innerText = text;
         show ? el.classList.remove('hidden') : el.classList.add('hidden');
     },
@@ -42,12 +40,15 @@ const ui = {
     },
     showView: (id) => {
         document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
+        const target = document.getElementById(id);
+        if(target) target.classList.remove('hidden');
     },
     switchTab: (id) => {
         document.querySelectorAll('.dash-tab').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+        
+        const tab = document.getElementById(id);
+        if(tab) tab.classList.add('active');
         
         const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick').includes(id));
         if(btn) btn.classList.add('active');
@@ -61,24 +62,31 @@ const ui = {
     },
     closeModal: () => document.getElementById('modalOverlay').classList.add('hidden'),
     
+    // SAFE RESET
     resetDashboard: () => {
-        document.getElementById('profPhone').value = '';
-        document.getElementById('profWhatsapp').value = '';
-        document.getElementById('profAddress').value = '';
-        document.getElementById('dashAvatar').innerHTML = '<i class="fa-solid fa-user"></i>';
-        document.getElementById('dashEmail').innerText = 'User';
-        document.getElementById('formAddVehicle').reset();
-        document.getElementById('vPreview').innerHTML = '';
+        const safeVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+        const safeText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
         
-        // Website Reset
-        document.getElementById('websiteEditor').classList.add('hidden');
-        document.getElementById('websiteLockScreen').classList.remove('hidden');
-        document.getElementById('initSaleName').value = '';
+        safeVal('profPhone', '');
+        safeVal('profWhatsapp', '');
+        safeVal('profAddress', '');
+        const av = document.getElementById('dashAvatar');
+        if(av) av.innerHTML = '<i class="fa-solid fa-user"></i>';
+        safeText('dashEmail', 'User');
         
-        document.getElementById('myVehiclesList').innerHTML = '';
+        const form = document.getElementById('formAddVehicle');
+        if(form) form.reset();
+        
+        document.getElementById('websiteEditor')?.classList.add('hidden');
+        document.getElementById('websiteLockScreen')?.classList.remove('hidden');
+        safeVal('initSaleName', '');
+        
+        const list = document.getElementById('myVehiclesList');
+        if(list) list.innerHTML = '';
+        
         state.user = null;
         state.isAdmin = false;
-        document.getElementById('navAdmin').classList.add('hidden');
+        document.getElementById('navAdmin')?.classList.add('hidden');
     }
 };
 
@@ -97,38 +105,37 @@ const compressImage = async (file) => {
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             let quality = 0.8;
             let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-            while (blob.size > 100 * 1024 && quality > 0.2) {
-                quality -= 0.1;
-                blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-            }
             resolve(blob);
         };
         img.onerror = reject;
     });
 };
 
-// ==========================================
-// 2. MAIN APP LOGIC
-// ==========================================
 const app = {
     init: () => {
         const sel = document.getElementById('vCat');
-        state.categories.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c; opt.innerText = c;
-            sel.appendChild(opt);
-        });
+        if(sel && sel.options.length === 0) {
+            state.categories.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                sel.appendChild(opt);
+            });
+        }
 
         auth.onAuthStateChanged(user => {
+            // HIDE INIT LOADER
+            document.getElementById('initLoader').classList.add('hidden');
+            
             if (user) {
                 state.user = user;
-                document.getElementById('dashEmail').innerText = user.email;
+                const emailEl = document.getElementById('dashEmail');
+                if(emailEl) emailEl.innerText = user.email;
                 ui.showView('viewDashboard');
                 document.getElementById('btnLoginNav').classList.add('hidden');
                 document.getElementById('btnLogoutNav').classList.remove('hidden');
                 if(user.email === 'admin@vehiclebuilder.com') {
                     state.isAdmin = true;
-                    document.getElementById('navAdmin').classList.remove('hidden');
+                    document.getElementById('navAdmin')?.classList.remove('hidden');
                 }
                 app.loadProfile();
             } else {
@@ -144,6 +151,7 @@ const app = {
         const params = new URLSearchParams(window.location.search);
         const sellerId = params.get('seller');
         if(sellerId) {
+            document.getElementById('initLoader').classList.add('hidden');
             document.getElementById('platformApp').classList.add('hidden');
             document.getElementById('generatedSite').classList.remove('hidden');
             siteRenderer.load(sellerId);
@@ -258,18 +266,14 @@ const app = {
             ui.showLoader(false);
         };
 
-        // WEBSITE UNLOCK & SAVE (IMPROVED)
         document.getElementById('btnUnlockWebsite').onclick = () => {
             const name = document.getElementById('initSaleName').value.trim();
             if(!name) return ui.toast("Enter a name!", "error");
-            
-            // Auto-Fill Content
             document.getElementById('webName').value = name;
             document.getElementById('webHeroTitle').value = `Welcome to ${name}`;
-            document.getElementById('webHeroSub').value = "Your Trusted Partner for Quality Vehicles";
-            document.getElementById('webAbout').value = `${name} is a premier vehicle dealership dedicated to providing high-quality vehicles at the best market rates. We believe in transparency, trust, and customer satisfaction.`;
-            document.getElementById('webWhy').value = "Verified Documents\nBest Market Price\nExcellent Customer Support\nWide Range of Selection";
-            
+            document.getElementById('webHeroSub').value = "Quality Vehicles, Trusted Service";
+            document.getElementById('webAbout').value = `${name} offers the best selection of vehicles.`;
+            document.getElementById('webWhy').value = "Best Prices\nVerified Documents\nFriendly Service";
             document.getElementById('websiteLockScreen').classList.add('hidden');
             document.getElementById('websiteEditor').classList.remove('hidden');
         };
@@ -286,16 +290,6 @@ const app = {
                     why: document.getElementById('webWhy').value,
                     fb: document.getElementById('webFb').value
                 };
-                
-                // Handle Logo upload
-                const logoFile = document.getElementById('webLogo').files[0];
-                if(logoFile) {
-                    const blob = await compressImage(logoFile);
-                    const ref = storage.ref(`sites/${state.user.uid}/logo`);
-                    await ref.put(blob);
-                    data.logo = await ref.getDownloadURL();
-                }
-                
                 await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
                 ui.toast("Website Published!");
             } catch(e) { ui.toast(e.message, 'error'); }
@@ -322,7 +316,7 @@ const app = {
         const snap = await db.collection('vehicles').where('uid', '==', state.user.uid).get();
         list.innerHTML = '';
         if(snap.empty) {
-            list.innerHTML = '<p>No vehicles found. Add one!</p>';
+            list.innerHTML = '<p>No vehicles found.</p>';
             return;
         }
         snap.forEach(doc => {
@@ -330,13 +324,11 @@ const app = {
             const el = document.createElement('div');
             el.className = 'v-card';
             el.innerHTML = `
-                <img src="${v.images && v.images.length ? v.images[0] : 'https://via.placeholder.com/300'}" loading="lazy">
+                <img src="${v.images[0]}" loading="lazy">
                 <div class="v-info">
                     <h4>${v.brand} ${v.model}</h4>
                     <p class="v-price">Rs. ${v.price}</p>
-                    <div style="display:flex; justify-content:space-between">
-                        <button class="btn btn-primary btn-xs" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
-                    </div>
+                    <button class="btn btn-primary btn-xs" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
                 </div>
             `;
             list.appendChild(el);
@@ -362,7 +354,6 @@ const app = {
             const d = doc.data();
             document.getElementById('websiteLockScreen').classList.add('hidden');
             document.getElementById('websiteEditor').classList.remove('hidden');
-            
             document.getElementById('webName').value = d.saleName || '';
             document.getElementById('webNavStyle').value = d.navStyle || '1';
             document.getElementById('webHeroTitle').value = d.heroTitle || '';
@@ -371,7 +362,6 @@ const app = {
             document.getElementById('webWhy').value = d.why || '';
             document.getElementById('webFb').value = d.fb || '';
         } else {
-            // Locked
             document.getElementById('websiteLockScreen').classList.remove('hidden');
             document.getElementById('websiteEditor').classList.add('hidden');
         }
@@ -387,22 +377,16 @@ const app = {
             if(s.saleName) {
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `
-                    <h3>${s.saleName}</h3>
-                    <button class="btn btn-outline mt-4 full-width" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>
-                `;
+                div.innerHTML = `<h3>${s.saleName}</h3><button class="btn btn-outline mt-4 full-width" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>`;
                 grid.appendChild(div);
             }
         });
     }
 };
 
-// ==========================================
-// 3. GENERATED SUPER SITE LOGIC
-// ==========================================
 const siteRenderer = {
     load: async (uid) => {
-        ui.showLoader(true, "Building Experience...");
+        ui.showLoader(true, "Building Site...");
         try {
             const [siteDoc, userDoc, vSnap] = await Promise.all([
                 db.collection('sites').doc(uid).get(),
@@ -414,30 +398,24 @@ const siteRenderer = {
             const s = siteDoc.data();
             const u = userDoc.data();
 
-            // 1. Navigation Logic
             const header = document.getElementById('genHeader');
             const logoHtml = s.logo 
                 ? `<img src="${s.logo}" class="gen-logo-img">` 
                 : `<div class="gen-logo-icon"><i class="fa-solid fa-car"></i></div>`;
             
-            const brandHtml = `<a href="#" class="gen-brand">${logoHtml} <span>${s.saleName}</span></a>`;
-            const menuHtml = `
+            header.className = s.navStyle === '2' ? 'gen-navbar left' : 'gen-navbar centered';
+            header.innerHTML = `
+                <a href="#" class="gen-brand">${logoHtml} <span>${s.saleName}</span></a>
                 <nav class="gen-menu">
                     <a href="#genVehicles">Inventory</a>
                     <a href="#genAbout">About</a>
-                    <a href="#genWhy">Why Us</a>
                     <a href="#genContact">Contact</a>
                 </nav>
             `;
-            
-            header.className = s.navStyle === '2' ? 'gen-navbar left' : 'gen-navbar centered';
-            header.innerHTML = s.navStyle === '2' ? `${brandHtml}${menuHtml}` : `${brandHtml}${menuHtml}`;
 
-            // 2. Hero
             document.getElementById('genHeroTitle').innerText = s.heroTitle || `Welcome to ${s.saleName}`;
-            document.getElementById('genHeroSub').innerText = s.heroSub || 'Premium Vehicles';
+            document.getElementById('genHeroSub').innerText = s.heroSub || '';
 
-            // 3. Smart Vehicles & Categories
             const grid = document.getElementById('genVehicleGrid');
             const cats = new Set();
             vSnap.forEach(doc => {
@@ -452,13 +430,11 @@ const siteRenderer = {
                     <div class="v-info">
                         <h4>${v.brand} ${v.model}</h4>
                         <p class="v-price">Rs. ${v.price}</p>
-                        <p class="text-sm text-secondary">${v.mileage} km | ${v.fuel}</p>
                     </div>
                 `;
                 grid.appendChild(card);
             });
 
-            // Filter Chips (Only show existing categories)
             const filters = document.getElementById('genCatFilter');
             filters.innerHTML = `<div class="chip active" onclick="siteRenderer.filter('all')">All</div>`;
             cats.forEach(c => {
@@ -469,50 +445,30 @@ const siteRenderer = {
                 filters.appendChild(chip);
             });
 
-            // 4. Content
-            document.getElementById('genAboutContent').innerHTML = `<p>${s.about}</p>`;
-            
+            document.getElementById('genAboutContent').innerText = s.about || '';
             const whyGrid = document.getElementById('genWhyGrid');
             const reasons = (s.why || "").split('\n');
             whyGrid.innerHTML = '';
             reasons.forEach(r => {
                 if(r.trim()) {
-                    const icon = siteRenderer.getIconForReason(r);
                     const div = document.createElement('div');
                     div.className = 'feat-card';
-                    div.innerHTML = `<i class="${icon}"></i><h3>${r}</h3>`;
+                    div.innerHTML = `<i class="fa-solid fa-check-circle"></i><h3>${r}</h3>`;
                     whyGrid.appendChild(div);
                 }
             });
 
-            // 5. Contact
             document.getElementById('genContactInfo').innerHTML = `
-                <h3>Visit Us</h3>
-                <p><i class="fa-solid fa-phone"></i> ${u.phone || 'N/A'}</p>
-                <p><i class="fa-brands fa-whatsapp"></i> ${u.whatsapp || 'N/A'}</p>
-                <p><i class="fa-solid fa-location-dot"></i> ${u.address || 'N/A'}</p>
-                <p style="margin-top:20px; font-size:0.9rem;">&copy; ${new Date().getFullYear()} ${s.saleName}. Powered by VehicleBuilder.</p>
+                <p><i class="fa-solid fa-phone"></i> ${u.phone || ''}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${u.address || ''}</p>
             `;
-            if(u.whatsapp) {
-                const wa = document.getElementById('floatWhatsapp');
-                wa.href = `https://wa.me/${u.whatsapp}`;
-                wa.classList.remove('hidden');
-            }
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('visible'); });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.scroll-anim').forEach(el => observer.observe(el));
 
-            // 6. Scroll Animations & Modals
-            siteRenderer.initAnimations();
-            window.addEventListener('scroll', () => {
-                 const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-                 if(s.fb && scrollP > 50 && !sessionStorage.getItem('fbShown')) {
-                     document.getElementById('fbModal').classList.remove('hidden');
-                     document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Visit Page</a>`;
-                     sessionStorage.setItem('fbShown', 'true');
-                 }
-            });
-
-        } catch(e) {
-            document.body.innerHTML = `<h2 class="text-center mt-4">Website Loading... (Or Setup Incomplete)</h2>`;
-        }
+        } catch(e) { console.error(e); }
         ui.showLoader(false);
     },
 
@@ -534,33 +490,11 @@ const siteRenderer = {
         const modal = document.getElementById('modalOverlay');
         modal.classList.remove('hidden');
         document.getElementById('modalBody').innerHTML = `
-            <h2>${v.brand} ${v.model} (${v.year})</h2>
+            <h2>${v.brand} ${v.model}</h2>
             <img src="${v.images[0]}" style="width:100%; border-radius:8px; margin:10px 0;">
-            <div class="grid-2">
-                <p><strong>Price:</strong> Rs. ${v.price}</p>
-                <p><strong>Mileage:</strong> ${v.mileage} km</p>
-                <p><strong>Fuel:</strong> ${v.fuel}</p>
-                <p><strong>Trans:</strong> ${v.trans}</p>
-            </div>
-            <p class="mt-2">${v.desc}</p>
+            <p><strong>Price:</strong> Rs. ${v.price}</p>
+            <p>${v.desc}</p>
         `;
-    },
-
-    getIconForReason: (text) => {
-        const t = text.toLowerCase();
-        if(t.includes('price')) return 'fa-solid fa-tag';
-        if(t.includes('trusted') || t.includes('verified')) return 'fa-solid fa-shield-halved';
-        if(t.includes('customer') || t.includes('support')) return 'fa-solid fa-headset';
-        return 'fa-solid fa-check-circle';
-    },
-
-    initAnimations: () => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if(entry.isIntersecting) entry.target.classList.add('visible');
-            });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.scroll-anim').forEach(el => observer.observe(el));
     }
 };
 
