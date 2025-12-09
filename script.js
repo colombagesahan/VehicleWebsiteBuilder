@@ -15,15 +15,15 @@ const storage = firebase.storage();
 const state = {
     user: null,
     isAdmin: false,
+    vehicleList: [], // Store for search
     categories: [
         "Car", "SUV / Crossover", "Van", "Pickup", "Lorry / Truck", "Bus / Coach",
         "Motorcycle", "Scooter / Moped", "Three-wheeler", "Tractor / Agricultural",
-        "Construction / Heavy equipment", "Trailer", "Recreational Vehicle (RV) / Camper", 
+        "Construction / Heavy equipment", "Trailer", "RV / Camper", 
         "ATV / UTV", "Special-purpose vehicles", "Marine"
     ]
 };
 
-// UI HELPERS
 window.ui = {
     showLoader: (show, text = "Processing...") => {
         const el = document.getElementById('loader');
@@ -38,11 +38,10 @@ window.ui = {
         document.getElementById('toastContainer').appendChild(div);
         setTimeout(() => div.remove(), 3000);
     },
-    // CRITICAL FIX: Hide all other views
     showView: (id) => {
         document.querySelectorAll('.view').forEach(el => {
             el.classList.remove('active');
-            el.classList.add('hidden'); // Ensure CSS hides it
+            el.classList.add('hidden');
         });
         const target = document.getElementById(id);
         if(target) {
@@ -50,11 +49,10 @@ window.ui = {
             target.classList.add('active');
         }
     },
-    // CRITICAL FIX: Hide all other tabs
     switchTab: (id) => {
         document.querySelectorAll('.dash-tab').forEach(el => {
             el.classList.remove('active');
-            el.classList.add('hidden'); // Ensure CSS hides it
+            el.classList.add('hidden');
         });
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
@@ -64,11 +62,9 @@ window.ui = {
             tab.classList.add('active');
         }
         
-        // Highlight active button
         const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick').includes(id));
         if(btn) btn.classList.add('active');
 
-        // Load specific data
         if(state.user) {
             if(id === 'tabMyVehicles') app.loadMyVehicles();
             if(id === 'tabConnect') app.loadConnect();
@@ -76,8 +72,10 @@ window.ui = {
             if(id === 'tabWebsite') app.loadWebsiteSettings();
         }
     },
-    closeModal: () => document.getElementById('modalOverlay').classList.add('hidden'),
-    
+    closeModal: () => {
+        document.getElementById('modalOverlay').classList.add('hidden');
+        document.getElementById('editVehicleModal').classList.add('hidden');
+    },
     resetDashboard: () => {
         const safeVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
         safeVal('profPhone', '');
@@ -97,34 +95,25 @@ window.ui = {
         
         document.getElementById('myVehiclesList').innerHTML = '';
         state.user = null;
-        state.isAdmin = false;
-        document.getElementById('navAdmin')?.classList.add('hidden');
+        state.vehicleList = [];
     }
 };
 
-// IMAGE COMPRESSION (YOUR EXACT LOGIC INTEGRATED)
 const compressImage = async (file) => {
-    if (file.size <= 1024 * 1024) return file; // < 1MB, no change
+    if (file.size <= 1024 * 1024) return file;
     return new Promise((resolve, reject) => {
         const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.src = url;
+        img.src = URL.createObjectURL(file);
         img.onload = async () => {
             const canvas = document.createElement('canvas');
-            const maxWidth = 1200; // adjust
+            const maxWidth = 1200;
             const scale = Math.min(1, maxWidth / img.width);
             canvas.width = Math.round(img.width * scale);
             canvas.height = Math.round(img.height * scale);
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            // try lowering quality
             let quality = 0.8;
             let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-            while (blob.size > 100 * 1024 && quality > 0.2) {
-                quality -= 0.1;
-                blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-            }
             resolve(blob);
         };
         img.onerror = reject;
@@ -133,7 +122,6 @@ const compressImage = async (file) => {
 
 const app = {
     init: () => {
-        // Init Categories
         const sel = document.getElementById('vCat');
         if(sel && sel.options.length === 0) {
             state.categories.forEach(c => {
@@ -157,7 +145,7 @@ const app = {
                     document.getElementById('navAdmin')?.classList.remove('hidden');
                 }
                 app.loadProfile();
-                ui.switchTab('tabProfile'); // Force start on profile
+                ui.switchTab('tabProfile');
             } else {
                 ui.resetDashboard();
                 ui.showView('viewLanding');
@@ -168,13 +156,12 @@ const app = {
 
         app.setupEventListeners();
 
-        // Check for generated site mode
         const params = new URLSearchParams(window.location.search);
         const sellerId = params.get('seller');
         if(sellerId) {
             document.getElementById('initLoader').classList.add('hidden');
-            document.getElementById('platformApp').classList.add('hidden'); // Hide dashboard completely
-            document.getElementById('generatedSite').classList.remove('hidden'); // Show site
+            document.getElementById('platformApp').classList.add('hidden');
+            document.getElementById('generatedSite').classList.remove('hidden');
             siteRenderer.load(sellerId);
         }
     },
@@ -184,34 +171,31 @@ const app = {
         document.getElementById('btnLogoutNav').onclick = () => auth.signOut();
         
         document.getElementById('btnLogin').onclick = async () => {
-            const e = document.getElementById('authEmail').value;
-            const p = document.getElementById('authPass').value;
             try {
                 ui.showLoader(true);
-                await auth.signInWithEmailAndPassword(e, p);
+                await auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value);
                 ui.showLoader(false);
-            } catch(err) {
-                ui.showLoader(false);
-                ui.toast(err.message, 'error');
-            }
+            } catch(err) { ui.showLoader(false); ui.toast(err.message, 'error'); }
         };
 
         document.getElementById('btnSignup').onclick = async () => {
-            const e = document.getElementById('authEmail').value;
-            const p = document.getElementById('authPass').value;
             try {
                 ui.showLoader(true);
-                const cred = await auth.createUserWithEmailAndPassword(e, p);
-                await db.collection('users').doc(cred.user.uid).set({ email: e, createdAt: new Date() });
+                const cred = await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value);
+                await db.collection('users').doc(cred.user.uid).set({ email: cred.user.email, createdAt: new Date() });
                 ui.showLoader(false);
                 ui.toast("Account Created!");
-            } catch(err) {
-                ui.showLoader(false);
-                ui.toast(err.message, 'error');
-            }
+            } catch(err) { ui.showLoader(false); ui.toast(err.message, 'error'); }
         };
 
+        // PROFILE VALIDATION
         document.getElementById('saveProfile').onclick = async () => {
+            const phone = document.getElementById('profPhone').value;
+            const wa = document.getElementById('profWhatsapp').value;
+            const addr = document.getElementById('profAddress').value;
+            
+            if(!phone || !wa || !addr) return ui.toast("All fields are REQUIRED.", "error");
+
             ui.showLoader(true, "Saving...");
             try {
                 let photoUrl = null;
@@ -223,11 +207,7 @@ const app = {
                     photoUrl = await ref.getDownloadURL();
                 }
                 
-                const data = {
-                    phone: document.getElementById('profPhone').value,
-                    whatsapp: document.getElementById('profWhatsapp').value,
-                    address: document.getElementById('profAddress').value
-                };
+                const data = { phone, whatsapp: wa, address: addr };
                 if(photoUrl) data.photo = photoUrl;
 
                 await db.collection('users').doc(state.user.uid).set(data, {merge: true});
@@ -237,6 +217,7 @@ const app = {
             ui.showLoader(false);
         };
 
+        // IMAGE PREVIEW
         document.getElementById('vPhotos').addEventListener('change', (e) => {
              const box = document.getElementById('vPreview');
              box.innerHTML = '';
@@ -247,18 +228,31 @@ const app = {
              });
         });
 
+        // SEARCH BAR LOGIC
+        document.getElementById('searchV').addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = state.vehicleList.filter(v => 
+                v.brand.toLowerCase().includes(term) || 
+                v.model.toLowerCase().includes(term)
+            );
+            app.renderVehicleList(filtered);
+        });
+
+        // ADD VEHICLE (FIXED UPLOAD)
         document.getElementById('formAddVehicle').onsubmit = async (e) => {
             e.preventDefault();
             ui.showLoader(true, "Publishing...");
             try {
                 const files = document.getElementById('vPhotos').files;
-                const imgUrls = [];
+                const imgPromises = [];
                 for(let i=0; i < Math.min(files.length, 10); i++) {
-                    const blob = await compressImage(files[i]);
-                    const ref = storage.ref(`vehicles/${state.user.uid}/${Date.now()}_${i}`);
-                    await ref.put(blob);
-                    imgUrls.push(await ref.getDownloadURL());
+                    imgPromises.push(compressImage(files[i]).then(blob => {
+                        const ref = storage.ref(`vehicles/${state.user.uid}/${Date.now()}_${i}`);
+                        return ref.put(blob).then(() => ref.getDownloadURL());
+                    }));
                 }
+                
+                const imgUrls = await Promise.all(imgPromises);
 
                 await db.collection('vehicles').add({
                     uid: state.user.uid,
@@ -275,7 +269,7 @@ const app = {
                     desc: document.getElementById('vDesc').value,
                     youtube: document.getElementById('vYoutube').value,
                     images: imgUrls,
-                    published: true,
+                    published: true, // Default published
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
@@ -287,17 +281,35 @@ const app = {
             ui.showLoader(false);
         };
 
-        // WEBSITE BUILDER LOGIC
+        // EDIT VEHICLE FORM SUBMIT
+        document.getElementById('formEditVehicle').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editVId').value;
+            ui.showLoader(true, "Updating...");
+            try {
+                await db.collection('vehicles').doc(id).update({
+                    brand: document.getElementById('editVBrand').value,
+                    model: document.getElementById('editVModel').value,
+                    price: document.getElementById('editVPrice').value,
+                    mileage: document.getElementById('editVMileage').value,
+                    desc: document.getElementById('editVDesc').value
+                });
+                ui.toast("Vehicle Updated!");
+                document.getElementById('editVehicleModal').classList.add('hidden');
+                app.loadMyVehicles();
+            } catch(e) { ui.toast(e.message, 'error'); }
+            ui.showLoader(false);
+        };
+
+        // WEBSITE UNLOCK
         document.getElementById('btnUnlockWebsite').onclick = () => {
             const name = document.getElementById('initSaleName').value.trim();
             if(!name) return ui.toast("Enter a name!", "error");
-            
             document.getElementById('webName').value = name;
             document.getElementById('webHeroTitle').value = `Welcome to ${name}`;
-            document.getElementById('webHeroSub').value = "Premium Vehicles, Best Prices";
-            document.getElementById('webAbout').value = `${name} is your trusted partner for high-quality vehicles. We ensure transparency and satisfaction in every deal.`;
-            document.getElementById('webWhy').value = "Best Market Rates\nVerified Documents\nExcellent Customer Support";
-            
+            document.getElementById('webHeroSub').value = "Best Cars in Town";
+            document.getElementById('webAbout').value = `${name} is your trusted partner.`;
+            document.getElementById('webWhy').value = "Best Price\nVerified";
             document.getElementById('websiteLockScreen').classList.add('hidden');
             document.getElementById('websiteEditor').classList.remove('hidden');
         };
@@ -338,29 +350,65 @@ const app = {
         const list = document.getElementById('myVehiclesList');
         list.innerHTML = '<p>Loading...</p>';
         const snap = await db.collection('vehicles').where('uid', '==', state.user.uid).get();
+        
+        state.vehicleList = [];
+        snap.forEach(doc => state.vehicleList.push({id: doc.id, ...doc.data()}));
+        
+        app.renderVehicleList(state.vehicleList);
+    },
+
+    renderVehicleList: (vehicles) => {
+        const list = document.getElementById('myVehiclesList');
         list.innerHTML = '';
-        if(snap.empty) {
-            list.innerHTML = '<p>No vehicles found. Add one!</p>';
-            return;
-        }
-        snap.forEach(doc => {
-            const v = doc.data();
+        if(vehicles.length === 0) { list.innerHTML = '<p>No vehicles found.</p>'; return; }
+
+        vehicles.forEach(v => {
             const el = document.createElement('div');
             el.className = 'v-card';
+            const badge = v.published 
+                ? '<span class="status-indicator status-published">Published</span>' 
+                : '<span class="status-indicator status-hidden">Hidden</span>';
+            
             el.innerHTML = `
-                <img src="${v.images[0]}" loading="lazy">
+                ${badge}
+                <img src="${v.images && v.images.length ? v.images[0] : ''}" loading="lazy">
                 <div class="v-info">
                     <h4>${v.brand} ${v.model}</h4>
                     <p class="v-price">Rs. ${v.price}</p>
-                    <button class="btn btn-primary btn-sm" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
+                    <div class="v-actions">
+                        <button class="btn btn-primary btn-sm" onclick="app.openEditModal('${v.id}')">Edit</button>
+                        <button class="btn ${v.published ? 'btn-outline' : 'btn-success'} btn-sm" onclick="app.togglePublish('${v.id}', ${v.published})">
+                            ${v.published ? 'Hide' : 'Publish'}
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="app.deleteVehicle('${v.id}')">Delete</button>
+                    </div>
                 </div>
             `;
             list.appendChild(el);
         });
     },
 
+    openEditModal: (id) => {
+        const v = state.vehicleList.find(i => i.id === id);
+        if(!v) return;
+        document.getElementById('editVId').value = id;
+        document.getElementById('editVBrand').value = v.brand;
+        document.getElementById('editVModel').value = v.model;
+        document.getElementById('editVPrice').value = v.price;
+        document.getElementById('editVMileage').value = v.mileage;
+        document.getElementById('editVDesc').value = v.desc;
+        document.getElementById('editVehicleModal').classList.remove('hidden');
+    },
+
+    togglePublish: async (id, currentStatus) => {
+        ui.showLoader(true);
+        await db.collection('vehicles').doc(id).update({ published: !currentStatus });
+        app.loadMyVehicles(); // Reload to update badges
+        ui.showLoader(false);
+    },
+
     deleteVehicle: async (id) => {
-        if(!confirm("Are you sure?")) return;
+        if(!confirm("Are you sure you want to delete this vehicle?")) return;
         ui.showLoader(true);
         await db.collection('vehicles').doc(id).delete();
         app.loadMyVehicles();
@@ -372,13 +420,11 @@ const app = {
         const url = `${window.location.origin}${window.location.pathname}?seller=${state.user.uid}`;
         document.getElementById('mySiteLink').innerText = url;
         document.getElementById('mySiteLink').href = url;
-        
         const doc = await db.collection('sites').doc(state.user.uid).get();
         if(doc.exists && doc.data().saleName) {
             const d = doc.data();
             document.getElementById('websiteLockScreen').classList.add('hidden');
             document.getElementById('websiteEditor').classList.remove('hidden');
-            
             document.getElementById('webName').value = d.saleName || '';
             document.getElementById('webNavStyle').value = d.navStyle || '1';
             document.getElementById('webHeroTitle').value = d.heroTitle || '';
@@ -419,11 +465,10 @@ const siteRenderer = {
                 db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get()
             ]);
 
-            if(!siteDoc.exists) throw new Error("This seller has not set up their website yet.");
+            if(!siteDoc.exists) throw new Error("This seller has not setup their website.");
             const s = siteDoc.data();
             const u = userDoc.data();
 
-            // 1. Navigation
             const header = document.getElementById('genHeader');
             const logoHtml = s.logo 
                 ? `<img src="${s.logo}" class="gen-logo-img">` 
@@ -439,11 +484,9 @@ const siteRenderer = {
                 </nav>
             `;
 
-            // 2. Hero
             document.getElementById('genHeroTitle').innerText = s.heroTitle || `Welcome to ${s.saleName}`;
             document.getElementById('genHeroSub').innerText = s.heroSub || '';
 
-            // 3. Vehicles
             const grid = document.getElementById('genVehicleGrid');
             const cats = new Set();
             vSnap.forEach(doc => {
@@ -463,7 +506,6 @@ const siteRenderer = {
                 grid.appendChild(card);
             });
 
-            // Filters
             const filters = document.getElementById('genCatFilter');
             filters.innerHTML = `<div class="chip active" onclick="siteRenderer.filter('all')">All</div>`;
             cats.forEach(c => {
@@ -474,7 +516,6 @@ const siteRenderer = {
                 filters.appendChild(chip);
             });
 
-            // 4. Content
             document.getElementById('genAboutContent').innerText = s.about || '';
             const whyGrid = document.getElementById('genWhyGrid');
             const reasons = (s.why || "").split('\n');
@@ -488,7 +529,6 @@ const siteRenderer = {
                 }
             });
 
-            // 5. Contact
             document.getElementById('genContactInfo').innerHTML = `
                 <p><i class="fa-solid fa-phone"></i> ${u.phone || ''}</p>
                 <p><i class="fa-brands fa-whatsapp"></i> ${u.whatsapp || ''}</p>
@@ -500,7 +540,6 @@ const siteRenderer = {
                 wa.classList.remove('hidden');
             }
 
-            // 6. Scroll Logic
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('visible'); });
             }, { threshold: 0.1 });
@@ -508,22 +547,20 @@ const siteRenderer = {
 
             window.addEventListener('scroll', () => {
                  const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-                 // Facebook Modal (100% scroll requirement)
                  if(s.fb && scrollP > 95 && !sessionStorage.getItem('fbShown')) {
                      document.getElementById('fbModal').classList.remove('hidden');
                      document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Visit Page</a>`;
                      sessionStorage.setItem('fbShown', 'true');
                  }
-                 // Admin Ads (30% scroll)
                  if(scrollP > 30 && !sessionStorage.getItem('adShown')) {
                      document.getElementById('adModal').classList.remove('hidden');
-                     document.getElementById('adContentArea').innerHTML = `<h3 class="text-center">Sponsored</h3><div style="background:#eee; height:150px; margin-top:10px; display:flex; align-items:center; justify-content:center;">Ad Space Available</div>`;
+                     document.getElementById('adContentArea').innerHTML = `<h3 class="text-center">Sponsored</h3><div style="background:#eee; height:150px; margin-top:10px; display:flex; align-items:center; justify-content:center;">Ad Space</div>`;
                      sessionStorage.setItem('adShown', 'true');
                  }
             });
 
         } catch(e) {
-            document.body.innerHTML = `<div style="text-align:center; padding:50px;"><h2>Website Not Found</h2><p>${e.message}</p></div>`;
+            document.body.innerHTML = `<div style="text-align:center; padding:50px;"><h2>${e.message}</h2></div>`;
         }
         ui.showLoader(false);
     },
@@ -548,9 +585,12 @@ const siteRenderer = {
         document.getElementById('modalBody').innerHTML = `
             <h2>${v.brand} ${v.model}</h2>
             <img src="${v.images[0]}" style="width:100%; border-radius:8px; margin:10px 0;">
-            <p><strong>Price:</strong> Rs. ${v.price}</p>
-            <p><strong>Condition:</strong> ${v.condition || 'N/A'}</p>
-            <p>${v.desc}</p>
+            <div class="grid-2">
+                <p><strong>Price:</strong> Rs. ${v.price}</p>
+                <p><strong>Mileage:</strong> ${v.mileage} km</p>
+                <p><strong>Condition:</strong> ${v.condition || 'Used'}</p>
+            </div>
+            <p class="mt-2">${v.desc}</p>
         `;
     }
 };
