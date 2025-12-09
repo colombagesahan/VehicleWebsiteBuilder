@@ -19,6 +19,7 @@ const state = {
     categories: ["Car", "SUV", "Van", "Pickup", "Lorry", "Bus", "Motorcycle", "Scooter", "Three-wheeler", "Tractor", "Construction", "Trailer", "RV", "ATV", "Special", "Marine"]
 };
 
+// UI HELPERS
 window.ui = {
     showLoader: (show, text="Processing...") => {
         const el = document.getElementById('loader');
@@ -45,9 +46,11 @@ window.ui = {
         const tab = document.getElementById(id);
         if(tab) { tab.classList.remove('hidden'); tab.classList.add('active'); }
         
+        // Highlight Sidebar Button
         const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick')?.includes(id));
         if(btn) btn.classList.add('active');
 
+        // Load Data based on Tab
         if(state.user) {
             if(id === 'tabMyVehicles') app.loadMyData('vehicles', 'myVehiclesList');
             if(id === 'tabMyParts') app.loadMyData('parts', 'myPartsList');
@@ -61,7 +64,8 @@ window.ui = {
     closeModal: () => {
         document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden'));
     },
-    // DYNAMIC SIDEBAR
+    
+    // DYNAMIC SIDEBAR RENDERER
     renderSidebar: (role) => {
         const nav = document.getElementById('dynamicSidebar');
         let html = `<button onclick="ui.switchTab('tabProfile')" class="nav-item active"><i class="fa-solid fa-id-card"></i> Profile</button>`;
@@ -84,7 +88,7 @@ window.ui = {
         
         html += `<button onclick="ui.switchTab('tabConnect')" class="nav-item"><i class="fa-solid fa-users"></i> Connect</button>`;
         nav.innerHTML = html;
-        document.getElementById('dashRole').innerText = role.toUpperCase();
+        document.getElementById('dashRole').innerText = role ? role.toUpperCase() : 'USER';
     }
 };
 
@@ -111,9 +115,10 @@ const app = {
             document.getElementById('initLoader').classList.add('hidden');
             if (user) {
                 state.user = user;
+                // Fetch Role
                 const doc = await db.collection('users').doc(user.uid).get();
                 if(doc.exists) {
-                    state.role = doc.data().role || 'seller';
+                    state.role = doc.data().role || 'seller'; // Default if undefined
                     ui.renderSidebar(state.role);
                     document.getElementById('dashEmail').innerText = user.email;
                     ui.showView('viewDashboard');
@@ -122,6 +127,11 @@ const app = {
                     
                     if(state.role === 'buyer') ui.switchTab('tabBuyerBrowse');
                     else ui.switchTab('tabProfile');
+                } else {
+                    // Fallback if user exists in Auth but not DB (rare)
+                    state.role = 'seller';
+                    ui.renderSidebar('seller');
+                    ui.showView('viewDashboard');
                 }
             } else {
                 ui.showView('viewLanding');
@@ -132,15 +142,15 @@ const app = {
 
         app.setupEvents();
         
-        // Check for role param in URL (from home.html)
+        // URL Param for Role (from home.html)
         const params = new URLSearchParams(window.location.search);
         const urlRole = params.get('role');
         if(urlRole) {
-            document.getElementById('landingTitle').innerText = `Welcome ${urlRole.toUpperCase().replace('_', ' ')}S`;
-            ui.showView('viewAuth'); // Go straight to signup
+            document.getElementById('landingTitle').innerText = `Join as ${urlRole.toUpperCase()}`;
+            ui.showView('viewAuth');
         }
         
-        // Check for Generated Site
+        // Generated Site Mode
         const sellerId = params.get('seller');
         if(sellerId) {
             document.getElementById('initLoader').classList.add('hidden');
@@ -164,19 +174,25 @@ const app = {
 
         document.getElementById('btnSignup').onclick = async () => {
             const params = new URLSearchParams(window.location.search);
-            const role = params.get('role') || 'seller'; // Default to seller if no param
+            const role = params.get('role') || 'seller'; // Default
             try {
                 ui.showLoader(true);
                 const cred = await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value);
+                // Save Role
                 await db.collection('users').doc(cred.user.uid).set({ email: cred.user.email, role: role, createdAt: new Date() });
                 ui.showLoader(false);
                 ui.toast("Account Created!");
-                window.location.href = window.location.pathname; // Refresh to load dashboard
+                window.location.href = window.location.pathname; // Refresh
             } catch(e) { ui.showLoader(false); ui.toast(e.message, 'error'); }
         };
 
         // PROFILE
         document.getElementById('saveProfile').onclick = async () => {
+            const phone = document.getElementById('profPhone').value;
+            const wa = document.getElementById('profWhatsapp').value;
+            const addr = document.getElementById('profAddress').value;
+            if(!phone || !wa || !addr) return ui.toast("All fields required", "error");
+
             ui.showLoader(true, "Saving...");
             let photoUrl = null;
             const file = document.getElementById('profPhoto').files[0];
@@ -186,19 +202,15 @@ const app = {
                 await ref.put(blob);
                 photoUrl = await ref.getDownloadURL();
             }
-            const data = {
-                phone: document.getElementById('profPhone').value,
-                whatsapp: document.getElementById('profWhatsapp').value,
-                address: document.getElementById('profAddress').value
-            };
+            const data = { phone, whatsapp: wa, address: addr };
             if(photoUrl) data.photo = photoUrl;
             await db.collection('users').doc(state.user.uid).set(data, {merge: true});
             ui.showLoader(false);
             ui.toast("Saved!");
         };
 
-        // GENERIC ADD FUNCTION (Used for Vehicles, Parts, Services)
-        const handleAdd = async (formId, collection, prefix) => {
+        // GENERIC ADD HANDLER (DRY)
+        const handleAdd = (formId, collection, prefix) => {
             document.getElementById(formId).onsubmit = async (e) => {
                 e.preventDefault();
                 ui.showLoader(true);
@@ -218,7 +230,7 @@ const app = {
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                // Collect inputs dynamically
+                // Collect all inputs with this prefix
                 document.querySelectorAll(`#${formId} input:not([type=file]), #${formId} select, #${formId} textarea`).forEach(input => {
                     data[input.id.replace(prefix, '').toLowerCase()] = input.value;
                 });
@@ -230,6 +242,7 @@ const app = {
             };
         };
 
+        // Init handlers
         handleAdd('formAddVehicle', 'vehicles', 'v');
         handleAdd('formAddPart', 'parts', 'p');
         handleAdd('formAddService', 'services', 's');
@@ -252,7 +265,7 @@ const app = {
                 about: document.getElementById('webAbout').value,
                 why: document.getElementById('webWhy').value,
                 fb: document.getElementById('webFb').value,
-                navStyle: '1'
+                navStyle: document.getElementById('webNavStyle').value
             };
             await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
             ui.showLoader(false);
@@ -279,14 +292,23 @@ const app = {
             const d = doc.data();
             const el = document.createElement('div');
             el.className = 'v-card';
-            const title = d.brand ? `${d.brand} ${d.model}` : (d.name || d.title);
+            // Determine Title (Vehicle vs Part vs Service)
+            let title = '';
+            if(d.brand) title = `${d.brand} ${d.model || ''}`;
+            else if(d.name) title = d.name;
+            
+            const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
+            const img = d.images && d.images.length ? d.images[0] : 'https://via.placeholder.com/300';
+
             el.innerHTML = `
-                <img src="${d.images[0]}" loading="lazy">
+                ${badge}
+                <img src="${img}" loading="lazy">
                 <div class="v-info">
                     <h4>${title}</h4>
-                    <p class="v-price">Rs. ${d.price}</p>
-                    <div class="v-actions" style="margin-top:10px;">
-                        <button class="btn btn-danger btn-sm full-width" onclick="app.deleteItem('${collection}', '${doc.id}')">Delete</button>
+                    <p class="v-price">Rs. ${d.price || 'N/A'}</p>
+                    <div class="v-actions" style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+                        <button class="btn btn-outline btn-sm" onclick="app.togglePublish('${collection}', '${doc.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button>
+                        <button class="btn btn-danger btn-sm" onclick="app.deleteItem('${collection}', '${doc.id}')">Delete</button>
                     </div>
                 </div>
             `;
@@ -294,11 +316,19 @@ const app = {
         });
     },
 
+    togglePublish: async (col, id, status) => {
+        ui.showLoader(true);
+        await db.collection(col).doc(id).update({published: !status});
+        if(col === 'vehicles') app.loadMyData('vehicles', 'myVehiclesList');
+        if(col === 'parts') app.loadMyData('parts', 'myPartsList');
+        if(col === 'services') app.loadMyData('services', 'myServicesList');
+        ui.showLoader(false);
+    },
+
     deleteItem: async (col, id) => {
-        if(!confirm("Delete?")) return;
+        if(!confirm("Delete this item?")) return;
         ui.showLoader(true);
         await db.collection(col).doc(id).delete();
-        // Refresh correct tab
         if(col === 'vehicles') app.loadMyData('vehicles', 'myVehiclesList');
         if(col === 'parts') app.loadMyData('parts', 'myPartsList');
         if(col === 'services') app.loadMyData('services', 'myServicesList');
@@ -332,27 +362,34 @@ const app = {
         });
     },
 
-    // BUYER LOGIC
+    // BUYER BROWSE
     buyerFilter: async (type) => {
         const grid = document.getElementById('buyerGrid');
         grid.innerHTML = 'Loading...';
+        // Handle chips UI
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        // logic to highlight active chip
+        // Find chip with correct onclick (simplification)
         
-        const snap = await db.collection(type).where('published', '==', true).limit(50).get();
+        let collection = type; // vehicles, parts, services
+        if(type === 'finance') collection = 'services'; // Finance users use services collection
+
+        const snap = await db.collection(collection).where('published', '==', true).limit(50).get();
         grid.innerHTML = '';
         snap.forEach(doc => {
             const d = doc.data();
-            const title = d.brand ? `${d.brand} ${d.model}` : (d.name || d.title);
-             grid.innerHTML += `
+            let title = d.brand ? `${d.brand} ${d.model}` : (d.name || 'Item');
+            const img = d.images && d.images.length ? d.images[0] : 'https://via.placeholder.com/300';
+            
+            grid.innerHTML += `
                 <div class="v-card" onclick="window.open('?seller=${d.uid}', '_blank')">
-                    <img src="${d.images[0]}" loading="lazy">
-                    <div class="v-info"><h4>${title}</h4><p class="v-price">Rs. ${d.price}</p></div>
+                    <img src="${img}" loading="lazy">
+                    <div class="v-info"><h4>${title}</h4><p class="v-price">Rs. ${d.price || ''}</p></div>
                 </div>`;
         });
     }
 };
 
+// GENERATED SITE RENDERER
 const siteRenderer = {
     load: async (uid) => {
         ui.showLoader(true, "Loading Site...");
@@ -364,17 +401,15 @@ const siteRenderer = {
             if(!site.exists) throw new Error("Site not found");
             const s = site.data(); const u = user.data();
             
-            // Basic Renderer
             document.getElementById('genHeroTitle').innerText = s.heroTitle || s.saleName;
-            document.getElementById('genAboutContent').innerText = s.about || '';
             document.getElementById('genContactInfo').innerHTML = `<p>${u.phone}</p><p>${u.address}</p>`;
             
-            // Load Items (Auto detect type based on user role)
-            let collection = 'vehicles';
-            if(u.role === 'parts') collection = 'parts';
-            if(u.role === 'service' || u.role === 'finance') collection = 'services';
+            // Determine Collection
+            let col = 'vehicles';
+            if(u.role === 'parts') col = 'parts';
+            if(u.role === 'service' || u.role === 'finance') col = 'services';
             
-            const items = await db.collection(collection).where('uid', '==', uid).get();
+            const items = await db.collection(col).where('uid', '==', uid).where('published', '==', true).get();
             const grid = document.getElementById('genGrid');
             items.forEach(doc => {
                 const d = doc.data();
