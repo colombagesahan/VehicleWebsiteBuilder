@@ -18,12 +18,12 @@ const state = {
     categories: [
         "Car", "SUV / Crossover", "Van", "Pickup", "Lorry / Truck", "Bus / Coach",
         "Motorcycle", "Scooter / Moped", "Three-wheeler", "Tractor / Agricultural",
-        "Construction / Heavy equipment", "Trailer", "RV / Camper", 
-        "ATV / UTV", "Special-purpose", "Marine"
+        "Construction / Heavy equipment", "Trailer", "Recreational Vehicle (RV) / Camper", 
+        "ATV / UTV", "Special-purpose vehicles", "Marine"
     ]
 };
 
-// GLOBAL UI HELPERS
+// UI HELPERS
 window.ui = {
     showLoader: (show, text = "Processing...") => {
         const el = document.getElementById('loader');
@@ -38,21 +38,37 @@ window.ui = {
         document.getElementById('toastContainer').appendChild(div);
         setTimeout(() => div.remove(), 3000);
     },
+    // CRITICAL FIX: Hide all other views
     showView: (id) => {
-        document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.view').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('hidden'); // Ensure CSS hides it
+        });
         const target = document.getElementById(id);
-        if(target) target.classList.remove('hidden');
+        if(target) {
+            target.classList.remove('hidden');
+            target.classList.add('active');
+        }
     },
+    // CRITICAL FIX: Hide all other tabs
     switchTab: (id) => {
-        document.querySelectorAll('.dash-tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.dash-tab').forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('hidden'); // Ensure CSS hides it
+        });
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
         const tab = document.getElementById(id);
-        if(tab) tab.classList.add('active');
+        if(tab) {
+            tab.classList.remove('hidden');
+            tab.classList.add('active');
+        }
         
+        // Highlight active button
         const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick').includes(id));
         if(btn) btn.classList.add('active');
 
+        // Load specific data
         if(state.user) {
             if(id === 'tabMyVehicles') app.loadMyVehicles();
             if(id === 'tabConnect') app.loadConnect();
@@ -62,49 +78,53 @@ window.ui = {
     },
     closeModal: () => document.getElementById('modalOverlay').classList.add('hidden'),
     
-    // SAFE RESET
     resetDashboard: () => {
         const safeVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-        const safeText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
-        
         safeVal('profPhone', '');
         safeVal('profWhatsapp', '');
         safeVal('profAddress', '');
         const av = document.getElementById('dashAvatar');
         if(av) av.innerHTML = '<i class="fa-solid fa-user"></i>';
-        safeText('dashEmail', 'User');
+        document.getElementById('dashEmail').innerText = 'User';
         
         const form = document.getElementById('formAddVehicle');
         if(form) form.reset();
+        document.getElementById('vPreview').innerHTML = '';
         
         document.getElementById('websiteEditor')?.classList.add('hidden');
         document.getElementById('websiteLockScreen')?.classList.remove('hidden');
         safeVal('initSaleName', '');
         
-        const list = document.getElementById('myVehiclesList');
-        if(list) list.innerHTML = '';
-        
+        document.getElementById('myVehiclesList').innerHTML = '';
         state.user = null;
         state.isAdmin = false;
         document.getElementById('navAdmin')?.classList.add('hidden');
     }
 };
 
+// IMAGE COMPRESSION (YOUR EXACT LOGIC INTEGRATED)
 const compressImage = async (file) => {
-    if (file.size <= 1024 * 1024) return file;
+    if (file.size <= 1024 * 1024) return file; // < 1MB, no change
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.src = URL.createObjectURL(file);
+        const url = URL.createObjectURL(file);
+        img.src = url;
         img.onload = async () => {
             const canvas = document.createElement('canvas');
-            const maxWidth = 1200;
+            const maxWidth = 1200; // adjust
             const scale = Math.min(1, maxWidth / img.width);
             canvas.width = Math.round(img.width * scale);
             canvas.height = Math.round(img.height * scale);
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // try lowering quality
             let quality = 0.8;
             let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+            while (blob.size > 100 * 1024 && quality > 0.2) {
+                quality -= 0.1;
+                blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+            }
             resolve(blob);
         };
         img.onerror = reject;
@@ -113,6 +133,7 @@ const compressImage = async (file) => {
 
 const app = {
     init: () => {
+        // Init Categories
         const sel = document.getElementById('vCat');
         if(sel && sel.options.length === 0) {
             state.categories.forEach(c => {
@@ -123,21 +144,20 @@ const app = {
         }
 
         auth.onAuthStateChanged(user => {
-            // HIDE INIT LOADER
             document.getElementById('initLoader').classList.add('hidden');
-            
             if (user) {
                 state.user = user;
-                const emailEl = document.getElementById('dashEmail');
-                if(emailEl) emailEl.innerText = user.email;
+                document.getElementById('dashEmail').innerText = user.email;
                 ui.showView('viewDashboard');
                 document.getElementById('btnLoginNav').classList.add('hidden');
                 document.getElementById('btnLogoutNav').classList.remove('hidden');
+                
                 if(user.email === 'admin@vehiclebuilder.com') {
                     state.isAdmin = true;
                     document.getElementById('navAdmin')?.classList.remove('hidden');
                 }
                 app.loadProfile();
+                ui.switchTab('tabProfile'); // Force start on profile
             } else {
                 ui.resetDashboard();
                 ui.showView('viewLanding');
@@ -148,12 +168,13 @@ const app = {
 
         app.setupEventListeners();
 
+        // Check for generated site mode
         const params = new URLSearchParams(window.location.search);
         const sellerId = params.get('seller');
         if(sellerId) {
             document.getElementById('initLoader').classList.add('hidden');
-            document.getElementById('platformApp').classList.add('hidden');
-            document.getElementById('generatedSite').classList.remove('hidden');
+            document.getElementById('platformApp').classList.add('hidden'); // Hide dashboard completely
+            document.getElementById('generatedSite').classList.remove('hidden'); // Show site
             siteRenderer.load(sellerId);
         }
     },
@@ -266,14 +287,17 @@ const app = {
             ui.showLoader(false);
         };
 
+        // WEBSITE BUILDER LOGIC
         document.getElementById('btnUnlockWebsite').onclick = () => {
             const name = document.getElementById('initSaleName').value.trim();
             if(!name) return ui.toast("Enter a name!", "error");
+            
             document.getElementById('webName').value = name;
             document.getElementById('webHeroTitle').value = `Welcome to ${name}`;
-            document.getElementById('webHeroSub').value = "Quality Vehicles, Trusted Service";
-            document.getElementById('webAbout').value = `${name} offers the best selection of vehicles.`;
-            document.getElementById('webWhy').value = "Best Prices\nVerified Documents\nFriendly Service";
+            document.getElementById('webHeroSub').value = "Premium Vehicles, Best Prices";
+            document.getElementById('webAbout').value = `${name} is your trusted partner for high-quality vehicles. We ensure transparency and satisfaction in every deal.`;
+            document.getElementById('webWhy').value = "Best Market Rates\nVerified Documents\nExcellent Customer Support";
+            
             document.getElementById('websiteLockScreen').classList.add('hidden');
             document.getElementById('websiteEditor').classList.remove('hidden');
         };
@@ -316,7 +340,7 @@ const app = {
         const snap = await db.collection('vehicles').where('uid', '==', state.user.uid).get();
         list.innerHTML = '';
         if(snap.empty) {
-            list.innerHTML = '<p>No vehicles found.</p>';
+            list.innerHTML = '<p>No vehicles found. Add one!</p>';
             return;
         }
         snap.forEach(doc => {
@@ -328,7 +352,7 @@ const app = {
                 <div class="v-info">
                     <h4>${v.brand} ${v.model}</h4>
                     <p class="v-price">Rs. ${v.price}</p>
-                    <button class="btn btn-primary btn-xs" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
+                    <button class="btn btn-primary btn-sm" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
                 </div>
             `;
             list.appendChild(el);
@@ -354,6 +378,7 @@ const app = {
             const d = doc.data();
             document.getElementById('websiteLockScreen').classList.add('hidden');
             document.getElementById('websiteEditor').classList.remove('hidden');
+            
             document.getElementById('webName').value = d.saleName || '';
             document.getElementById('webNavStyle').value = d.navStyle || '1';
             document.getElementById('webHeroTitle').value = d.heroTitle || '';
@@ -377,7 +402,7 @@ const app = {
             if(s.saleName) {
                 const div = document.createElement('div');
                 div.className = 'card';
-                div.innerHTML = `<h3>${s.saleName}</h3><button class="btn btn-outline mt-4 full-width" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>`;
+                div.innerHTML = `<h3>${s.saleName}</h3><button class="btn btn-outline mt-2 full-width" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>`;
                 grid.appendChild(div);
             }
         });
@@ -386,7 +411,7 @@ const app = {
 
 const siteRenderer = {
     load: async (uid) => {
-        ui.showLoader(true, "Building Site...");
+        ui.showLoader(true, "Building Website...");
         try {
             const [siteDoc, userDoc, vSnap] = await Promise.all([
                 db.collection('sites').doc(uid).get(),
@@ -394,10 +419,11 @@ const siteRenderer = {
                 db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get()
             ]);
 
-            if(!siteDoc.exists) throw new Error("Site not ready.");
+            if(!siteDoc.exists) throw new Error("This seller has not set up their website yet.");
             const s = siteDoc.data();
             const u = userDoc.data();
 
+            // 1. Navigation
             const header = document.getElementById('genHeader');
             const logoHtml = s.logo 
                 ? `<img src="${s.logo}" class="gen-logo-img">` 
@@ -413,9 +439,11 @@ const siteRenderer = {
                 </nav>
             `;
 
+            // 2. Hero
             document.getElementById('genHeroTitle').innerText = s.heroTitle || `Welcome to ${s.saleName}`;
             document.getElementById('genHeroSub').innerText = s.heroSub || '';
 
+            // 3. Vehicles
             const grid = document.getElementById('genVehicleGrid');
             const cats = new Set();
             vSnap.forEach(doc => {
@@ -435,6 +463,7 @@ const siteRenderer = {
                 grid.appendChild(card);
             });
 
+            // Filters
             const filters = document.getElementById('genCatFilter');
             filters.innerHTML = `<div class="chip active" onclick="siteRenderer.filter('all')">All</div>`;
             cats.forEach(c => {
@@ -445,6 +474,7 @@ const siteRenderer = {
                 filters.appendChild(chip);
             });
 
+            // 4. Content
             document.getElementById('genAboutContent').innerText = s.about || '';
             const whyGrid = document.getElementById('genWhyGrid');
             const reasons = (s.why || "").split('\n');
@@ -458,17 +488,43 @@ const siteRenderer = {
                 }
             });
 
+            // 5. Contact
             document.getElementById('genContactInfo').innerHTML = `
                 <p><i class="fa-solid fa-phone"></i> ${u.phone || ''}</p>
+                <p><i class="fa-brands fa-whatsapp"></i> ${u.whatsapp || ''}</p>
                 <p><i class="fa-solid fa-location-dot"></i> ${u.address || ''}</p>
             `;
-            
+            if(u.whatsapp) {
+                const wa = document.getElementById('floatWhatsapp');
+                wa.href = `https://wa.me/${u.whatsapp}`;
+                wa.classList.remove('hidden');
+            }
+
+            // 6. Scroll Logic
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('visible'); });
             }, { threshold: 0.1 });
             document.querySelectorAll('.scroll-anim').forEach(el => observer.observe(el));
 
-        } catch(e) { console.error(e); }
+            window.addEventListener('scroll', () => {
+                 const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+                 // Facebook Modal (100% scroll requirement)
+                 if(s.fb && scrollP > 95 && !sessionStorage.getItem('fbShown')) {
+                     document.getElementById('fbModal').classList.remove('hidden');
+                     document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Visit Page</a>`;
+                     sessionStorage.setItem('fbShown', 'true');
+                 }
+                 // Admin Ads (30% scroll)
+                 if(scrollP > 30 && !sessionStorage.getItem('adShown')) {
+                     document.getElementById('adModal').classList.remove('hidden');
+                     document.getElementById('adContentArea').innerHTML = `<h3 class="text-center">Sponsored</h3><div style="background:#eee; height:150px; margin-top:10px; display:flex; align-items:center; justify-content:center;">Ad Space Available</div>`;
+                     sessionStorage.setItem('adShown', 'true');
+                 }
+            });
+
+        } catch(e) {
+            document.body.innerHTML = `<div style="text-align:center; padding:50px;"><h2>Website Not Found</h2><p>${e.message}</p></div>`;
+        }
         ui.showLoader(false);
     },
 
@@ -493,6 +549,7 @@ const siteRenderer = {
             <h2>${v.brand} ${v.model}</h2>
             <img src="${v.images[0]}" style="width:100%; border-radius:8px; margin:10px 0;">
             <p><strong>Price:</strong> Rs. ${v.price}</p>
+            <p><strong>Condition:</strong> ${v.condition || 'N/A'}</p>
             <p>${v.desc}</p>
         `;
     }
