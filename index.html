@@ -10,7 +10,7 @@
 </head>
 <body>
 
-    <!-- SYSTEM LOADERS -->
+    <!-- LOADERS -->
     <div id="initLoader" class="init-loader"><div class="spinner"></div><p>Initializing Platform...</p></div>
     <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loaderText">Processing...</p></div>
     <div id="toastContainer" class="toast-container"></div>
@@ -23,7 +23,7 @@
     <div id="fbModal" class="modal-overlay hidden"><div class="modal-content fb-content text-center"><button class="close-modal" onclick="document.getElementById('fbModal').classList.add('hidden')">&times;</button><i class="fa-brands fa-facebook text-primary" style="font-size:3rem;"></i><h3>Like us on Facebook!</h3><div id="fbLinkArea" class="mt-4"></div></div></div>
 
     <!-- =======================================================
-         PLATFORM APP (Dashboard)
+         PLATFORM DASHBOARD
     ======================================================== -->
     <div id="platformApp">
         <nav class="navbar">
@@ -63,7 +63,6 @@
         <!-- 3. MAIN DASHBOARD -->
         <section id="viewDashboard" class="view hidden">
             <div class="dash-layout">
-                <!-- Dynamic Sidebar -->
                 <aside class="dash-sidebar">
                     <div class="user-info">
                         <div class="avatar-circle" id="dashAvatar"><i class="fa-solid fa-user"></i></div>
@@ -71,21 +70,24 @@
                         <span id="dashRole" class="badge">Role</span>
                     </div>
                     <nav class="side-nav" id="dynamicSidebar">
-                        <!-- JS WILL POPULATE THIS BASED ON ROLE -->
+                        <!-- JS WILL POPULATE THIS -->
                     </nav>
                 </aside>
 
                 <main class="dash-content">
                     
-                    <!-- A. COMMON: PROFILE -->
+                    <!-- A. COMMON: PROFILE (Updated with City) -->
                     <div id="tabProfile" class="dash-tab active">
                         <h2>Profile Settings</h2>
                         <div class="card">
-                            <div class="alert-box"><i class="fa-solid fa-info-circle"></i> These details appear on your website/profile.</div>
+                            <div class="alert-box"><i class="fa-solid fa-info-circle"></i> Complete your profile to verify your business location.</div>
                             <div class="form-group"><label>Profile Photo (Required)</label><input type="file" id="profPhoto" accept="image/*"></div>
                             <div class="form-group"><label>Phone Number (Required)</label><input type="tel" id="profPhone" required></div>
                             <div class="form-group"><label>WhatsApp (Required)</label><input type="tel" id="profWhatsapp" required></div>
-                            <div class="form-group"><label>Address (Required)</label><textarea id="profAddress" required></textarea></div>
+                            <div class="grid-2">
+                                <div class="form-group"><label>City / Town (Required for URL)</label><input type="text" id="profCity" placeholder="e.g. Athurugiriya" required></div>
+                                <div class="form-group"><label>Address</label><input type="text" id="profAddress" required></div>
+                            </div>
                             <button id="saveProfile" class="btn btn-primary">Save Profile</button>
                         </div>
                     </div>
@@ -161,16 +163,20 @@
                         <div id="myServicesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- E. COMMON: WEBSITE BUILDER -->
+                    <!-- E. COMMON: WEBSITE BUILDER (Updated with Slug) -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Website Builder</h2>
                         <div id="websiteLockScreen" class="lock-overlay">
-                            <h3>Setup Your Business Name</h3>
+                            <h3>Setup Your Business</h3>
+                            <p>Update your Profile "City" first to create your unique URL.</p>
                             <input type="text" id="initSaleName" placeholder="Business Name">
                             <button id="btnUnlockWebsite" class="btn btn-primary">Create Website</button>
                         </div>
                         <div id="websiteEditor" class="hidden">
-                            <p class="mb-2">Your URL: <a href="#" id="mySiteLink" target="_blank" class="font-bold">View Website</a></p>
+                            <div class="info-banner mb-2">
+                                <strong>Your Unique Page Link:</strong><br>
+                                <a href="#" id="mySiteLink" target="_blank" class="font-bold text-lg">...</a>
+                            </div>
                             <div class="card">
                                 <h3>Branding</h3>
                                 <input type="text" id="webName" placeholder="Business Name">
@@ -187,7 +193,7 @@
                                 <h3>Media</h3>
                                 <input type="file" id="webGallery" multiple>
                                 <input type="text" id="webFb" placeholder="Facebook Page Link">
-                                <button id="saveWebsite" class="btn btn-success mt-4">Publish Website</button>
+                                <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update Link</button>
                             </div>
                         </div>
                     </div>
@@ -204,11 +210,25 @@
                         <div id="buyerGrid" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- G. COMMON: CONNECT & ADMIN -->
+                    <!-- G. COMMON: CONNECT (UPDATED) -->
                     <div id="tabConnect" class="dash-tab">
-                        <h2>Directory</h2>
-                        <div id="sellersGrid" class="sellers-grid"></div>
+                        <h2>Business Directory</h2>
+                        <!-- Tabs -->
+                        <div class="tabs-header">
+                            <button class="chip active" onclick="app.connectFilter('all')">All</button>
+                            <button class="chip" onclick="app.connectFilter('seller')">Car Sales</button>
+                            <button class="chip" onclick="app.connectFilter('parts')">Spare Parts</button>
+                            <button class="chip" onclick="app.connectFilter('service')">Services</button>
+                            <button class="chip" onclick="app.connectFilter('finance')">Finance</button>
+                        </div>
+                        <!-- Filter Bar -->
+                        <div class="grid-2 mb-2">
+                            <input type="text" id="connectSearch" placeholder="Search Business Name...">
+                            <input type="text" id="connectCity" placeholder="Filter by City...">
+                        </div>
+                        <div id="sellersGrid" class="connect-grid"></div>
                     </div>
+
                     <div id="tabAdmin" class="dash-tab">
                         <h2>Admin</h2>
                         <input type="file" id="adminAdImg">
@@ -221,7 +241,7 @@
     </div>
 
     <!-- =======================================================
-         GENERATED WEBSITE (Dynamic based on Seller Type)
+         GENERATED WEBSITE (Hash Strategy)
     ======================================================== -->
     <div id="generatedSite" class="hidden">
         <header id="genHeader"></header>
