@@ -61,33 +61,21 @@ const ui = {
     },
     closeModal: () => document.getElementById('modalOverlay').classList.add('hidden'),
     
-    // *** CRITICAL FIX: RESET DASHBOARD ***
     resetDashboard: () => {
-        console.log("Resetting Dashboard...");
-        // Profile
         document.getElementById('profPhone').value = '';
         document.getElementById('profWhatsapp').value = '';
         document.getElementById('profAddress').value = '';
         document.getElementById('dashAvatar').innerHTML = '<i class="fa-solid fa-user"></i>';
         document.getElementById('dashEmail').innerText = 'User';
-        
-        // Add Vehicle
         document.getElementById('formAddVehicle').reset();
         document.getElementById('vPreview').innerHTML = '';
         
-        // Website
-        document.getElementById('webName').value = '';
-        document.getElementById('webHeroTitle').value = '';
-        document.getElementById('webHeroSub').value = '';
-        document.getElementById('webAbout').value = '';
-        document.getElementById('webWhy').value = '';
-        document.getElementById('webFb').value = '';
-        document.getElementById('mySiteLink').innerText = 'Generating...';
+        // Website Reset
+        document.getElementById('websiteEditor').classList.add('hidden');
+        document.getElementById('websiteLockScreen').classList.remove('hidden');
+        document.getElementById('initSaleName').value = '';
         
-        // Lists
         document.getElementById('myVehiclesList').innerHTML = '';
-        
-        // State
         state.user = null;
         state.isAdmin = false;
         document.getElementById('navAdmin').classList.add('hidden');
@@ -131,7 +119,6 @@ const app = {
             sel.appendChild(opt);
         });
 
-        // AUTH LISTENER
         auth.onAuthStateChanged(user => {
             if (user) {
                 state.user = user;
@@ -139,14 +126,12 @@ const app = {
                 ui.showView('viewDashboard');
                 document.getElementById('btnLoginNav').classList.add('hidden');
                 document.getElementById('btnLogoutNav').classList.remove('hidden');
-                
                 if(user.email === 'admin@vehiclebuilder.com') {
                     state.isAdmin = true;
                     document.getElementById('navAdmin').classList.remove('hidden');
                 }
-                app.loadProfile(); // Load NEW user data
+                app.loadProfile();
             } else {
-                // LOGOUT DETECTED -> RESET EVERYTHING
                 ui.resetDashboard();
                 ui.showView('viewLanding');
                 document.getElementById('btnLoginNav').classList.remove('hidden');
@@ -155,7 +140,7 @@ const app = {
         });
 
         app.setupEventListeners();
-        
+
         const params = new URLSearchParams(window.location.search);
         const sellerId = params.get('seller');
         if(sellerId) {
@@ -173,7 +158,7 @@ const app = {
             const e = document.getElementById('authEmail').value;
             const p = document.getElementById('authPass').value;
             try {
-                ui.showLoader(true, "Logging in...");
+                ui.showLoader(true);
                 await auth.signInWithEmailAndPassword(e, p);
                 ui.showLoader(false);
             } catch(err) {
@@ -186,11 +171,9 @@ const app = {
             const e = document.getElementById('authEmail').value;
             const p = document.getElementById('authPass').value;
             try {
-                ui.showLoader(true, "Creating Account...");
+                ui.showLoader(true);
                 const cred = await auth.createUserWithEmailAndPassword(e, p);
-                await db.collection('users').doc(cred.user.uid).set({
-                    email: e, createdAt: new Date()
-                });
+                await db.collection('users').doc(cred.user.uid).set({ email: e, createdAt: new Date() });
                 ui.showLoader(false);
                 ui.toast("Account Created!");
             } catch(err) {
@@ -200,7 +183,7 @@ const app = {
         };
 
         document.getElementById('saveProfile').onclick = async () => {
-            ui.showLoader(true, "Saving Profile...");
+            ui.showLoader(true, "Saving...");
             try {
                 let photoUrl = null;
                 const file = document.getElementById('profPhoto').files[0];
@@ -237,7 +220,7 @@ const app = {
 
         document.getElementById('formAddVehicle').onsubmit = async (e) => {
             e.preventDefault();
-            ui.showLoader(true, "Compressing & Uploading...");
+            ui.showLoader(true, "Publishing...");
             try {
                 const files = document.getElementById('vPhotos').files;
                 const imgUrls = [];
@@ -275,6 +258,22 @@ const app = {
             ui.showLoader(false);
         };
 
+        // WEBSITE UNLOCK & SAVE (IMPROVED)
+        document.getElementById('btnUnlockWebsite').onclick = () => {
+            const name = document.getElementById('initSaleName').value.trim();
+            if(!name) return ui.toast("Enter a name!", "error");
+            
+            // Auto-Fill Content
+            document.getElementById('webName').value = name;
+            document.getElementById('webHeroTitle').value = `Welcome to ${name}`;
+            document.getElementById('webHeroSub').value = "Your Trusted Partner for Quality Vehicles";
+            document.getElementById('webAbout').value = `${name} is a premier vehicle dealership dedicated to providing high-quality vehicles at the best market rates. We believe in transparency, trust, and customer satisfaction.`;
+            document.getElementById('webWhy').value = "Verified Documents\nBest Market Price\nExcellent Customer Support\nWide Range of Selection";
+            
+            document.getElementById('websiteLockScreen').classList.add('hidden');
+            document.getElementById('websiteEditor').classList.remove('hidden');
+        };
+
         document.getElementById('saveWebsite').onclick = async () => {
             ui.showLoader(true);
             try {
@@ -287,8 +286,18 @@ const app = {
                     why: document.getElementById('webWhy').value,
                     fb: document.getElementById('webFb').value
                 };
+                
+                // Handle Logo upload
+                const logoFile = document.getElementById('webLogo').files[0];
+                if(logoFile) {
+                    const blob = await compressImage(logoFile);
+                    const ref = storage.ref(`sites/${state.user.uid}/logo`);
+                    await ref.put(blob);
+                    data.logo = await ref.getDownloadURL();
+                }
+                
                 await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
-                ui.toast("Website Settings Saved!");
+                ui.toast("Website Published!");
             } catch(e) { ui.toast(e.message, 'error'); }
             ui.showLoader(false);
         };
@@ -303,12 +312,6 @@ const app = {
             document.getElementById('profWhatsapp').value = d.whatsapp || '';
             document.getElementById('profAddress').value = d.address || '';
             if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
-        } else {
-            // New user, ensure fields are empty (Double check)
-            document.getElementById('profPhone').value = '';
-            document.getElementById('profWhatsapp').value = '';
-            document.getElementById('profAddress').value = '';
-            document.getElementById('dashAvatar').innerHTML = '<i class="fa-solid fa-user"></i>';
         }
     },
 
@@ -331,8 +334,8 @@ const app = {
                 <div class="v-info">
                     <h4>${v.brand} ${v.model}</h4>
                     <p class="v-price">Rs. ${v.price}</p>
-                    <div class="v-actions">
-                        <button class="btn btn-primary btn-sm" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
+                    <div style="display:flex; justify-content:space-between">
+                        <button class="btn btn-primary btn-xs" onclick="app.deleteVehicle('${doc.id}')">Delete</button>
                     </div>
                 </div>
             `;
@@ -355,8 +358,11 @@ const app = {
         document.getElementById('mySiteLink').href = url;
         
         const doc = await db.collection('sites').doc(state.user.uid).get();
-        if(doc.exists) {
+        if(doc.exists && doc.data().saleName) {
             const d = doc.data();
+            document.getElementById('websiteLockScreen').classList.add('hidden');
+            document.getElementById('websiteEditor').classList.remove('hidden');
+            
             document.getElementById('webName').value = d.saleName || '';
             document.getElementById('webNavStyle').value = d.navStyle || '1';
             document.getElementById('webHeroTitle').value = d.heroTitle || '';
@@ -365,16 +371,12 @@ const app = {
             document.getElementById('webWhy').value = d.why || '';
             document.getElementById('webFb').value = d.fb || '';
         } else {
-            // New user clear
-            document.getElementById('webName').value = '';
-            document.getElementById('webHeroTitle').value = '';
-            document.getElementById('webHeroSub').value = '';
-            document.getElementById('webAbout').value = '';
-            document.getElementById('webWhy').value = '';
-            document.getElementById('webFb').value = '';
+            // Locked
+            document.getElementById('websiteLockScreen').classList.remove('hidden');
+            document.getElementById('websiteEditor').classList.add('hidden');
         }
     },
-
+    
     loadConnect: async () => {
         const grid = document.getElementById('sellersGrid');
         grid.innerHTML = 'Loading...';
@@ -382,23 +384,25 @@ const app = {
         grid.innerHTML = '';
         snap.forEach(doc => {
             const s = doc.data();
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.innerHTML = `
-                <h3>${s.saleName || 'Car Sale'}</h3>
-                <button class="btn btn-outline mt-2" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>
-            `;
-            grid.appendChild(div);
+            if(s.saleName) {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <h3>${s.saleName}</h3>
+                    <button class="btn btn-outline mt-4 full-width" onclick="window.open('?seller=${doc.id}', '_blank')">Visit Site</button>
+                `;
+                grid.appendChild(div);
+            }
         });
     }
 };
 
 // ==========================================
-// 3. GENERATED SITE LOGIC
+// 3. GENERATED SUPER SITE LOGIC
 // ==========================================
 const siteRenderer = {
     load: async (uid) => {
-        ui.showLoader(true, "Loading Website...");
+        ui.showLoader(true, "Building Experience...");
         try {
             const [siteDoc, userDoc, vSnap] = await Promise.all([
                 db.collection('sites').doc(uid).get(),
@@ -406,28 +410,34 @@ const siteRenderer = {
                 db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get()
             ]);
 
-            if(!siteDoc.exists) throw new Error("Seller website not set up.");
+            if(!siteDoc.exists) throw new Error("Site not ready.");
             const s = siteDoc.data();
             const u = userDoc.data();
 
+            // 1. Navigation Logic
             const header = document.getElementById('genHeader');
-            const menu = `
-                <div style="display:flex; gap:20px;">
-                    <a href="#genVehicles" style="text-decoration:none; color:#333; font-weight:600">Inventory</a>
-                    <a href="#genAbout" style="text-decoration:none; color:#333; font-weight:600">About</a>
-                    <a href="#genContact" style="text-decoration:none; color:#333; font-weight:600">Contact</a>
-                </div>
+            const logoHtml = s.logo 
+                ? `<img src="${s.logo}" class="gen-logo-img">` 
+                : `<div class="gen-logo-icon"><i class="fa-solid fa-car"></i></div>`;
+            
+            const brandHtml = `<a href="#" class="gen-brand">${logoHtml} <span>${s.saleName}</span></a>`;
+            const menuHtml = `
+                <nav class="gen-menu">
+                    <a href="#genVehicles">Inventory</a>
+                    <a href="#genAbout">About</a>
+                    <a href="#genWhy">Why Us</a>
+                    <a href="#genContact">Contact</a>
+                </nav>
             `;
             
-            if(s.navStyle === '2') {
-                header.innerHTML = `<div class="navbar" style="justify-content:space-between"><h2>${s.saleName}</h2>${menu}</div>`;
-            } else {
-                header.innerHTML = `<div class="navbar" style="flex-direction:column"><h2>${s.saleName}</h2>${menu}</div>`;
-            }
+            header.className = s.navStyle === '2' ? 'gen-navbar left' : 'gen-navbar centered';
+            header.innerHTML = s.navStyle === '2' ? `${brandHtml}${menuHtml}` : `${brandHtml}${menuHtml}`;
 
-            const hero = document.getElementById('genHero');
-            hero.innerHTML = `<h1>${s.heroTitle || 'Welcome'}</h1><p>${s.heroSub || 'Best Deals in Town'}</p>`;
+            // 2. Hero
+            document.getElementById('genHeroTitle').innerText = s.heroTitle || `Welcome to ${s.saleName}`;
+            document.getElementById('genHeroSub').innerText = s.heroSub || 'Premium Vehicles';
 
+            // 3. Smart Vehicles & Categories
             const grid = document.getElementById('genVehicleGrid');
             const cats = new Set();
             vSnap.forEach(doc => {
@@ -436,16 +446,19 @@ const siteRenderer = {
                 const card = document.createElement('div');
                 card.className = 'v-card';
                 card.dataset.cat = v.category;
+                card.onclick = () => siteRenderer.openModal(doc.id);
                 card.innerHTML = `
-                    <img src="${v.images[0]}" onclick="siteRenderer.openModal('${doc.id}')">
+                    <img src="${v.images[0]}" loading="lazy">
                     <div class="v-info">
                         <h4>${v.brand} ${v.model}</h4>
                         <p class="v-price">Rs. ${v.price}</p>
+                        <p class="text-sm text-secondary">${v.mileage} km | ${v.fuel}</p>
                     </div>
                 `;
                 grid.appendChild(card);
             });
 
+            // Filter Chips (Only show existing categories)
             const filters = document.getElementById('genCatFilter');
             filters.innerHTML = `<div class="chip active" onclick="siteRenderer.filter('all')">All</div>`;
             cats.forEach(c => {
@@ -456,22 +469,29 @@ const siteRenderer = {
                 filters.appendChild(chip);
             });
 
-            document.getElementById('genAboutContent').innerText = s.about || 'We are a trusted seller.';
-            const whyDiv = document.getElementById('genWhyGrid');
-            const reasons = (s.why || "Trusted\nBest Prices\nQuality").split('\n');
-            whyDiv.innerHTML = ''; // Clear prev
+            // 4. Content
+            document.getElementById('genAboutContent').innerHTML = `<p>${s.about}</p>`;
+            
+            const whyGrid = document.getElementById('genWhyGrid');
+            const reasons = (s.why || "").split('\n');
+            whyGrid.innerHTML = '';
             reasons.forEach(r => {
-                if(r.trim()){
-                    const d = document.createElement('div');
-                    d.className = 'feat-card';
-                    d.innerHTML = `<h3>${r}</h3>`;
-                    whyDiv.appendChild(d);
+                if(r.trim()) {
+                    const icon = siteRenderer.getIconForReason(r);
+                    const div = document.createElement('div');
+                    div.className = 'feat-card';
+                    div.innerHTML = `<i class="${icon}"></i><h3>${r}</h3>`;
+                    whyGrid.appendChild(div);
                 }
             });
 
+            // 5. Contact
             document.getElementById('genContactInfo').innerHTML = `
-                <p><i class="fa-solid fa-phone"></i> ${u.phone || ''}</p>
-                <p><i class="fa-solid fa-location-dot"></i> ${u.address || ''}</p>
+                <h3>Visit Us</h3>
+                <p><i class="fa-solid fa-phone"></i> ${u.phone || 'N/A'}</p>
+                <p><i class="fa-brands fa-whatsapp"></i> ${u.whatsapp || 'N/A'}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${u.address || 'N/A'}</p>
+                <p style="margin-top:20px; font-size:0.9rem;">&copy; ${new Date().getFullYear()} ${s.saleName}. Powered by VehicleBuilder.</p>
             `;
             if(u.whatsapp) {
                 const wa = document.getElementById('floatWhatsapp');
@@ -479,24 +499,19 @@ const siteRenderer = {
                 wa.classList.remove('hidden');
             }
 
-            window.onscroll = () => {
-                const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
-                
-                if(s.fb && scrollP > 50 && !sessionStorage.getItem('fbShown')) {
-                    document.getElementById('fbModal').classList.remove('hidden');
-                    document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Open Page</a>`;
-                    sessionStorage.setItem('fbShown', 'true');
-                }
-
-                if(scrollP > 30 && !sessionStorage.getItem('adShown')) {
-                    document.getElementById('adModal').classList.remove('hidden');
-                    document.getElementById('adContentArea').innerHTML = `<h3 class="text-center">Sponsored Ad Space</h3><div style="background:#eee; height:150px; margin-top:10px;"></div>`;
-                    sessionStorage.setItem('adShown', 'true');
-                }
-            };
+            // 6. Scroll Animations & Modals
+            siteRenderer.initAnimations();
+            window.addEventListener('scroll', () => {
+                 const scrollP = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+                 if(s.fb && scrollP > 50 && !sessionStorage.getItem('fbShown')) {
+                     document.getElementById('fbModal').classList.remove('hidden');
+                     document.getElementById('fbLinkArea').innerHTML = `<a href="${s.fb}" target="_blank" class="btn btn-primary">Visit Page</a>`;
+                     sessionStorage.setItem('fbShown', 'true');
+                 }
+            });
 
         } catch(e) {
-            document.body.innerHTML = `<h2 class="text-center mt-2">Error: ${e.message}</h2>`;
+            document.body.innerHTML = `<h2 class="text-center mt-4">Website Loading... (Or Setup Incomplete)</h2>`;
         }
         ui.showLoader(false);
     },
@@ -516,7 +531,6 @@ const siteRenderer = {
         const doc = await db.collection('vehicles').doc(vid).get();
         const v = doc.data();
         ui.showLoader(false);
-
         const modal = document.getElementById('modalOverlay');
         modal.classList.remove('hidden');
         document.getElementById('modalBody').innerHTML = `
@@ -529,8 +543,24 @@ const siteRenderer = {
                 <p><strong>Trans:</strong> ${v.trans}</p>
             </div>
             <p class="mt-2">${v.desc}</p>
-            ${v.youtube ? `<a href="${v.youtube}" target="_blank" class="btn btn-primary mt-2 full-width text-center">Watch Video</a>` : ''}
         `;
+    },
+
+    getIconForReason: (text) => {
+        const t = text.toLowerCase();
+        if(t.includes('price')) return 'fa-solid fa-tag';
+        if(t.includes('trusted') || t.includes('verified')) return 'fa-solid fa-shield-halved';
+        if(t.includes('customer') || t.includes('support')) return 'fa-solid fa-headset';
+        return 'fa-solid fa-check-circle';
+    },
+
+    initAnimations: () => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.scroll-anim').forEach(el => observer.observe(el));
     }
 };
 
