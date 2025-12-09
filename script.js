@@ -32,7 +32,7 @@ window.ui = {
         div.className = `toast ${type}`;
         div.innerText = msg;
         document.getElementById('toastContainer').appendChild(div);
-        setTimeout(()=>div.remove(), 3000);
+        setTimeout(()=>div.remove(), 4000);
     },
     showView: (id) => {
         document.querySelectorAll('.view').forEach(el => { el.classList.remove('active'); el.classList.add('hidden'); });
@@ -194,51 +194,62 @@ const app = {
             if(!phone || !wa || !addr) return ui.toast("All fields required", "error");
 
             ui.showLoader(true, "Saving...");
-            let photoUrl = null;
-            const file = document.getElementById('profPhoto').files[0];
-            if(file) {
-                const blob = await compressImage(file);
-                const ref = storage.ref(`profiles/${state.user.uid}`);
-                await ref.put(blob);
-                photoUrl = await ref.getDownloadURL();
+            try {
+                let photoUrl = null;
+                const file = document.getElementById('profPhoto').files[0];
+                if(file) {
+                    const blob = await compressImage(file);
+                    const ref = storage.ref(`profiles/${state.user.uid}`);
+                    await ref.put(blob);
+                    photoUrl = await ref.getDownloadURL();
+                }
+                const data = { phone, whatsapp: wa, address: addr };
+                if(photoUrl) data.photo = photoUrl;
+                await db.collection('users').doc(state.user.uid).set(data, {merge: true});
+                ui.toast("Saved!");
+            } catch(e) {
+                ui.toast(e.message, 'error');
+            } finally {
+                ui.showLoader(false);
             }
-            const data = { phone, whatsapp: wa, address: addr };
-            if(photoUrl) data.photo = photoUrl;
-            await db.collection('users').doc(state.user.uid).set(data, {merge: true});
-            ui.showLoader(false);
-            ui.toast("Saved!");
         };
 
-        // GENERIC ADD HANDLER (DRY)
+        // GENERIC ADD HANDLER (FIXED WITH TRY/CATCH)
         const handleAdd = (formId, collection, prefix) => {
             document.getElementById(formId).onsubmit = async (e) => {
                 e.preventDefault();
                 ui.showLoader(true);
-                const files = document.getElementById(`${prefix}Photos`).files;
-                const imgUrls = [];
-                for(let i=0; i<Math.min(files.length, 10); i++) {
-                    const blob = await compressImage(files[i]);
-                    const ref = storage.ref(`${collection}/${state.user.uid}/${Date.now()}_${i}`);
-                    await ref.put(blob);
-                    imgUrls.push(await ref.getDownloadURL());
+                try {
+                    const files = document.getElementById(`${prefix}Photos`).files;
+                    const imgUrls = [];
+                    for(let i=0; i<Math.min(files.length, 10); i++) {
+                        const blob = await compressImage(files[i]);
+                        const ref = storage.ref(`${collection}/${state.user.uid}/${Date.now()}_${i}`);
+                        await ref.put(blob);
+                        imgUrls.push(await ref.getDownloadURL());
+                    }
+
+                    const data = {
+                        uid: state.user.uid,
+                        images: imgUrls,
+                        published: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    // Collect all inputs with this prefix
+                    document.querySelectorAll(`#${formId} input:not([type=file]), #${formId} select, #${formId} textarea`).forEach(input => {
+                        data[input.id.replace(prefix, '').toLowerCase()] = input.value;
+                    });
+
+                    await db.collection(collection).add(data);
+                    document.getElementById(formId).reset();
+                    ui.toast("Published successfully!");
+                } catch(err) {
+                    console.error(err);
+                    ui.toast(err.message, "error");
+                } finally {
+                    ui.showLoader(false);
                 }
-
-                const data = {
-                    uid: state.user.uid,
-                    images: imgUrls,
-                    published: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                // Collect all inputs with this prefix
-                document.querySelectorAll(`#${formId} input:not([type=file]), #${formId} select, #${formId} textarea`).forEach(input => {
-                    data[input.id.replace(prefix, '').toLowerCase()] = input.value;
-                });
-
-                await db.collection(collection).add(data);
-                document.getElementById(formId).reset();
-                ui.showLoader(false);
-                ui.toast("Published!");
             };
         };
 
@@ -258,18 +269,23 @@ const app = {
 
         document.getElementById('saveWebsite').onclick = async () => {
             ui.showLoader(true);
-            const data = {
-                saleName: document.getElementById('webName').value,
-                heroTitle: document.getElementById('webHeroTitle').value,
-                heroSub: document.getElementById('webHeroSub').value,
-                about: document.getElementById('webAbout').value,
-                why: document.getElementById('webWhy').value,
-                fb: document.getElementById('webFb').value,
-                navStyle: document.getElementById('webNavStyle').value
-            };
-            await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
-            ui.showLoader(false);
-            ui.toast("Website Published!");
+            try {
+                const data = {
+                    saleName: document.getElementById('webName').value,
+                    heroTitle: document.getElementById('webHeroTitle').value,
+                    heroSub: document.getElementById('webHeroSub').value,
+                    about: document.getElementById('webAbout').value,
+                    why: document.getElementById('webWhy').value,
+                    fb: document.getElementById('webFb').value,
+                    navStyle: document.getElementById('webNavStyle').value
+                };
+                await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
+                ui.toast("Website Published!");
+            } catch(e) {
+                ui.toast(e.message, 'error');
+            } finally {
+                ui.showLoader(false);
+            }
         };
     },
 
@@ -318,21 +334,31 @@ const app = {
 
     togglePublish: async (col, id, status) => {
         ui.showLoader(true);
-        await db.collection(col).doc(id).update({published: !status});
-        if(col === 'vehicles') app.loadMyData('vehicles', 'myVehiclesList');
-        if(col === 'parts') app.loadMyData('parts', 'myPartsList');
-        if(col === 'services') app.loadMyData('services', 'myServicesList');
-        ui.showLoader(false);
+        try {
+            await db.collection(col).doc(id).update({published: !status});
+            if(col === 'vehicles') app.loadMyData('vehicles', 'myVehiclesList');
+            if(col === 'parts') app.loadMyData('parts', 'myPartsList');
+            if(col === 'services') app.loadMyData('services', 'myServicesList');
+        } catch(e) {
+            ui.toast(e.message, 'error');
+        } finally {
+            ui.showLoader(false);
+        }
     },
 
     deleteItem: async (col, id) => {
         if(!confirm("Delete this item?")) return;
         ui.showLoader(true);
-        await db.collection(col).doc(id).delete();
-        if(col === 'vehicles') app.loadMyData('vehicles', 'myVehiclesList');
-        if(col === 'parts') app.loadMyData('parts', 'myPartsList');
-        if(col === 'services') app.loadMyData('services', 'myServicesList');
-        ui.showLoader(false);
+        try {
+            await db.collection(col).doc(id).delete();
+            if(col === 'vehicles') app.loadMyData('vehicles', 'myVehiclesList');
+            if(col === 'parts') app.loadMyData('parts', 'myPartsList');
+            if(col === 'services') app.loadMyData('services', 'myServicesList');
+        } catch(e) {
+            ui.toast(e.message, 'error');
+        } finally {
+            ui.showLoader(false);
+        }
     },
 
     loadWebsiteSettings: async () => {
@@ -366,12 +392,10 @@ const app = {
     buyerFilter: async (type) => {
         const grid = document.getElementById('buyerGrid');
         grid.innerHTML = 'Loading...';
-        // Handle chips UI
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        // Find chip with correct onclick (simplification)
         
-        let collection = type; // vehicles, parts, services
-        if(type === 'finance') collection = 'services'; // Finance users use services collection
+        let collection = type; 
+        if(type === 'finance') collection = 'services'; 
 
         const snap = await db.collection(collection).where('published', '==', true).limit(50).get();
         grid.innerHTML = '';
