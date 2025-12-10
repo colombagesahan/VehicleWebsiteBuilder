@@ -42,7 +42,7 @@ window.ui = {
         document.getElementById(id).classList.add('active');
     },
     switchTab: (id) => {
-        // PROFILE LOCK LOGIC
+        // PROFILE LOCK
         if(state.user && !state.profileComplete && id !== 'tabProfile') {
             return ui.toast("Please complete your Profile Settings first!", "error");
         }
@@ -117,7 +117,7 @@ const app = {
             return;
         }
 
-        // Init all category selects
+        // Init categories
         ['vCat', 'editVCat'].forEach(id => {
             const sel = document.getElementById(id);
             if(sel) {
@@ -134,6 +134,7 @@ const app = {
                 if(doc.exists) {
                     const data = doc.data();
                     state.role = data.role || 'seller';
+                    // Allow access if city exists
                     if(data.phone && data.city && data.address) state.profileComplete = true;
                     ui.renderSidebar(state.role);
                     document.getElementById('dashEmail').innerText = user.email;
@@ -164,15 +165,22 @@ const app = {
             try { ui.showLoader(true); const c = await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value); await db.collection('users').doc(c.user.uid).set({ email: c.user.email, role: role, createdAt: new Date() }); ui.showLoader(false); ui.toast("Account Created!"); window.location.href = window.location.pathname; } catch(e) { ui.showLoader(false); ui.toast(e.message, 'error'); }
         };
 
-        // PROFILE
+        // PROFILE SAVE (FIXED PHONE & CITY LOGIC)
         document.getElementById('saveProfile').onclick = async () => {
             let phone = document.getElementById('profPhone').value;
             let wa = document.getElementById('profWhatsapp').value;
             const city = document.getElementById('profCity').value;
             const addr = document.getElementById('profAddress').value;
-            if(!phone || !wa || !addr || !city) return ui.toast("All fields required", "error");
+            
+            if(!phone || !wa || !addr || !city) return ui.toast("All fields required (including City)", "error");
 
-            const formatPhone = (p) => p.startsWith('0') ? '+94' + p.substring(1) : p;
+            // Format +94
+            const formatPhone = (p) => {
+                let n = p.trim();
+                if(n.startsWith('0')) n = '+94' + n.substring(1);
+                else if(!n.startsWith('+')) n = '+94' + n;
+                return n;
+            };
             phone = formatPhone(phone);
             wa = formatPhone(wa);
 
@@ -260,11 +268,10 @@ const app = {
             finally { ui.showLoader(false); }
         };
 
-        // EDIT VEHICLE SUBMIT
+        // FULL EDIT VEHICLE SUBMIT
         document.getElementById('formEditVehicle').onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('editVId').value;
-            
             const ytLink = document.getElementById('editVYoutube').value;
             let ytId = '';
             if(ytLink) {
@@ -299,16 +306,21 @@ const app = {
             finally { ui.showLoader(false); }
         };
 
-        // WEBSITE BUILDER
+        // WEBSITE BUILDER (Fix: Check city)
         document.getElementById('btnUnlockWebsite').onclick = async () => {
             const name = document.getElementById('initSaleName').value.trim();
             if(!name) return ui.toast("Enter a name", "error");
             
-            // Generate Slug
+            // Get user data to ensure city exists
             const userDoc = await db.collection('users').doc(state.user.uid).get();
-            const city = userDoc.data().city || 'srilanka';
+            const userData = userDoc.data();
+            
+            if(!userData.city) {
+                return ui.toast("Please update your City in Profile Settings first!", "error");
+            }
+
             const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const cleanCity = city.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanCity = userData.city.toLowerCase().replace(/[^a-z0-9]/g, '');
             const slug = `${cleanName}-${cleanCity}`;
 
             document.getElementById('webName').value = name;
@@ -387,7 +399,7 @@ const app = {
         const list = document.getElementById(listId);
         list.innerHTML = 'Loading...';
         const snap = await db.collection(collection).where('uid', '==', state.user.uid).get();
-        state.inventory = [];
+        state.inventory = []; // Store for search
         snap.forEach(doc => state.inventory.push({id: doc.id, ...doc.data()}));
         app.renderVehicleList(state.inventory);
     },
@@ -412,7 +424,8 @@ const app = {
     searchVehicles: () => {
         const term = document.getElementById('searchV').value.toLowerCase();
         const filtered = state.inventory.filter(v => 
-            v.brand.toLowerCase().includes(term) || v.model.toLowerCase().includes(term)
+            (v.brand && v.brand.toLowerCase().includes(term)) || 
+            (v.model && v.model.toLowerCase().includes(term))
         );
         app.renderVehicleList(filtered);
     },
