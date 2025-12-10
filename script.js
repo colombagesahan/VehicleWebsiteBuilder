@@ -16,7 +16,8 @@ const state = {
     user: null,
     role: null,
     profileComplete: false,
-    vehicleImages: [], // Staging area for images
+    vehicleImages: [], 
+    inventory: [], // Store for search
     categories: ["Car", "SUV", "Van", "Pickup", "Lorry", "Bus", "Motorcycle", "Scooter", "Three-wheeler", "Tractor", "Construction", "Trailer", "RV", "ATV", "Special", "Marine"]
 };
 
@@ -107,7 +108,6 @@ const compressImage = async (file) => {
 
 const app = {
     init: () => {
-        // HASH CHECK
         if(window.location.hash.startsWith('#/')) {
             const slug = window.location.hash.substring(2);
             document.getElementById('initLoader').classList.add('hidden');
@@ -117,8 +117,14 @@ const app = {
             return;
         }
 
-        const sel = document.getElementById('vCat');
-        if(sel && sel.options.length === 0) state.categories.forEach(c => sel.appendChild(new Option(c, c)));
+        // Init all category selects
+        ['vCat', 'editVCat'].forEach(id => {
+            const sel = document.getElementById(id);
+            if(sel) {
+                sel.innerHTML = '';
+                state.categories.forEach(c => sel.appendChild(new Option(c, c)));
+            }
+        });
 
         auth.onAuthStateChanged(async user => {
             document.getElementById('initLoader').classList.add('hidden');
@@ -128,18 +134,14 @@ const app = {
                 if(doc.exists) {
                     const data = doc.data();
                     state.role = data.role || 'seller';
-                    // Check Profile Completion
                     if(data.phone && data.city && data.address) state.profileComplete = true;
-                    
                     ui.renderSidebar(state.role);
                     document.getElementById('dashEmail').innerText = user.email;
                     if(data.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${data.photo}">`;
-                    
                     ui.showView('viewDashboard');
                     document.getElementById('btnLoginNav').classList.add('hidden');
                     document.getElementById('btnLogoutNav').classList.remove('hidden');
-                    
-                    ui.switchTab('tabProfile'); // Always start here to check lock
+                    ui.switchTab('tabProfile'); 
                 }
             } else {
                 ui.showView('viewLanding');
@@ -152,7 +154,6 @@ const app = {
     },
 
     setupEvents: () => {
-        // Login/Signup Logic (Same as before)
         document.getElementById('btnLoginNav').onclick = () => ui.showView('viewAuth');
         document.getElementById('btnLogoutNav').onclick = () => auth.signOut();
         document.getElementById('btnLogin').onclick = async () => {
@@ -163,16 +164,14 @@ const app = {
             try { ui.showLoader(true); const c = await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value); await db.collection('users').doc(c.user.uid).set({ email: c.user.email, role: role, createdAt: new Date() }); ui.showLoader(false); ui.toast("Account Created!"); window.location.href = window.location.pathname; } catch(e) { ui.showLoader(false); ui.toast(e.message, 'error'); }
         };
 
-        // PROFILE (Updated Logic)
+        // PROFILE
         document.getElementById('saveProfile').onclick = async () => {
             let phone = document.getElementById('profPhone').value;
             let wa = document.getElementById('profWhatsapp').value;
             const city = document.getElementById('profCity').value;
             const addr = document.getElementById('profAddress').value;
-            
             if(!phone || !wa || !addr || !city) return ui.toast("All fields required", "error");
 
-            // Auto Format Phone (077... -> +9477...)
             const formatPhone = (p) => p.startsWith('0') ? '+94' + p.substring(1) : p;
             phone = formatPhone(phone);
             wa = formatPhone(wa);
@@ -191,27 +190,24 @@ const app = {
                 if(photoUrl) data.photo = photoUrl;
                 
                 await db.collection('users').doc(state.user.uid).set(data, {merge: true});
-                state.profileComplete = true; // Unlock
+                state.profileComplete = true; 
                 if(photoUrl) document.getElementById('dashAvatar').innerHTML = `<img src="${photoUrl}">`;
-                
                 ui.toast("Profile Saved! Dashboard Unlocked.");
-                // Update UI to show formatted numbers
                 document.getElementById('profPhone').value = phone;
                 document.getElementById('profWhatsapp').value = wa;
             } catch(e) { ui.toast(e.message, 'error'); } 
             finally { ui.showLoader(false); }
         };
 
-        // VEHICLE PHOTO STAGING (FIXED 10 PHOTOS)
+        // VEHICLE IMAGES
         document.getElementById('vPhotosInput').addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             if(state.vehicleImages.length + files.length > 10) return ui.toast("Max 10 photos allowed", "error");
-            
             state.vehicleImages = [...state.vehicleImages, ...files];
             app.renderPhotoStaging();
         });
 
-        // VEHICLE ADD (Using Staged Images)
+        // ADD VEHICLE
         document.getElementById('formAddVehicle').onsubmit = async (e) => {
             e.preventDefault();
             if(state.vehicleImages.length === 0) return ui.toast("Please upload at least one photo", "error");
@@ -224,12 +220,10 @@ const app = {
                 }));
                 const imgUrls = await Promise.all(imgPromises);
 
-                // Extract YouTube ID
                 const ytLink = document.getElementById('vYoutube').value;
                 let ytId = '';
                 if(ytLink) {
-                    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                    const match = ytLink.match(regExp);
+                    const match = ytLink.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
                     if (match && match[2].length == 11) ytId = match[2];
                 }
 
@@ -245,8 +239,12 @@ const app = {
                     fuel: document.getElementById('vFuel').value,
                     price: document.getElementById('vPrice').value,
                     mileage: document.getElementById('vMileage').value,
+                    body: document.getElementById('vBody').value,
+                    engine: document.getElementById('vEngine').value,
+                    book: document.getElementById('vBook').value,
+                    finance: document.getElementById('vFinance').value,
                     desc: document.getElementById('vDesc').value,
-                    youtube: ytId, // Save ID only
+                    youtube: ytId, 
                     images: imgUrls,
                     published: true,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -262,39 +260,99 @@ const app = {
             finally { ui.showLoader(false); }
         };
 
-        // MY VEHICLE ACTIONS (Edit/Delete/Publish)
-        // ... (Similar logic for Parts/Service add - kept generic for brevity but assumes they use direct file input for now or update similar to vehicle) ...
-        
-        // WEBSITE BUILDER (Slug logic preserved)
-        document.getElementById('btnUnlockWebsite').onclick = async () => { /* ... same as before ... */ };
-        document.getElementById('saveWebsite').onclick = async () => { /* ... same as before ... */ };
-        
-        // Edit Modal Submit
+        // EDIT VEHICLE SUBMIT
         document.getElementById('formEditVehicle').onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('editVId').value;
+            
             const ytLink = document.getElementById('editVYoutube').value;
             let ytId = '';
             if(ytLink) {
-                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-                const match = ytLink.match(regExp);
+                const match = ytLink.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
                 if (match && match[2].length == 11) ytId = match[2];
             }
 
             ui.showLoader(true);
-            await db.collection('vehicles').doc(id).update({
-                brand: document.getElementById('editVBrand').value,
-                model: document.getElementById('editVModel').value,
-                price: document.getElementById('editVPrice').value,
-                mileage: document.getElementById('editVMileage').value,
-                condition: document.getElementById('editVCond').value,
-                desc: document.getElementById('editVDesc').value,
-                youtube: ytId
-            });
-            ui.showLoader(false);
-            ui.toast("Updated");
-            document.getElementById('editVehicleModal').classList.add('hidden');
-            app.loadMyData('vehicles', 'myVehiclesList');
+            try {
+                await db.collection('vehicles').doc(id).update({
+                    category: document.getElementById('editVCat').value,
+                    brand: document.getElementById('editVBrand').value,
+                    model: document.getElementById('editVModel').value,
+                    trim: document.getElementById('editVTrim').value,
+                    year: document.getElementById('editVYear').value,
+                    condition: document.getElementById('editVCond').value,
+                    trans: document.getElementById('editVTrans').value,
+                    fuel: document.getElementById('editVFuel').value,
+                    price: document.getElementById('editVPrice').value,
+                    mileage: document.getElementById('editVMileage').value,
+                    body: document.getElementById('editVBody').value,
+                    engine: document.getElementById('editVEngine').value,
+                    book: document.getElementById('editVBook').value,
+                    finance: document.getElementById('editVFinance').value,
+                    desc: document.getElementById('editVDesc').value,
+                    youtube: ytId
+                });
+                ui.toast("Updated Successfully");
+                document.getElementById('editVehicleModal').classList.add('hidden');
+                app.loadMyData('vehicles', 'myVehiclesList');
+            } catch(e) { ui.toast(e.message, 'error'); }
+            finally { ui.showLoader(false); }
+        };
+
+        // WEBSITE BUILDER
+        document.getElementById('btnUnlockWebsite').onclick = async () => {
+            const name = document.getElementById('initSaleName').value.trim();
+            if(!name) return ui.toast("Enter a name", "error");
+            
+            // Generate Slug
+            const userDoc = await db.collection('users').doc(state.user.uid).get();
+            const city = userDoc.data().city || 'srilanka';
+            const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const cleanCity = city.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const slug = `${cleanName}-${cleanCity}`;
+
+            document.getElementById('webName').value = name;
+            document.getElementById('websiteLockScreen').classList.add('hidden');
+            document.getElementById('websiteEditor').classList.remove('hidden');
+            document.getElementById('mySiteLink').innerText = `${window.location.origin}${window.location.pathname}#/${slug}`;
+            document.getElementById('mySiteLink').href = `${window.location.origin}${window.location.pathname}#/${slug}`;
+        };
+
+        document.getElementById('saveWebsite').onclick = async () => {
+            ui.showLoader(true);
+            try {
+                const userDoc = await db.collection('users').doc(state.user.uid).get();
+                const city = userDoc.data().city || 'srilanka';
+                const name = document.getElementById('webName').value;
+                const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const cleanCity = city.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const slug = `${cleanName}-${cleanCity}`;
+
+                const data = {
+                    saleName: name,
+                    slug: slug,
+                    role: state.role,
+                    city: city,
+                    heroTitle: document.getElementById('webHeroTitle').value,
+                    heroSub: document.getElementById('webHeroSub').value,
+                    about: document.getElementById('webAbout').value,
+                    why: document.getElementById('webWhy').value,
+                    fb: document.getElementById('webFb').value,
+                    navStyle: document.getElementById('webNavStyle').value
+                };
+                
+                const logoFile = document.getElementById('webLogo').files[0];
+                if(logoFile) {
+                    const blob = await compressImage(logoFile);
+                    const ref = storage.ref(`sites/${state.user.uid}/logo`);
+                    await ref.put(blob);
+                    data.logo = await ref.getDownloadURL();
+                }
+
+                await db.collection('sites').doc(state.user.uid).set(data, {merge: true});
+                ui.toast("Website Published!");
+            } catch(e) { ui.toast(e.message, 'error'); } 
+            finally { ui.showLoader(false); }
         };
     },
 
@@ -314,7 +372,6 @@ const app = {
         app.renderPhotoStaging();
     },
 
-    // LOADERS & DATA
     loadProfile: async () => {
         const doc = await db.collection('users').doc(state.user.uid).get();
         if(doc.exists) {
@@ -323,7 +380,6 @@ const app = {
             document.getElementById('profWhatsapp').value = d.whatsapp || '';
             document.getElementById('profAddress').value = d.address || '';
             document.getElementById('profCity').value = d.city || '';
-            // Make fields editable but button says "Save"
         }
     },
 
@@ -331,74 +387,103 @@ const app = {
         const list = document.getElementById(listId);
         list.innerHTML = 'Loading...';
         const snap = await db.collection(collection).where('uid', '==', state.user.uid).get();
+        state.inventory = [];
+        snap.forEach(doc => state.inventory.push({id: doc.id, ...doc.data()}));
+        app.renderVehicleList(state.inventory);
+    },
+
+    renderVehicleList: (items) => {
+        const list = document.getElementById('myVehiclesList');
         list.innerHTML = '';
-        snap.forEach(doc => {
-            const d = doc.data();
+        if(items.length === 0) { list.innerHTML = '<p>No items found.</p>'; return; }
+
+        items.forEach(d => {
             const el = document.createElement('div');
             el.className = 'v-card';
             let title = d.brand ? `${d.brand} ${d.model}` : (d.name || 'Item');
             const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
             const img = d.images && d.images.length ? d.images[0] : 'https://via.placeholder.com/300';
             
-            // Edit Button Logic (Only for vehicles for now)
-            let editBtn = '';
-            if(collection === 'vehicles') editBtn = `<button class="btn btn-primary btn-sm" onclick="app.openEditModal('${doc.id}')">Edit</button>`;
-
-            el.innerHTML = `${badge}<img src="${img}"><div class="v-info"><h4>${title}</h4><p class="v-price">Rs. ${d.price}</p><div class="v-actions" style="grid-template-columns: 1fr 1fr 1fr;">${editBtn}<button class="btn btn-outline btn-sm" onclick="app.togglePublish('${collection}', '${doc.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('${collection}', '${doc.id}')">Del</button></div></div>`;
+            el.innerHTML = `${badge}<img src="${img}"><div class="v-info"><h4>${title}</h4><p class="v-price">Rs. ${d.price}</p><div class="v-actions"><button class="btn btn-primary btn-sm" onclick="app.openEditModal('${d.id}')">Edit</button><button class="btn btn-outline btn-sm" onclick="app.togglePublish('vehicles', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('vehicles', '${d.id}')">Del</button></div></div>`;
             list.appendChild(el);
         });
+    },
+
+    searchVehicles: () => {
+        const term = document.getElementById('searchV').value.toLowerCase();
+        const filtered = state.inventory.filter(v => 
+            v.brand.toLowerCase().includes(term) || v.model.toLowerCase().includes(term)
+        );
+        app.renderVehicleList(filtered);
     },
 
     openEditModal: async (id) => {
         const doc = await db.collection('vehicles').doc(id).get();
         const d = doc.data();
         document.getElementById('editVId').value = id;
+        document.getElementById('editVCat').value = d.category;
         document.getElementById('editVBrand').value = d.brand;
         document.getElementById('editVModel').value = d.model;
+        document.getElementById('editVTrim').value = d.trim || '';
+        document.getElementById('editVYear').value = d.year;
+        document.getElementById('editVCond').value = d.condition || '';
+        document.getElementById('editVTrans').value = d.trans;
+        document.getElementById('editVFuel').value = d.fuel;
         document.getElementById('editVPrice').value = d.price;
         document.getElementById('editVMileage').value = d.mileage;
-        document.getElementById('editVCond').value = d.condition || '';
+        document.getElementById('editVBody').value = d.body || '';
+        document.getElementById('editVEngine').value = d.engine || '';
+        document.getElementById('editVBook').value = d.book || 'Original Book';
+        document.getElementById('editVFinance').value = d.finance || 'no';
         document.getElementById('editVDesc').value = d.desc;
         document.getElementById('editVYoutube').value = d.youtube ? `https://youtu.be/${d.youtube}` : '';
         document.getElementById('editVehicleModal').classList.remove('hidden');
     },
 
-    togglePublish: async (col, id, status) => { /* ... same ... */ },
-    deleteItem: async (col, id) => { /* ... same ... */ },
-    loadWebsiteSettings: async () => { /* ... same ... */ },
-    loadConnect: async () => { /* ... same ... */ },
-    connectFilter: (role) => { /* ... same ... */ },
-    filterConnect: () => { /* ... same ... */ },
-    buyerFilter: async (type) => { /* ... same ... */ }
+    togglePublish: async (col, id, status) => {
+        ui.showLoader(true);
+        await db.collection(col).doc(id).update({published: !status});
+        app.loadMyData(col, 'myVehiclesList');
+        ui.showLoader(false);
+    },
+
+    deleteItem: async (col, id) => {
+        if(!confirm("Are you sure?")) return;
+        ui.showLoader(true);
+        await db.collection(col).doc(id).delete();
+        app.loadMyData(col, 'myVehiclesList');
+        ui.showLoader(false);
+    },
+
+    loadWebsiteSettings: async () => { /* ... same as previous ... */ },
+    loadConnect: async () => { /* ... same as previous ... */ },
+    connectFilter: (role) => { /* ... same as previous ... */ },
+    filterConnect: () => { /* ... same as previous ... */ },
+    buyerFilter: async (type) => { /* ... same as previous ... */ }
 };
 
-// GENERATED SITE RENDERER (Super Premium)
+// SITE RENDERER
 const siteRenderer = {
     loadBySlug: async (slug) => {
         ui.showLoader(true, "Building Experience...");
         try {
             const sitesSnap = await db.collection('sites').where('slug', '==', slug).limit(1).get();
             if(sitesSnap.empty) throw new Error("Page not found");
-            
-            const siteDoc = sitesSnap.docs[0];
-            const uid = siteDoc.id;
-            const s = siteDoc.data();
-            const userDoc = await db.collection('users').doc(uid).get();
-            const u = userDoc.data();
+            const uid = sitesSnap.docs[0].id;
+            const s = sitesSnap.docs[0].data();
+            const uDoc = await db.collection('users').doc(uid).get();
+            const u = uDoc.data();
 
             document.getElementById('genHeroTitle').innerText = s.heroTitle || s.saleName;
             document.getElementById('genHeroSub').innerText = s.heroSub || '';
-            document.getElementById('genContactInfo').innerHTML = `
-                <p><i class="fa-solid fa-phone"></i> ${u.phone}</p>
-                <p><i class="fa-solid fa-location-dot"></i> ${u.city}, ${u.address}</p>
-            `;
+            document.getElementById('genContactInfo').innerHTML = `<p><i class="fa-solid fa-phone"></i> ${u.phone}</p><p><i class="fa-solid fa-location-dot"></i> ${u.city}, ${u.address}</p>`;
+            
             if(u.whatsapp) {
                 const wa = document.getElementById('floatWhatsapp');
                 wa.href = `https://wa.me/${u.whatsapp.replace('+','')}`;
                 wa.classList.remove('hidden');
             }
 
-            // Load Vehicles
             const items = await db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get();
             const grid = document.getElementById('genGrid');
             items.forEach(doc => {
@@ -406,17 +491,9 @@ const siteRenderer = {
                 const card = document.createElement('div');
                 card.className = 'v-card';
                 card.onclick = () => siteRenderer.openDetailModal(d, u.whatsapp);
-                card.innerHTML = `
-                    <img src="${d.images[0]}" loading="lazy">
-                    <div class="v-info">
-                        <h4>${d.brand} ${d.model}</h4>
-                        <p class="v-price">Rs. ${d.price}</p>
-                        <p class="text-sm text-secondary">${d.mileage} km | ${d.condition || 'Used'}</p>
-                    </div>
-                `;
+                card.innerHTML = `<img src="${d.images[0]}" loading="lazy"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p><p class="text-sm text-secondary">${d.mileage} km | ${d.condition || 'Used'}</p></div>`;
                 grid.appendChild(card);
             });
-
         } catch(e) { document.body.innerHTML = `<h1>${e.message}</h1>`; }
         ui.showLoader(false);
     },
@@ -424,33 +501,13 @@ const siteRenderer = {
     openDetailModal: (d, waNumber) => {
         const modal = document.getElementById('siteVehicleModal');
         const content = document.getElementById('siteModalContent');
-        
-        // Slider Logic
         let slides = d.images.map((img, i) => `<img src="${img}" class="slide-img ${i===0?'active':''}" onclick="siteRenderer.openLightbox('${img}')">`).join('');
-        
         let youtubeEmbed = d.youtube ? `<div class="mt-4"><iframe width="100%" height="300" src="https://www.youtube.com/embed/${d.youtube}" frameborder="0" allowfullscreen></iframe></div>` : '';
 
         content.innerHTML = `
-            <div class="slider-container">
-                ${slides}
-                <button class="slider-btn prev-btn" onclick="siteRenderer.moveSlide(-1)">&#10094;</button>
-                <button class="slider-btn next-btn" onclick="siteRenderer.moveSlide(1)">&#10095;</button>
-            </div>
-            <div class="modal-info">
-                <h2>${d.brand} ${d.model} (${d.year})</h2>
-                <p class="text-primary font-bold text-lg">Rs. ${d.price}</p>
-                <div class="grid-2 mt-4">
-                    <p><strong>Mileage:</strong> ${d.mileage} km</p>
-                    <p><strong>Fuel:</strong> ${d.fuel}</p>
-                    <p><strong>Trans:</strong> ${d.trans}</p>
-                    <p><strong>Body:</strong> ${d.body || '-'}</p>
-                </div>
-                <div class="mt-4 p-4 bg-light rounded">${d.desc}</div>
-                ${youtubeEmbed}
-                <a href="https://wa.me/${waNumber.replace('+','')}?text=Hi, I am interested in ${d.brand} ${d.model}" target="_blank" class="btn btn-success full-width mt-4"><i class="fa-brands fa-whatsapp"></i> Ask on WhatsApp</a>
-            </div>
+            <div class="slider-container">${slides}<button class="slider-btn prev-btn" onclick="siteRenderer.moveSlide(-1)">&#10094;</button><button class="slider-btn next-btn" onclick="siteRenderer.moveSlide(1)">&#10095;</button></div>
+            <div class="modal-info"><h2>${d.brand} ${d.model} (${d.year})</h2><p class="text-primary font-bold text-lg">Rs. ${d.price}</p><div class="grid-2 mt-4"><p><strong>Mileage:</strong> ${d.mileage} km</p><p><strong>Fuel:</strong> ${d.fuel}</p><p><strong>Trans:</strong> ${d.trans}</p><p><strong>Body:</strong> ${d.body || '-'}</p></div><div class="mt-4 p-4 bg-light rounded">${d.desc}</div>${youtubeEmbed}<a href="https://wa.me/${waNumber.replace('+','')}?text=Hi, I am interested in ${d.brand} ${d.model}" target="_blank" class="btn btn-success full-width mt-4"><i class="fa-brands fa-whatsapp"></i> Ask on WhatsApp</a></div>
         `;
-        
         modal.classList.remove('hidden');
         siteRenderer.currentSlide = 0;
         siteRenderer.totalSlides = d.images.length;
