@@ -45,7 +45,7 @@
         </div>
     </div>
 
-    <!-- 2. PUBLIC SITE VEHICLE MODAL (Dark Theme) -->
+    <!-- 2. PUBLIC SITE VEHICLE MODAL -->
     <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
         <div class="modal-content large-modal dark-modal-theme">
             <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
@@ -59,9 +59,24 @@
         <img id="lightboxImg" src="">
     </div>
 
-    <!-- ADMIN & FB MODALS -->
-    <div id="adModal" class="modal-overlay hidden"><div class="modal-content ad-content"><button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button><div id="adContentArea"></div></div></div>
-    <div id="fbModal" class="modal-overlay hidden"><div class="modal-content fb-content text-center"><button class="close-modal" onclick="document.getElementById('fbModal').classList.add('hidden')">&times;</button><i class="fa-brands fa-facebook text-primary" style="font-size:3rem;"></i><h3>Like us on Facebook!</h3><div id="fbLinkArea" class="mt-4"></div></div></div>
+    <!-- 4. GLOBAL AD MODAL (Money Making) -->
+    <div id="adModal" class="modal-overlay hidden">
+        <div class="modal-content ad-content">
+            <button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button>
+            <div id="adContentArea"></div>
+        </div>
+    </div>
+
+    <!-- 5. MESSAGE MODAL -->
+    <div id="msgModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-modal" onclick="document.getElementById('msgModal').classList.add('hidden')">&times;</button>
+            <h3>Send Message</h3>
+            <p class="text-secondary text-sm">You can send <span id="msgCount">10</span> more messages today.</p>
+            <textarea id="msgText" rows="4" class="full-width mt-2" placeholder="Hi, I saw your profile..."></textarea>
+            <button id="btnSendMsg" class="btn btn-primary full-width mt-4">Send via WhatsApp</button>
+        </div>
+    </div>
 
     <!-- =======================================================
          PLATFORM DASHBOARD
@@ -107,9 +122,7 @@
                         <span id="dashEmail">User</span>
                         <span id="dashRole" class="badge">Role</span>
                     </div>
-                    <nav class="side-nav" id="dynamicSidebar">
-                        <!-- JS Injected -->
-                    </nav>
+                    <nav class="side-nav" id="dynamicSidebar"></nav>
                 </aside>
 
                 <main class="dash-content">
@@ -118,11 +131,12 @@
                     <div id="tabProfile" class="dash-tab active">
                         <h2>Profile Settings</h2>
                         <div class="card">
-                            <div class="alert-box warning">
+                            <div class="alert-box" id="profileNotice">
                                 <i class="fa-solid fa-lock"></i> 
                                 <strong>You must complete your profile to unlock your dashboard.</strong>
                             </div>
-                            <fieldset id="profileFieldset">
+                            
+                            <fieldset id="profFields">
                                 <div class="form-group">
                                     <label>Profile Photo (Required)</label>
                                     <input type="file" id="profPhoto" accept="image/*">
@@ -131,12 +145,12 @@
                                     <div class="form-group">
                                         <label>Phone Number (Required)</label>
                                         <input type="tel" id="profPhone" placeholder="771234567" required>
-                                        <small class="text-secondary text-primary font-bold">Please enter without 0. We auto-add +94.</small>
+                                        <small class="text-secondary">Enter without '0'. We auto-add +94.</small>
                                     </div>
                                     <div class="form-group">
                                         <label>WhatsApp Number (Required)</label>
                                         <input type="tel" id="profWhatsapp" placeholder="771234567" required>
-                                        <small class="text-secondary text-primary font-bold">Please enter without 0. We auto-add +94.</small>
+                                        <small class="text-secondary">Enter without '0'. We auto-add +94.</small>
                                     </div>
                                 </div>
                                 <div class="grid-2">
@@ -151,9 +165,10 @@
                                     </div>
                                 </div>
                             </fieldset>
+                            
                             <div class="btn-group">
                                 <button id="saveProfile" class="btn btn-primary">Save Profile</button>
-                                <button id="editProfileBtn" class="btn btn-outline hidden">Edit</button>
+                                <button id="editProfileBtn" class="btn btn-outline hidden">Edit Profile</button>
                             </div>
                         </div>
                     </div>
@@ -180,28 +195,32 @@
                             </div>
                             <textarea id="vDesc" placeholder="Description (Max 500 words)" maxlength="2500"></textarea>
                             <input type="url" id="vYoutube" placeholder="YouTube Video Link">
-                            
                             <div class="form-group mt-4">
                                 <label>Upload Photos (Max 10)</label>
                                 <input type="file" id="vPhotosInput" multiple accept="image/*" class="mb-2">
                                 <div id="vPhotoStaging" class="img-staging-grid"></div>
                             </div>
-
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Vehicle</button>
                         </form>
                     </div>
                     
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
-                        <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2" onkeyup="app.searchVehicles()">
+                        <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2">
+                        
+                        <!-- DYNAMIC TIP BOX -->
                         <div class="alert-box" style="font-size:0.9rem; margin-top:10px;">
                             <i class="fa-solid fa-lightbulb text-primary"></i> 
-                            <strong>Tip:</strong> Use the "Show" button to display your vehicle on your page again.
+                            <div>
+                                <strong>Tip:</strong> Use the "Hide" button to remove vehicles without deleting.<br>
+                                Use the "Show" button to display them on your page again.
+                            </div>
                         </div>
+                        
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- C. ROLE: PARTS SELLER -->
+                    <!-- C. PARTS & D. SERVICES (Forms) -->
                     <div id="tabAddPart" class="dash-tab">
                         <h2>Add Auto Part</h2>
                         <form id="formAddPart" class="card">
@@ -217,12 +236,8 @@
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Part</button>
                         </form>
                     </div>
-                    <div id="tabMyParts" class="dash-tab">
-                        <h2>My Products</h2>
-                        <div id="myPartsList" class="vehicle-grid"></div>
-                    </div>
+                    <div id="tabMyParts" class="dash-tab"><h2>My Products</h2><div id="myPartsList" class="vehicle-grid"></div></div>
 
-                    <!-- D. ROLE: SERVICE / FINANCE -->
                     <div id="tabAddService" class="dash-tab">
                         <h2>Add Service / Package</h2>
                         <form id="formAddService" class="card">
@@ -235,18 +250,15 @@
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Service</button>
                         </form>
                     </div>
-                    <div id="tabMyServices" class="dash-tab">
-                        <h2>My Services</h2>
-                        <div id="myServicesList" class="vehicle-grid"></div>
-                    </div>
+                    <div id="tabMyServices" class="dash-tab"><h2>My Services</h2><div id="myServicesList" class="vehicle-grid"></div></div>
 
-                    <!-- E. COMMON: PAGE BUILDER -->
+                    <!-- E. PAGE BUILDER -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Page Builder</h2>
                         <div id="websiteLockScreen" class="lock-overlay">
                             <h3>Setup Your Business Page</h3>
                             <p>Update your Profile "City" first to create your unique URL.</p>
-                            <input type="text" id="initSaleName" placeholder="Business Name">
+                            <input type="text" id="initSaleName" placeholder="Business Name (e.g. Sahan Motors)">
                             <button id="btnUnlockWebsite" class="btn btn-primary">Create Page</button>
                         </div>
                         <div id="websiteEditor" class="hidden">
@@ -257,10 +269,18 @@
                             <div class="card">
                                 <h3>Branding</h3>
                                 <input type="text" id="webName" placeholder="Business Name">
+                                <div class="grid-2">
+                                    <div class="form-group"><label>Logo</label><input type="file" id="webLogo"></div>
+                                    <div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div>
+                                </div>
+                                <select id="webNavStyle"><option value="1">Style 1: Centered</option><option value="2">Style 2: Left</option></select>
                                 <h3>Content</h3>
-                                <textarea id="webAbout" placeholder="About Us content..."></textarea>
-                                <textarea id="webWhy" placeholder="Why Choose Us (One point per line)..."></textarea>
-                                <h3>Contact</h3>
+                                <input type="text" id="webHeroTitle" placeholder="Hero Title">
+                                <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
+                                <textarea id="webAbout" placeholder="About Us..."></textarea>
+                                <textarea id="webWhy" placeholder="Why Choose Us..."></textarea>
+                                <h3>Media</h3>
+                                <input type="file" id="webGallery" multiple>
                                 <input type="text" id="webFb" placeholder="Facebook Page Link">
                                 <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update</button>
                             </div>
@@ -279,7 +299,7 @@
                         <div id="buyerGrid" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- G. BUSINESS DIRECTORY -->
+                    <!-- G. DIRECTORY -->
                     <div id="tabDirectory" class="dash-tab">
                         <h2>Business Directory</h2>
                         <div class="tabs-header">
@@ -296,25 +316,76 @@
                         <div id="sellersGrid" class="connect-grid"></div>
                     </div>
 
-                    <!-- H. SOCIAL CONNECT FEED -->
+                    <!-- H. SOCIAL CONNECT (NEW LOGIC) -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Social Connect</h2>
-                        <div class="card">
-                            <form id="formPostFeed">
-                                <textarea id="feedText" class="full-width" rows="3" placeholder="Share an update or special offer..." required></textarea>
-                                <input type="file" id="feedImage" accept="image/*" class="mt-2">
-                                <button type="submit" class="btn btn-primary mt-2">Post Update</button>
-                            </form>
+                        
+                        <!-- Social Profile Lock -->
+                        <div id="socialLockScreen" class="lock-overlay hidden">
+                            <i class="fa-solid fa-user-shield text-primary" style="font-size:3rem;"></i>
+                            <h3>Setup Social Profile</h3>
+                            <p>To ensure trust in our business community, you must use your <strong>Real Name</strong> and <strong>Real Photo</strong>.</p>
+                            <div class="card mt-4" style="max-width:400px; margin:20px auto;">
+                                <input type="text" id="socialRealName" placeholder="Your Real Name" class="mb-2">
+                                <label>Real Photo</label>
+                                <input type="file" id="socialRealPhoto" class="mb-2">
+                                <button id="btnUnlockSocial" class="btn btn-primary full-width">Join Community</button>
+                            </div>
                         </div>
-                        <div id="feedStream" class="feed-grid">
-                            <!-- Posts loaded here -->
+
+                        <!-- Social Feed -->
+                        <div id="socialFeedArea" class="hidden">
+                            <div class="card">
+                                <h3>Post Update</h3>
+                                <form id="formPostFeed">
+                                    <textarea id="feedText" class="full-width" rows="3" placeholder="Share an update, offer, or news..." required></textarea>
+                                    <input type="file" id="feedImage" accept="image/*" class="mt-2">
+                                    <button type="submit" class="btn btn-primary mt-2">Post</button>
+                                </form>
+                            </div>
+                            <div id="feedStream" class="feed-grid"></div>
                         </div>
                     </div>
 
+                    <!-- I. PROMOTE (NEW MONEY MAKING) -->
+                    <div id="tabPromote" class="dash-tab">
+                        <h2>Promote Your Business</h2>
+                        <div class="grid-2">
+                            <div class="card">
+                                <h3>Create Advertisement</h3>
+                                <p class="text-secondary text-sm mb-2">Your ad will appear as a popup on relevant dashboards and pages.</p>
+                                <div class="form-group"><label>Ad Image (Landscape)</label><input type="file" id="adImage"></div>
+                                <div class="form-group"><label>Target Audience</label>
+                                    <select id="adTarget">
+                                        <option value="all">All Users</option>
+                                        <option value="seller">Vehicle Sellers</option>
+                                        <option value="buyer">Buyers</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Destination URL</label><input type="url" id="adUrl" placeholder="https://..."></div>
+                                <div class="alert-box warning">Price: Rs. 5000 / Month</div>
+                            </div>
+                            <div class="card">
+                                <h3>Payment Details</h3>
+                                <p>Bank: <strong>Commercial Bank</strong><br>Branch: <strong>Homagama</strong><br>Acc Name: <strong>COLOMBAGE SD</strong><br>Acc No: <strong>8750053306</strong></p>
+                                <hr class="mt-4 mb-4">
+                                <div class="form-group"><label>Upload Receipt / Screenshot</label><input type="file" id="adReceipt"></div>
+                                <button id="btnSubmitAd" class="btn btn-success full-width">Submit for Review</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>My Ads Status</h3>
+                            <div id="myAdsList"></div>
+                        </div>
+                    </div>
+
+                    <!-- ADMIN -->
                     <div id="tabAdmin" class="dash-tab">
-                        <h2>Admin</h2>
-                        <input type="file" id="adminAdImg">
-                        <button id="btnUploadAd" class="btn btn-primary mt-2">Upload Ad</button>
+                        <h2>Admin Panel</h2>
+                        <div class="tabs-header">
+                            <button class="chip active" onclick="app.loadAdminAds()">Ad Reviews</button>
+                        </div>
+                        <div id="adminAdList" class="connect-grid"></div>
                     </div>
 
                 </main>
@@ -330,54 +401,37 @@
             <div class="wrap nav">
                 <div class="brand">
                     <div class="logo">AM</div>
-                    <div>
-                        <div class="site-name" id="genSiteName">AutoMarket</div>
-                        <div class="site-tag" id="genSiteCity">Buy · Sell · Trade</div>
-                    </div>
+                    <div><div class="site-name" id="genSiteName"></div><div class="site-tag" id="genSiteCity"></div></div>
                 </div>
                 <nav><ul><li><a href="#vehicles">Vehicles</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav>
             </div>
         </header>
-
         <main class="wrap">
             <section class="hero">
                 <div class="hero-card">
-                    <h1>Find your next ride — fast & trusted</h1>
-                    <p>Browse top-quality cars and contact us instantly via WhatsApp.</p>
-                    <div class="search-inline">
-                        <input id="genSearch" placeholder="Search our inventory...">
-                        <button onclick="siteRenderer.filterGenGrid()">Search</button>
-                    </div>
+                    <h1 id="genHeroTitle"></h1>
+                    <p id="genHeroSub"></p>
+                    <div class="search-inline"><input id="genSearch" placeholder="Search inventory..."><button onclick="siteRenderer.filterGenGrid()">Search</button></div>
                 </div>
             </section>
-
             <section id="vehicles" class="vehicles">
-                <div class="flex-head"><h2>Our Offerings</h2><small>Latest Inventory</small></div>
+                <div class="flex-head"><h2>Inventory</h2></div>
                 <div id="genGrid" class="vehicles-grid"></div>
             </section>
-
             <section id="about" class="about">
                 <div class="grid-2">
                     <div class="hero-card"><h3>About Us</h3><p id="genAboutContent"></p></div>
-                    <div class="hero-card"><h3>Why Choose Us</h3><div id="genWhyGrid"></div></div>
+                    <div class="hero-card"><h3>Why Choose Us</h3><p id="genWhyContent" style="white-space: pre-line;"></p></div>
                 </div>
             </section>
-
             <section id="contact" class="contact">
                 <h3>Contact Us</h3>
                 <div class="grid-2">
-                    <div class="hero-card">
-                        <h4>Visit Us</h4>
-                        <p id="genContactAddress" class="text-muted"></p>
-                        <h4 class="mt-4">Call Us</h4>
-                        <p id="genContactPhone" class="text-muted"></p>
-                    </div>
+                    <div class="hero-card"><h4>Visit Us</h4><p id="genContactAddress" class="text-muted"></p><h4 class="mt-4">Call Us</h4><p id="genContactPhone" class="text-muted"></p></div>
                 </div>
             </section>
-
             <footer>© 2025 Powered by VehicleBuilder</footer>
         </main>
-
         <a id="floatWhatsapp" class="whatsapp-float" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
     </div>
 
