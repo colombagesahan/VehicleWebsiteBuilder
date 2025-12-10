@@ -45,9 +45,9 @@
         </div>
     </div>
 
-    <!-- 2. PUBLIC SITE VEHICLE MODAL -->
+    <!-- 2. PUBLIC SITE VEHICLE MODAL (Dark Theme) -->
     <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
-        <div class="modal-content large-modal">
+        <div class="modal-content large-modal dark-modal-theme">
             <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
             <div id="siteModalContent"></div>
         </div>
@@ -193,14 +193,11 @@
                     
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
-                        <!-- SEARCH BAR -->
                         <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2" onkeyup="app.searchVehicles()">
-                        
                         <div class="alert-box" style="font-size:0.9rem; margin-top:10px;">
                             <i class="fa-solid fa-lightbulb text-primary"></i> 
-                            <strong>Tip:</strong> Use the "Hide" button to temporarily remove a vehicle from your site without deleting it.
+                            <strong>Tip:</strong> Use the "Show" button to display your vehicle on your page again.
                         </div>
-                        
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
@@ -243,14 +240,14 @@
                         <div id="myServicesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- E. COMMON: WEBSITE BUILDER -->
+                    <!-- E. COMMON: PAGE BUILDER -->
                     <div id="tabWebsite" class="dash-tab">
-                        <h2>Website Builder</h2>
+                        <h2>Page Builder</h2>
                         <div id="websiteLockScreen" class="lock-overlay">
-                            <h3>Setup Your Business</h3>
+                            <h3>Setup Your Business Page</h3>
                             <p>Update your Profile "City" first to create your unique URL.</p>
                             <input type="text" id="initSaleName" placeholder="Business Name">
-                            <button id="btnUnlockWebsite" class="btn btn-primary">Create Website</button>
+                            <button id="btnUnlockWebsite" class="btn btn-primary">Create Page</button>
                         </div>
                         <div id="websiteEditor" class="hidden">
                             <div class="info-banner mb-2">
@@ -260,20 +257,12 @@
                             <div class="card">
                                 <h3>Branding</h3>
                                 <input type="text" id="webName" placeholder="Business Name">
-                                <div class="grid-2">
-                                    <div class="form-group"><label>Logo</label><input type="file" id="webLogo"></div>
-                                    <div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div>
-                                </div>
-                                <select id="webNavStyle"><option value="1">Style 1: Centered</option><option value="2">Style 2: Left</option></select>
                                 <h3>Content</h3>
-                                <input type="text" id="webHeroTitle" placeholder="Hero Title">
-                                <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
                                 <textarea id="webAbout" placeholder="About Us content..."></textarea>
-                                <textarea id="webWhy" placeholder="Why Choose Us..."></textarea>
-                                <h3>Media</h3>
-                                <input type="file" id="webGallery" multiple>
+                                <textarea id="webWhy" placeholder="Why Choose Us (One point per line)..."></textarea>
+                                <h3>Contact</h3>
                                 <input type="text" id="webFb" placeholder="Facebook Page Link">
-                                <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update Link</button>
+                                <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update</button>
                             </div>
                         </div>
                     </div>
@@ -290,8 +279,8 @@
                         <div id="buyerGrid" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- G. CONNECT & ADMIN -->
-                    <div id="tabConnect" class="dash-tab">
+                    <!-- G. BUSINESS DIRECTORY -->
+                    <div id="tabDirectory" class="dash-tab">
                         <h2>Business Directory</h2>
                         <div class="tabs-header">
                             <button class="chip active" onclick="app.connectFilter('all')">All</button>
@@ -306,6 +295,22 @@
                         </div>
                         <div id="sellersGrid" class="connect-grid"></div>
                     </div>
+
+                    <!-- H. SOCIAL CONNECT FEED -->
+                    <div id="tabConnect" class="dash-tab">
+                        <h2>Social Connect</h2>
+                        <div class="card">
+                            <form id="formPostFeed">
+                                <textarea id="feedText" class="full-width" rows="3" placeholder="Share an update or special offer..." required></textarea>
+                                <input type="file" id="feedImage" accept="image/*" class="mt-2">
+                                <button type="submit" class="btn btn-primary mt-2">Post Update</button>
+                            </form>
+                        </div>
+                        <div id="feedStream" class="feed-grid">
+                            <!-- Posts loaded here -->
+                        </div>
+                    </div>
+
                     <div id="tabAdmin" class="dash-tab">
                         <h2>Admin</h2>
                         <input type="file" id="adminAdImg">
@@ -318,47 +323,62 @@
     </div>
 
     <!-- =======================================================
-         GENERATED WEBSITE
+         GENERATED WEBSITE (AUTOMARKET DARK THEME)
     ======================================================== -->
-    <div id="generatedSite" class="hidden">
-        <header id="genHeader"></header>
-        <section id="genHero" class="gen-hero">
-            <div class="hero-overlay"></div>
-            <div class="hero-content scroll-anim">
-                <h1 id="genHeroTitle"></h1>
-                <p id="genHeroSub"></p>
-                <a href="#genItems" class="hero-btn">Browse Collection</a>
-            </div>
-        </section>
-        <section id="genItems" class="gen-section">
-            <h2 class="sec-title scroll-anim">Latest Inventory</h2>
-            <div id="genGrid" class="vehicle-grid scroll-anim"></div>
-        </section>
-        <section id="genAbout" class="gen-section bg-light">
-            <div class="container-split">
-                <div class="text-block scroll-anim"><h2 class="sec-title-left">About Us</h2><div id="genAboutContent"></div></div>
-                <div class="image-block scroll-anim"><img id="genAboutImg" src="https://via.placeholder.com/800"></div>
-            </div>
-        </section>
-        <section id="genWhy" class="gen-section bg-dark text-white">
-            <h2 class="sec-title text-white scroll-anim">Why Choose Us</h2>
-            <div id="genWhyGrid" class="features-grid scroll-anim"></div>
-        </section>
-        <section id="genGallery" class="gen-section">
-            <h2 class="sec-title scroll-anim">Gallery</h2>
-            <div id="genGalleryTrack" class="gallery-scroller scroll-anim"></div>
-        </section>
-        <section id="genContact" class="gen-section footer-section">
-            <h2 class="sec-title text-white scroll-anim">Contact Us</h2>
-            <div class="contact-layout scroll-anim">
-                <div id="genContactInfo" class="contact-details"></div>
-                <div id="genMap" class="map-box">
-                    <iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=Sri%20Lanka&t=&z=13&ie=UTF8&iwloc=&output=embed" allowfullscreen></iframe>
+    <div id="generatedSite" class="hidden dark-theme-site">
+        <header class="gen-header">
+            <div class="wrap nav">
+                <div class="brand">
+                    <div class="logo">AM</div>
+                    <div>
+                        <div class="site-name" id="genSiteName">AutoMarket</div>
+                        <div class="site-tag" id="genSiteCity">Buy · Sell · Trade</div>
+                    </div>
                 </div>
+                <nav><ul><li><a href="#vehicles">Vehicles</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav>
             </div>
-            <div id="genFooter" class="footer-bottom"></div>
-        </section>
-        <a href="#" id="floatWhatsapp" class="float-wa hidden" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+        </header>
+
+        <main class="wrap">
+            <section class="hero">
+                <div class="hero-card">
+                    <h1>Find your next ride — fast & trusted</h1>
+                    <p>Browse top-quality cars and contact us instantly via WhatsApp.</p>
+                    <div class="search-inline">
+                        <input id="genSearch" placeholder="Search our inventory...">
+                        <button onclick="siteRenderer.filterGenGrid()">Search</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="vehicles" class="vehicles">
+                <div class="flex-head"><h2>Our Offerings</h2><small>Latest Inventory</small></div>
+                <div id="genGrid" class="vehicles-grid"></div>
+            </section>
+
+            <section id="about" class="about">
+                <div class="grid-2">
+                    <div class="hero-card"><h3>About Us</h3><p id="genAboutContent"></p></div>
+                    <div class="hero-card"><h3>Why Choose Us</h3><div id="genWhyGrid"></div></div>
+                </div>
+            </section>
+
+            <section id="contact" class="contact">
+                <h3>Contact Us</h3>
+                <div class="grid-2">
+                    <div class="hero-card">
+                        <h4>Visit Us</h4>
+                        <p id="genContactAddress" class="text-muted"></p>
+                        <h4 class="mt-4">Call Us</h4>
+                        <p id="genContactPhone" class="text-muted"></p>
+                    </div>
+                </div>
+            </section>
+
+            <footer>© 2025 Powered by VehicleBuilder</footer>
+        </main>
+
+        <a id="floatWhatsapp" class="whatsapp-float" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
