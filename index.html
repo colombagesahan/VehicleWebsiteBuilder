@@ -3,24 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VehicleBuilder Platform</title>
+    <title>VehicleBuilder Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- LOADERS -->
-    <div id="initLoader" class="init-loader"><div class="spinner"></div><p>Loading System...</p></div>
+    <!-- SYSTEM LOADERS -->
+    <div id="initLoader" class="init-loader"><div class="spinner"></div><p>Initializing Platform...</p></div>
     <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loaderText">Processing...</p></div>
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- 1. INTERNAL CHAT MODAL (New System) -->
+    <!-- 1. FULL EDIT VEHICLE MODAL -->
+    <div id="editVehicleModal" class="modal-overlay hidden">
+        <div class="modal-content large-modal-content">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2>Edit Vehicle Details</h2>
+                <button class="close-modal" onclick="ui.closeModal()" style="position:static;">&times;</button>
+            </div>
+            <form id="formEditVehicle">
+                <input type="hidden" id="editVId">
+                <div class="grid-2">
+                    <div class="form-group"><label>Category</label><select id="editVCat"></select></div>
+                    <div class="form-group"><label>Brand</label><input type="text" id="editVBrand" required></div>
+                    <div class="form-group"><label>Model</label><input type="text" id="editVModel" required></div>
+                    <div class="form-group"><label>Trim</label><input type="text" id="editVTrim"></div>
+                    <div class="form-group"><label>Year</label><input type="number" id="editVYear" required></div>
+                    <div class="form-group"><label>Condition</label><input type="text" id="editVCond"></div>
+                    <div class="form-group"><label>Transmission</label><select id="editVTrans"><option>Automatic</option><option>Manual</option><option>Tiptronic</option></select></div>
+                    <div class="form-group"><label>Fuel</label><select id="editVFuel"><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></div>
+                    <div class="form-group"><label>Price (Rs)</label><input type="number" id="editVPrice" required></div>
+                    <div class="form-group"><label>Mileage (km)</label><input type="number" id="editVMileage" required></div>
+                    <div class="form-group"><label>Body</label><input type="text" id="editVBody"></div>
+                    <div class="form-group"><label>Engine</label><input type="text" id="editVEngine"></div>
+                    <div class="form-group"><label>Book</label><select id="editVBook"><option>Original Book</option><option>Duplicate Book</option></select></div>
+                    <div class="form-group"><label>Finance</label><select id="editVFinance"><option value="no">No Finance</option><option value="yes">Has Finance</option></select></div>
+                </div>
+                <div class="form-group"><label>Description</label><textarea id="editVDesc" rows="5"></textarea></div>
+                <div class="form-group"><label>YouTube Link</label><input type="url" id="editVYoutube"></div>
+                <button type="submit" class="btn btn-primary full-width">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. PUBLIC SITE VEHICLE MODAL (Dark Theme) -->
+    <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
+        <div class="modal-content large-modal dark-modal-theme">
+            <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
+            <div id="siteModalContent"></div>
+        </div>
+    </div>
+
+    <!-- 3. FULLSCREEN IMAGE LIGHTBOX -->
+    <div id="lightboxModal" class="lightbox-overlay hidden">
+        <span class="close-lightbox" onclick="document.getElementById('lightboxModal').classList.add('hidden')">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
+
+    <!-- 4. ADMIN & FB MODALS -->
+    <div id="adModal" class="modal-overlay hidden">
+        <div class="modal-content ad-content">
+            <button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button>
+            <div id="adContentArea"></div>
+        </div>
+    </div>
+    <div id="fbModal" class="modal-overlay hidden">
+        <div class="modal-content fb-content text-center">
+            <button class="close-modal" onclick="document.getElementById('fbModal').classList.add('hidden')">&times;</button>
+            <i class="fa-brands fa-facebook text-primary" style="font-size:3rem;"></i>
+            <h3>Like us on Facebook!</h3>
+            <div id="fbLinkArea" class="mt-4"></div>
+        </div>
+    </div>
+
+    <!-- 5. INTERNAL CHAT MODAL -->
     <div id="chatModal" class="modal-overlay hidden">
         <div class="modal-content chat-content">
             <div class="chat-header">
                 <h3 id="chatUserName">Chat</h3>
-                <button class="close-modal" onclick="document.getElementById('chatModal').classList.add('hidden')">&times;</button>
+                <button class="close-modal" onclick="document.getElementById('chatModal').classList.add('hidden')" style="position:static;">&times;</button>
             </div>
             <div id="chatHistory" class="chat-history"></div>
             <form id="chatForm" class="chat-input-area">
@@ -31,46 +93,8 @@
         </div>
     </div>
 
-    <!-- 2. EDIT VEHICLE MODAL -->
-    <div id="editVehicleModal" class="modal-overlay hidden">
-        <div class="modal-content large-modal-content">
-            <button class="close-modal" onclick="ui.closeModal()">&times;</button>
-            <h2>Edit Details</h2>
-            <form id="formEditVehicle">
-                <input type="hidden" id="editVId">
-                <div class="grid-2">
-                    <div class="form-group"><label>Brand</label><input type="text" id="editVBrand" required></div>
-                    <div class="form-group"><label>Model</label><input type="text" id="editVModel" required></div>
-                    <div class="form-group"><label>Price (Rs)</label><input type="number" id="editVPrice" required></div>
-                    <div class="form-group"><label>Mileage</label><input type="number" id="editVMileage" required></div>
-                    <div class="form-group"><label>Condition</label><input type="text" id="editVCond"></div>
-                    <div class="form-group"><label>Youtube ID</label><input type="text" id="editVYoutube"></div>
-                </div>
-                <div class="form-group"><label>Description</label><textarea id="editVDesc" rows="4"></textarea></div>
-                <button type="submit" class="btn btn-primary full-width">Update</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 3. SITE DETAIL MODAL (Responsive Slider) -->
-    <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
-        <div class="modal-content large-modal dark-modal-theme">
-            <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
-            <div id="siteModalContent"></div>
-        </div>
-    </div>
-
-    <!-- 4. LIGHTBOX -->
-    <div id="lightboxModal" class="lightbox-overlay hidden">
-        <span class="close-lightbox" onclick="document.getElementById('lightboxModal').classList.add('hidden')">&times;</span>
-        <img id="lightboxImg" src="">
-    </div>
-
-    <!-- 5. ADS MODAL -->
-    <div id="adModal" class="modal-overlay hidden"><div class="modal-content ad-content"><button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button><div id="adContentArea"></div></div></div>
-
     <!-- =======================================================
-         DASHBOARD
+         PLATFORM DASHBOARD
     ======================================================== -->
     <div id="platformApp">
         <nav class="navbar">
@@ -81,29 +105,33 @@
             </div>
         </nav>
 
+        <!-- LANDING -->
         <section id="viewLanding" class="view">
             <div class="hero">
-                <h1 id="landingTitle">Welcome</h1>
-                <p>Login to manage your business.</p>
-                <button class="btn btn-primary btn-lg" onclick="ui.showView('viewAuth')">Login / Register</button>
-                <br><br><a href="home.html" style="text-decoration:underline;color:var(--primary)">&larr; Back</a>
+                <h1 id="landingTitle">Welcome to the Platform</h1>
+                <p>Please Sign In or Create an Account to continue.</p>
+                <button class="btn btn-primary btn-lg" onclick="ui.showView('viewAuth')">Sign In / Register</button>
+                <br><br>
+                <a href="home.html" style="text-decoration: underline; color: #2563eb;">&larr; Back to Role Selection</a>
             </div>
         </section>
 
+        <!-- AUTH -->
         <section id="viewAuth" class="view hidden">
             <div class="auth-container">
-                <h2>Access Dashboard</h2>
+                <h2>Account Access</h2>
                 <form id="authForm">
-                    <input type="email" id="authEmail" placeholder="Email" required>
-                    <input type="password" id="authPass" placeholder="Password" required>
+                    <div class="form-group"><label>Email</label><input type="email" id="authEmail" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="authPass" required></div>
                     <div class="btn-group">
                         <button type="button" id="btnLogin" class="btn btn-primary">Login</button>
-                        <button type="button" id="btnSignup" class="btn btn-secondary">Register</button>
+                        <button type="button" id="btnSignup" class="btn btn-secondary">Create Account</button>
                     </div>
                 </form>
             </div>
         </section>
 
+        <!-- DASHBOARD -->
         <section id="viewDashboard" class="view hidden">
             <div class="dash-layout">
                 <aside class="dash-sidebar">
@@ -112,37 +140,58 @@
                         <span id="dashEmail">User</span>
                         <span id="dashRole" class="badge">Role</span>
                     </div>
-                    <nav class="side-nav" id="dynamicSidebar"></nav>
+                    <nav class="side-nav" id="dynamicSidebar">
+                        <!-- JS Injected -->
+                    </nav>
                 </aside>
 
                 <main class="dash-content">
                     
-                    <!-- PROFILE -->
+                    <!-- A. COMMON: PROFILE -->
                     <div id="tabProfile" class="dash-tab active">
                         <h2>Profile Settings</h2>
                         <div class="card">
                             <div class="alert-box warning" id="profileNotice">
-                                <i class="fa-solid fa-lock"></i> <strong>You must complete your profile to unlock your dashboard.</strong>
+                                <i class="fa-solid fa-lock"></i> 
+                                <strong>You must complete your profile to unlock your dashboard.</strong>
                             </div>
                             <fieldset id="profFields">
-                                <div class="form-group"><label>Profile Photo</label><input type="file" id="profPhoto" accept="image/*"></div>
-                                <div class="grid-2">
-                                    <div class="form-group"><label>Phone (No 0)</label><input type="tel" id="profPhone" placeholder="771234567" required></div>
-                                    <div class="form-group"><label>WhatsApp (No 0)</label><input type="tel" id="profWhatsapp" placeholder="771234567" required></div>
+                                <div class="form-group">
+                                    <label>Profile Photo (Required)</label>
+                                    <input type="file" id="profPhoto" accept="image/*">
                                 </div>
                                 <div class="grid-2">
-                                    <div class="form-group"><label>City (Required)</label><input type="text" id="profCity" placeholder="e.g. Malabe" required></div>
-                                    <div class="form-group"><label>Address</label><input type="text" id="profAddress" required></div>
+                                    <div class="form-group">
+                                        <label>Phone Number (Required)</label>
+                                        <input type="tel" id="profPhone" placeholder="771234567" required>
+                                        <small class="text-secondary text-primary font-bold">Please enter without '0'. We auto-add +94.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>WhatsApp Number (Required)</label>
+                                        <input type="tel" id="profWhatsapp" placeholder="771234567" required>
+                                        <small class="text-secondary text-primary font-bold">Please enter without '0'. We auto-add +94.</small>
+                                    </div>
+                                </div>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>City / Town (Required)</label>
+                                        <input type="text" id="profCity" placeholder="e.g. Athurugiriya" required>
+                                        <small class="text-secondary text-primary">Adding correct city boosts SEO and Sales.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Address (Required)</label>
+                                        <input type="text" id="profAddress" placeholder="Full Address" required>
+                                    </div>
                                 </div>
                             </fieldset>
                             <div class="btn-group">
                                 <button id="saveProfile" class="btn btn-primary">Save Profile</button>
-                                <button id="editProfileBtn" class="btn btn-outline hidden">Edit</button>
+                                <button id="editProfileBtn" class="btn btn-outline hidden">Edit Profile</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- ADD VEHICLE -->
+                    <!-- B. ROLE: VEHICLE SELLER -->
                     <div id="tabAddVehicle" class="dash-tab">
                         <h2>Add Vehicle</h2>
                         <form id="formAddVehicle" class="card">
@@ -153,7 +202,7 @@
                                 <input type="text" id="vTrim" placeholder="Trim">
                                 <input type="number" id="vYear" placeholder="Year" required>
                                 <input type="text" id="vCond" placeholder="Condition">
-                                <select id="vTrans"><option>Automatic</option><option>Manual</option></select>
+                                <select id="vTrans"><option>Automatic</option><option>Manual</option><option>Tiptronic</option></select>
                                 <select id="vFuel"><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select>
                                 <input type="number" id="vPrice" placeholder="Price (Rs)" required>
                                 <input type="number" id="vMileage" placeholder="Mileage (km)" required>
@@ -162,59 +211,115 @@
                                 <select id="vBook"><option>Original Book</option><option>Duplicate Book</option></select>
                                 <select id="vFinance"><option value="no">No Finance</option><option value="yes">Has Finance</option></select>
                             </div>
-                            <textarea id="vDesc" placeholder="Description" maxlength="2000"></textarea>
+                            <textarea id="vDesc" placeholder="Description (Max 500 words)" maxlength="2500"></textarea>
                             <input type="url" id="vYoutube" placeholder="YouTube Video Link">
+                            
                             <div class="form-group mt-4">
                                 <label>Upload Photos (Max 10)</label>
-                                <input type="file" id="vPhotosInput" multiple accept="image/*">
+                                <input type="file" id="vPhotosInput" multiple accept="image/*" class="mb-2">
                                 <div id="vPhotoStaging" class="img-staging-grid"></div>
                             </div>
+
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Vehicle</button>
                         </form>
                     </div>
-
-                    <!-- MY INVENTORY -->
+                    
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
                         <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2" onkeyup="app.searchVehicles()">
-                        <div id="inventoryTip" class="alert-box" style="font-size:0.9rem;"></div>
+                        
+                        <div id="inventoryTip" class="alert-box" style="font-size:0.9rem; margin-top:10px;"></div>
+                        
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- OTHER ROLES -->
-                    <div id="tabAddPart" class="dash-tab"><h2>Add Part</h2><form id="formAddPart" class="card"><div class="grid-2"><input id="pName" placeholder="Name" required><input id="pBrand" placeholder="Brand"><input id="pModel" placeholder="Fits Model"><input id="pPrice" type="number" placeholder="Price" required></div><textarea id="pDesc"></textarea><input type="file" id="pPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish</button></form></div>
-                    <div id="tabMyParts" class="dash-tab"><h2>My Parts</h2><div id="myPartsList" class="vehicle-grid"></div></div>
-                    <div id="tabAddService" class="dash-tab"><h2>Add Service</h2><form id="formAddService" class="card"><div class="grid-2"><input id="sName" placeholder="Name" required><input id="sPrice" type="number" placeholder="Price"></div><textarea id="sDesc"></textarea><input type="file" id="sPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish</button></form></div>
-                    <div id="tabMyServices" class="dash-tab"><h2>My Services</h2><div id="myServicesList" class="vehicle-grid"></div></div>
+                    <!-- C. ROLE: PARTS SELLER -->
+                    <div id="tabAddPart" class="dash-tab">
+                        <h2>Add Auto Part</h2>
+                        <form id="formAddPart" class="card">
+                            <div class="grid-2">
+                                <input type="text" id="pName" placeholder="Part Name" required>
+                                <input type="text" id="pBrand" placeholder="Brand">
+                                <input type="text" id="pModel" placeholder="Fits Model">
+                                <select id="pCondition"><option>Brand New</option><option>Reconditioned</option><option>Used</option></select>
+                                <input type="number" id="pPrice" placeholder="Price (Rs)" required>
+                            </div>
+                            <textarea id="pDesc" placeholder="Description"></textarea>
+                            <input type="file" id="pPhotos" multiple>
+                            <button type="submit" class="btn btn-primary full-width mt-4">Publish Part</button>
+                        </form>
+                    </div>
+                    <div id="tabMyParts" class="dash-tab">
+                        <h2>My Products</h2>
+                        <div id="myPartsList" class="vehicle-grid"></div>
+                    </div>
 
-                    <!-- PAGE BUILDER (Auto Gen) -->
+                    <!-- D. ROLE: SERVICE / FINANCE -->
+                    <div id="tabAddService" class="dash-tab">
+                        <h2>Add Service / Package</h2>
+                        <form id="formAddService" class="card">
+                            <div class="grid-2">
+                                <input type="text" id="sName" placeholder="Service Name" required>
+                                <input type="number" id="sPrice" placeholder="Starting Price (Optional)">
+                            </div>
+                            <textarea id="sDesc" placeholder="Details..." required></textarea>
+                            <input type="file" id="sPhotos" multiple>
+                            <button type="submit" class="btn btn-primary full-width mt-4">Publish Service</button>
+                        </form>
+                    </div>
+                    <div id="tabMyServices" class="dash-tab">
+                        <h2>My Services</h2>
+                        <div id="myServicesList" class="vehicle-grid"></div>
+                    </div>
+
+                    <!-- E. COMMON: PAGE BUILDER -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Page Builder</h2>
                         <div id="websiteLockScreen" class="lock-overlay">
-                            <h3>Setup Business Page</h3>
-                            <p>We use your Profile City & Business Name to create a unique URL.</p>
+                            <h3>Setup Your Business Page</h3>
+                            <p>Update your Profile "City" first to create your unique URL.</p>
                             <input type="text" id="initSaleName" placeholder="Business Name (e.g. Sahan Motors)">
-                            <button id="btnUnlockWebsite" class="btn btn-primary">Create Automatic Page</button>
+                            <button id="btnUnlockWebsite" class="btn btn-primary">Create Page</button>
                         </div>
                         <div id="websiteEditor" class="hidden">
                             <div class="info-banner mb-2">
-                                <strong>Your Page URL:</strong><br>
+                                <strong>Your Unique Page Link:</strong><br>
                                 <a href="#" id="mySiteLink" target="_blank" class="font-bold text-lg">...</a>
                             </div>
-                            <div class="card text-center">
-                                <i class="fa-solid fa-wand-magic-sparkles text-primary" style="font-size:3rem;margin-bottom:15px;"></i>
-                                <h3>Page Active</h3>
-                                <p>Your page is automatically generated using your <strong>Inventory</strong> and <strong>Profile Details</strong>.</p>
-                                <p class="text-secondary text-sm">Every time you add a vehicle, it instantly appears on your page.</p>
-                                <hr class="mt-4 mb-4">
-                                <label>Update Business Name (Optional)</label>
-                                <input type="text" id="webName" class="mb-2">
-                                <button id="saveWebsite" class="btn btn-success">Update Name</button>
+                            <div class="card">
+                                <h3>Branding</h3>
+                                <input type="text" id="webName" placeholder="Business Name">
+                                <div class="grid-2">
+                                    <div class="form-group"><label>Logo</label><input type="file" id="webLogo"></div>
+                                    <div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div>
+                                </div>
+                                <select id="webNavStyle"><option value="1">Style 1: Centered</option><option value="2">Style 2: Left</option></select>
+                                <h3>Content</h3>
+                                <input type="text" id="webHeroTitle" placeholder="Hero Title">
+                                <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
+                                <textarea id="webAbout" placeholder="About Us content..."></textarea>
+                                <textarea id="webWhy" placeholder="Why Choose Us..."></textarea>
+                                <h3>Media</h3>
+                                <input type="file" id="webGallery" multiple>
+                                <input type="text" id="webFb" placeholder="Facebook Page Link">
+                                <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- DIRECTORY -->
+                    <!-- F. BUYER BROWSE -->
+                    <div id="tabBuyerBrowse" class="dash-tab">
+                        <h2>Marketplace</h2>
+                        <div class="tabs-header">
+                            <button class="chip active" onclick="app.buyerFilter('vehicles')">Vehicles</button>
+                            <button class="chip" onclick="app.buyerFilter('parts')">Parts</button>
+                            <button class="chip" onclick="app.buyerFilter('services')">Services</button>
+                        </div>
+                        <input type="text" id="buyerSearch" placeholder="Search..." class="full-width mt-2 mb-2">
+                        <div id="buyerGrid" class="vehicle-grid"></div>
+                    </div>
+
+                    <!-- G. DIRECTORY -->
                     <div id="tabDirectory" class="dash-tab">
                         <h2>Business Directory</h2>
                         <div class="tabs-header">
@@ -222,6 +327,7 @@
                             <button class="chip" onclick="app.connectFilter('seller')">Car Sales</button>
                             <button class="chip" onclick="app.connectFilter('parts')">Spare Parts</button>
                             <button class="chip" onclick="app.connectFilter('service')">Services</button>
+                            <button class="chip" onclick="app.connectFilter('finance')">Finance</button>
                         </div>
                         <div class="grid-2 mb-2">
                             <input type="text" id="connectSearch" placeholder="Search Name...">
@@ -230,9 +336,10 @@
                         <div id="sellersGrid" class="connect-grid"></div>
                     </div>
 
-                    <!-- SOCIAL CONNECT -->
+                    <!-- H. SOCIAL CONNECT -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Social Connect</h2>
+                        
                         <div id="socialLockScreen" class="lock-overlay hidden">
                             <i class="fa-solid fa-user-shield text-primary" style="font-size:3rem;"></i>
                             <h3>Setup Social Profile</h3>
@@ -241,20 +348,25 @@
                             <input type="file" id="socialRealPhoto" class="mt-2">
                             <button id="btnUnlockSocial" class="btn btn-primary mt-2">Join</button>
                         </div>
+
                         <div id="socialFeedArea" class="hidden">
                             <div class="tabs-header">
                                 <button class="chip active" onclick="app.showFeed()">Feed</button>
                                 <button class="chip" onclick="app.showPeople()">People</button>
                             </div>
                             <div id="postCreator" class="card">
-                                <form id="formPostFeed"><textarea id="feedText" rows="2" class="full-width" placeholder="Share update..."></textarea><input type="file" id="feedImage" class="mt-2"><button class="btn btn-primary mt-2">Post</button></form>
+                                <form id="formPostFeed">
+                                    <textarea id="feedText" class="full-width" rows="2" placeholder="Share update..."></textarea>
+                                    <input type="file" id="feedImage" class="mt-2">
+                                    <button class="btn btn-primary mt-2">Post</button>
+                                </form>
                             </div>
                             <div id="feedStream" class="feed-grid"></div>
                             <div id="peopleStream" class="hidden connect-grid"></div>
                         </div>
                     </div>
 
-                    <!-- PROMOTE -->
+                    <!-- I. PROMOTE -->
                     <div id="tabPromote" class="dash-tab">
                         <h2>Promote Your Business</h2>
                         <div class="grid-2">
@@ -275,21 +387,26 @@
                         <div class="card"><h3>My Ads</h3><div id="myAdsList"></div></div>
                     </div>
 
-                    <div id="tabAdmin" class="dash-tab"><h2>Admin</h2><div id="adminAdList" class="connect-grid"></div></div>
+                    <!-- ADMIN -->
+                    <div id="tabAdmin" class="dash-tab">
+                        <h2>Admin</h2>
+                        <div id="adminAdList" class="connect-grid"></div>
+                    </div>
+
                 </main>
             </div>
         </section>
     </div>
 
     <!-- =======================================================
-         GENERATED SITE (AUTOMARKET TEMPLATE)
+         GENERATED WEBSITE (AUTOMARKET DARK THEME)
     ======================================================== -->
-    <div id="generatedSite" class="hidden auto-market-theme">
-        <header>
+    <div id="generatedSite" class="hidden dark-theme-site">
+        <header class="gen-header">
             <div class="wrap nav">
                 <div class="brand">
                     <div class="logo">AM</div>
-                    <div><div id="genSiteName" style="font-weight:800"></div><div id="genSiteCity" style="font-size:0.8rem;color:#98a8b9"></div></div>
+                    <div><div class="site-name" id="genSiteName"></div><div class="site-tag" id="genSiteCity"></div></div>
                 </div>
                 <nav><ul><li><a href="#vehicles">Inventory</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav>
             </div>
@@ -297,26 +414,28 @@
         <main class="wrap">
             <section class="hero">
                 <div class="hero-card">
-                    <h1>Find your next ride</h1>
-                    <p>Browse high-quality vehicles from <span id="genOwnerName"></span>.</p>
+                    <h1 id="genHeroTitle"></h1>
+                    <p id="genHeroSub"></p>
+                    <div class="search-inline"><input id="genSearch" placeholder="Search inventory..."><button onclick="siteRenderer.filterGenGrid()">Search</button></div>
                 </div>
             </section>
             <section id="vehicles" class="vehicles">
-                <h2>Our Inventory</h2>
+                <div class="flex-head"><h2>Inventory</h2></div>
                 <div id="genGrid" class="vehicles-grid"></div>
             </section>
             <section id="about" class="about">
-                <h3>About Us</h3>
-                <div class="hero-card"><p>Welcome to <span id="genAboutName"></span>. We are a trusted vehicle dealer located in <span id="genAboutCity"></span>. We provide the best quality vehicles for the best price.</p></div>
-            </section>
-            <section id="contact" class="contact">
-                <h3>Contact</h3>
-                <div class="hero-card">
-                    <p><strong>Phone:</strong> <span id="genContactPhone"></span></p>
-                    <p><strong>Address:</strong> <span id="genContactAddress"></span></p>
+                <div class="grid-2">
+                    <div class="hero-card"><h3>About Us</h3><p id="genAboutContent"></p></div>
+                    <div class="hero-card"><h3>Why Choose Us</h3><p id="genWhyContent" style="white-space: pre-line;"></p></div>
                 </div>
             </section>
-            <footer>© 2025 AutoMarket Generator</footer>
+            <section id="contact" class="contact">
+                <h3>Contact Us</h3>
+                <div class="grid-2">
+                    <div class="hero-card"><h4>Visit Us</h4><p id="genContactAddress" class="text-muted"></p><h4 class="mt-4">Call Us</h4><p id="genContactPhone" class="text-muted"></p></div>
+                </div>
+            </section>
+            <footer>© 2025 Powered by VehicleBuilder</footer>
         </main>
         <a id="floatWhatsapp" class="whatsapp-float" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
     </div>
