@@ -32,6 +32,7 @@ window.ui = {
         document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('active');
     },
     switchTab: (id) => {
+        // PROFILE LOCK CHECK
         if(state.user && !state.profileComplete && id !== 'tabProfile') return ui.toast("Please complete your Profile Settings first!", "error");
         
         document.querySelectorAll('.dash-tab').forEach(el => { el.classList.remove('active'); el.classList.add('hidden'); });
@@ -55,6 +56,7 @@ window.ui = {
     },
     closeModal: () => document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden')),
     
+    // GHOST DATA FIX
     resetDashboard: () => {
         const safeVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
         safeVal('profPhone', ''); safeVal('profWhatsapp', ''); safeVal('profAddress', ''); safeVal('profCity', '');
@@ -114,10 +116,10 @@ const app = {
             return;
         }
 
-        ['vCat', 'editVCat'].forEach(id => {
-            const sel = document.getElementById(id);
-            if(sel) { sel.innerHTML = ''; state.categories.forEach(c => sel.appendChild(new Option(c, c))); }
-        });
+        const sel = document.getElementById('vCat');
+        if(sel && sel.options.length === 0) state.categories.forEach(c => sel.appendChild(new Option(c, c)));
+        const editSel = document.getElementById('editVCat');
+        if(editSel && editSel.options.length === 0) state.categories.forEach(c => editSel.appendChild(new Option(c, c)));
 
         auth.onAuthStateChanged(async user => {
             document.getElementById('initLoader').classList.add('hidden');
@@ -159,8 +161,7 @@ const app = {
             let wa = document.getElementById('profWhatsapp').value;
             const city = document.getElementById('profCity').value;
             const addr = document.getElementById('profAddress').value;
-            if(!phone || !wa || !addr || !city) return ui.toast("All fields required (including City)", "error");
-            
+            if(!phone || !wa || !addr || !city) return ui.toast("All fields required", "error");
             const formatPhone = (p) => { let n = p.trim(); if(n.startsWith('0')) n = '+94' + n.substring(1); else if(!n.startsWith('+')) n = '+94' + n; return n; };
             phone = formatPhone(phone); wa = formatPhone(wa);
 
@@ -175,6 +176,7 @@ const app = {
                 state.profileComplete = true; 
                 app.loadProfile(); 
                 ui.toast("Profile Saved! Dashboard Unlocked.");
+                document.getElementById('profPhone').value = phone; document.getElementById('profWhatsapp').value = wa;
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
@@ -197,7 +199,6 @@ const app = {
             } catch(err) { ui.toast(err.message, "error"); } finally { ui.showLoader(false); }
         };
 
-        // FULL EDIT VEHICLE
         document.getElementById('formEditVehicle').onsubmit = async (e) => {
             e.preventDefault(); const id = document.getElementById('editVId').value;
             const ytLink = document.getElementById('editVYoutube').value;
@@ -227,10 +228,8 @@ const app = {
             const cleanCity = userData.city.toLowerCase().replace(/[^a-z0-9]/g, '');
             const slug = `${cleanName}-${cleanCity}`;
 
-            // Save immediately
             await db.collection('sites').doc(state.user.uid).set({
                 saleName: name, slug: slug, role: state.role, city: userData.city,
-                // defaults
                 heroTitle: name, about: "Welcome to our page."
             }, {merge: true});
 
@@ -282,7 +281,6 @@ const app = {
             const url = `https://wa.me/${targetPhone.replace('+','')}?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
             localStorage.setItem(`msg_count_${today}`, count + 1);
-            document.getElementById('msgCountDisplay').innerText = 10 - (count + 1);
             document.getElementById('msgModal').classList.add('hidden');
         };
 
@@ -311,7 +309,7 @@ const app = {
             document.getElementById('profPhone').value = d.phone || ''; document.getElementById('profWhatsapp').value = d.whatsapp || ''; document.getElementById('profAddress').value = d.address || ''; document.getElementById('profCity').value = d.city || '';
             if(state.profileComplete) {
                 document.getElementById('profFields').disabled = true;
-                document.getElementById('profileNotice').classList.add('hidden'); 
+                document.getElementById('profileNotice').classList.add('hidden'); // REMOVE NOTICE
                 document.getElementById('saveProfile').classList.add('hidden');
                 document.getElementById('editProfileBtn').classList.remove('hidden');
                 if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
@@ -388,7 +386,7 @@ const app = {
     loadMyAds: async () => { const div = document.getElementById('myAdsList'); div.innerHTML = 'Loading...'; const snap = await db.collection('ads').where('uid', '==', state.user.uid).get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); const badge = a.status === 'active' ? '<span class="badge" style="background:green;color:white">Active</span>' : '<span class="badge">Pending</span>'; div.innerHTML += `<div class="card" style="padding:10px;">${badge} <strong>Target: ${a.target}</strong> <br> Clicks: ${a.clicks || 0}</div>`; }); },
     loadAdminAds: async () => { const div = document.getElementById('adminAdList'); div.innerHTML = 'Loading Pending Ads...'; const snap = await db.collection('ads').where('status', '==', 'pending').get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); div.innerHTML += `<div class="biz-card"><img src="${a.receipt}" style="width:100%;height:150px;object-fit:cover"><div class="biz-content"><p>User: ${a.uid}</p><button class="btn btn-success btn-sm" onclick="app.approveAd('${doc.id}')">Approve</button></div></div>`; }); },
     approveAd: async (id) => { await db.collection('ads').doc(id).update({status: 'active'}); ui.toast("Ad Approved"); app.loadAdminAds(); },
-    buyerFilter: async (type) => { /* Logic same as before */ }
+    buyerFilter: async (type) => { /* Logic is handled in render vehicle list or similar buyer specific logic */ }
 };
 
 const siteRenderer = {
