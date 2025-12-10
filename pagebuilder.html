@@ -2,364 +2,364 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Page Builder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VehicleBuilder Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --sidebar-w: 350px; --primary: #2563eb; --dark: #0f172a; --light: #f1f5f9; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { display: flex; height: 100vh; overflow: hidden; background: #1e1e1e; }
-
-        /* --- LEFT SIDEBAR (TOOLS) --- */
-        .editor-sidebar { width: var(--sidebar-w); background: #ffffff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 10; }
-        .editor-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .back-btn { text-decoration: none; color: #64748b; font-weight: 600; font-size: 0.9rem; }
-        .back-btn:hover { color: var(--primary); }
-        
-        .editor-tabs { display: flex; border-bottom: 1px solid #eee; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: white; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: #eff6ff; }
-
-        .editor-content { flex: 1; overflow-y: auto; padding: 20px; }
-        .control-group { margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px; }
-        .control-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #334155; }
-        .control-group input, .control-group textarea, .control-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
-        .control-group textarea { resize: vertical; min-height: 80px; }
-        
-        /* Theme Cards */
-        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .theme-card { border: 2px solid #eee; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center; transition: 0.2s; }
-        .theme-card:hover { border-color: var(--primary); }
-        .theme-card.selected { border-color: var(--primary); background: #eff6ff; }
-        .theme-preview { height: 40px; border-radius: 4px; margin-bottom: 5px; }
-
-        .editor-footer { padding: 15px; border-top: 1px solid #eee; background: white; }
-        .btn-save { width: 100%; padding: 12px; background: var(--success, #10b981); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 1rem; }
-        .btn-save:hover { background: #059669; }
-
-        /* --- RIGHT SIDE (PREVIEW) --- */
-        .preview-area { flex: 1; background: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
-        .preview-toolbar { position: absolute; top: 20px; background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 30px; display: flex; gap: 15px; z-index: 20; }
-        .device-btn { color: #ccc; cursor: pointer; font-size: 1.2rem; }
-        .device-btn:hover, .device-btn.active { color: white; }
-        
-        .preview-frame {
-            background: white; transition: width 0.3s; box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            border: none; width: 100%; height: 100%; max-width: 100%; border-radius: 8px; overflow: hidden;
-        }
-        /* Device Sizes */
-        .preview-area.mobile .preview-frame { width: 375px; height: 750px; border-radius: 30px; border: 8px solid #111; }
-        .preview-area.tablet .preview-frame { width: 768px; }
-
-        /* --- LOADER --- */
-        .loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- LOADER -->
-    <div id="loader" class="loader">
-        <div class="spinner"></div>
-        <p style="margin-top:10px; color:#666;">Loading Editor...</p>
+    <!-- SYSTEM LOADERS -->
+    <div id="initLoader" class="init-loader"><div class="spinner"></div><p>Initializing Platform...</p></div>
+    <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loaderText">Processing...</p></div>
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- 1. FULL EDIT VEHICLE MODAL -->
+    <div id="editVehicleModal" class="modal-overlay hidden">
+        <div class="modal-content large-modal-content">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2>Edit Vehicle Details</h2>
+                <button class="close-modal" onclick="ui.closeModal()" style="position:static;">&times;</button>
+            </div>
+            <form id="formEditVehicle">
+                <input type="hidden" id="editVId">
+                <div class="grid-2">
+                    <div class="form-group"><label>Category</label><select id="editVCat"></select></div>
+                    <div class="form-group"><label>Brand</label><input type="text" id="editVBrand" required></div>
+                    <div class="form-group"><label>Model</label><input type="text" id="editVModel" required></div>
+                    <div class="form-group"><label>Trim</label><input type="text" id="editVTrim"></div>
+                    <div class="form-group"><label>Year</label><input type="number" id="editVYear" required></div>
+                    <div class="form-group"><label>Condition</label><input type="text" id="editVCond"></div>
+                    <div class="form-group"><label>Transmission</label><select id="editVTrans"><option>Automatic</option><option>Manual</option><option>Tiptronic</option></select></div>
+                    <div class="form-group"><label>Fuel</label><select id="editVFuel"><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></div>
+                    <div class="form-group"><label>Price (Rs)</label><input type="number" id="editVPrice" required></div>
+                    <div class="form-group"><label>Mileage (km)</label><input type="number" id="editVMileage" required></div>
+                    <div class="form-group"><label>Body</label><input type="text" id="editVBody"></div>
+                    <div class="form-group"><label>Engine</label><input type="text" id="editVEngine"></div>
+                    <div class="form-group"><label>Book</label><select id="editVBook"><option>Original Book</option><option>Duplicate Book</option></select></div>
+                    <div class="form-group"><label>Finance</label><select id="editVFinance"><option value="no">No Finance</option><option value="yes">Has Finance</option></select></div>
+                </div>
+                <div class="form-group"><label>Description</label><textarea id="editVDesc" rows="5"></textarea></div>
+                <div class="form-group"><label>YouTube Link</label><input type="url" id="editVYoutube"></div>
+                <button type="submit" class="btn btn-primary full-width">Save Changes</button>
+            </form>
+        </div>
     </div>
 
-    <!-- LEFT: EDITOR -->
-    <aside class="editor-sidebar">
-        <div class="editor-header">
-            <span><strong>Page Builder</strong></span>
-            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+    <!-- 2. PUBLIC SITE MODALS -->
+    <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
+        <div class="modal-content large-modal dark-modal-theme">
+            <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
+            <div id="siteModalContent"></div>
         </div>
-        
-        <div class="editor-tabs">
-            <button class="tab-btn active" onclick="switchTab('design')">Design</button>
-            <button class="tab-btn" onclick="switchTab('content')">Content</button>
-            <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
-        </div>
+    </div>
+    <div id="lightboxModal" class="lightbox-overlay hidden">
+        <span class="close-lightbox" onclick="document.getElementById('lightboxModal').classList.add('hidden')">&times;</span>
+        <img id="lightboxImg" src="">
+    </div>
 
-        <!-- TAB: DESIGN -->
-        <div id="tab-design" class="editor-content">
-            <div class="control-group">
-                <label>Select Theme</label>
-                <div class="theme-grid">
-                    <div class="theme-card selected" onclick="setTheme('dark')" id="theme-dark">
-                        <div class="theme-preview" style="background:#0f1724;"></div>
-                        <small>Midnight</small>
+    <!-- 3. MONETIZATION & SOCIAL -->
+    <div id="adModal" class="modal-overlay hidden"><div class="modal-content ad-content"><button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button><div id="adContentArea"></div></div></div>
+    <div id="fbModal" class="modal-overlay hidden"><div class="modal-content fb-content text-center"><button class="close-modal" onclick="document.getElementById('fbModal').classList.add('hidden')">&times;</button><i class="fa-brands fa-facebook text-primary" style="font-size:3rem;"></i><h3>Like us on Facebook!</h3><div id="fbLinkArea" class="mt-4"></div></div></div>
+    <div id="msgModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-modal" onclick="document.getElementById('msgModal').classList.add('hidden')">&times;</button>
+            <h3>Send Message</h3>
+            <p class="text-secondary text-sm">Limit: 10 new chats per day.</p>
+            <textarea id="msgText" rows="4" class="full-width mt-2" placeholder="Hi..."></textarea>
+            <input type="hidden" id="msgTargetPhone">
+            <button id="btnSendMsg" class="btn btn-success full-width mt-4"><i class="fa-brands fa-whatsapp"></i> Send WhatsApp</button>
+        </div>
+    </div>
+
+    <!-- =======================================================
+         DASHBOARD
+    ======================================================== -->
+    <div id="platformApp">
+        <nav class="navbar">
+            <div class="nav-brand">Vehicle<span>Builder</span></div>
+            <div class="nav-links">
+                <button id="btnLoginNav" class="btn btn-primary btn-sm">Login</button>
+                <button id="btnLogoutNav" class="btn btn-outline btn-sm hidden">Logout</button>
+            </div>
+        </nav>
+
+        <!-- LANDING -->
+        <section id="viewLanding" class="view">
+            <div class="hero">
+                <h1 id="landingTitle">Welcome to the Platform</h1>
+                <p>Please Sign In or Create an Account to continue.</p>
+                <button class="btn btn-primary btn-lg" onclick="ui.showView('viewAuth')">Sign In / Register</button>
+                <br><br><a href="home.html" style="text-decoration: underline; color: #2563eb;">&larr; Back to Role Selection</a>
+            </div>
+        </section>
+
+        <!-- AUTH -->
+        <section id="viewAuth" class="view hidden">
+            <div class="auth-container">
+                <h2>Account Access</h2>
+                <form id="authForm">
+                    <div class="form-group"><label>Email</label><input type="email" id="authEmail" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="authPass" required></div>
+                    <div class="btn-group">
+                        <button type="button" id="btnLogin" class="btn btn-primary">Login</button>
+                        <button type="button" id="btnSignup" class="btn btn-secondary">Create Account</button>
                     </div>
-                    <div class="theme-card" onclick="setTheme('light')" id="theme-light">
-                        <div class="theme-preview" style="background:#ffffff; border:1px solid #ccc;"></div>
-                        <small>Clean White</small>
+                </form>
+            </div>
+        </section>
+
+        <!-- MAIN DASHBOARD -->
+        <section id="viewDashboard" class="view hidden">
+            <div class="dash-layout">
+                <aside class="dash-sidebar">
+                    <div class="user-info">
+                        <div class="avatar-circle" id="dashAvatar"><i class="fa-solid fa-user"></i></div>
+                        <span id="dashEmail">User</span>
+                        <span id="dashRole" class="badge">Role</span>
                     </div>
-                    <div class="theme-card" onclick="setTheme('red')" id="theme-red">
-                        <div class="theme-preview" style="background:#111; border-bottom: 4px solid red;"></div>
-                        <small>Sport Red</small>
+                    <nav class="side-nav" id="dynamicSidebar"></nav>
+                </aside>
+
+                <main class="dash-content">
+                    
+                    <!-- A. PROFILE -->
+                    <div id="tabProfile" class="dash-tab active">
+                        <h2>Profile Settings</h2>
+                        <div class="card">
+                            <div class="alert-box warning" id="profileNotice">
+                                <i class="fa-solid fa-lock"></i> 
+                                <strong>You must complete your profile to unlock your dashboard.</strong>
+                            </div>
+                            <!-- FIXED: No black border (CSS updated) -->
+                            <fieldset id="profFields">
+                                <div class="form-group"><label>Profile Photo (Required)</label><input type="file" id="profPhoto" accept="image/*"></div>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>Phone Number</label><input type="tel" id="profPhone" placeholder="771234567" required>
+                                        <small class="text-secondary text-primary font-bold">Enter without '0'. We auto-add +94.</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>WhatsApp Number</label><input type="tel" id="profWhatsapp" placeholder="771234567" required>
+                                        <small class="text-secondary text-primary font-bold">Enter without '0'. We auto-add +94.</small>
+                                    </div>
+                                </div>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>City / Town (Required)</label><input type="text" id="profCity" placeholder="e.g. Athurugiriya" required>
+                                        <small class="text-secondary text-primary">Adding correct city boosts SEO and Sales.</small>
+                                    </div>
+                                    <div class="form-group"><label>Address</label><input type="text" id="profAddress" placeholder="Full Address" required></div>
+                                </div>
+                            </fieldset>
+                            <div class="btn-group">
+                                <button id="saveProfile" class="btn btn-primary">Save Profile</button>
+                                <button id="editProfileBtn" class="btn btn-outline hidden">Edit Profile</button>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- B. ADD VEHICLE -->
+                    <div id="tabAddVehicle" class="dash-tab">
+                        <h2>Add Vehicle</h2>
+                        <form id="formAddVehicle" class="card">
+                            <div class="grid-2">
+                                <select id="vCat" required></select>
+                                <input type="text" id="vBrand" placeholder="Brand (e.g. Toyota)" required>
+                                <input type="text" id="vModel" placeholder="Model" required>
+                                <input type="text" id="vTrim" placeholder="Trim">
+                                <input type="number" id="vYear" placeholder="Year" required>
+                                <input type="text" id="vCond" placeholder="Condition">
+                                <select id="vTrans"><option>Automatic</option><option>Manual</option><option>Tiptronic</option></select>
+                                <select id="vFuel"><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select>
+                                <input type="number" id="vPrice" placeholder="Price (Rs)" required>
+                                <input type="number" id="vMileage" placeholder="Mileage (km)" required>
+                                <input type="text" id="vBody" placeholder="Body Type">
+                                <input type="text" id="vEngine" placeholder="Engine CC">
+                                <select id="vBook"><option>Original Book</option><option>Duplicate Book</option></select>
+                                <select id="vFinance"><option value="no">No Finance</option><option value="yes">Has Finance</option></select>
+                            </div>
+                            <textarea id="vDesc" placeholder="Description (Max 500 words)" maxlength="2500"></textarea>
+                            <input type="url" id="vYoutube" placeholder="YouTube Video Link">
+                            <div class="form-group mt-4">
+                                <label>Upload Photos (Max 10)</label>
+                                <input type="file" id="vPhotosInput" multiple accept="image/*" class="mb-2">
+                                <div id="vPhotoStaging" class="img-staging-grid"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary full-width mt-4">Publish Vehicle</button>
+                        </form>
+                    </div>
+
+                    <!-- MY INVENTORY (With Tips) -->
+                    <div id="tabMyVehicles" class="dash-tab">
+                        <h2>My Inventory</h2>
+                        <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2">
+                        <!-- Dynamic Tip Box -->
+                        <div id="inventoryTip" class="alert-box" style="font-size:0.9rem; margin-top:10px;"></div>
+                        <div id="myVehiclesList" class="vehicle-grid"></div>
+                    </div>
+
+                    <!-- OTHER ROLES (Parts, Services) -->
+                    <div id="tabAddPart" class="dash-tab"><h2>Add Part</h2><form id="formAddPart" class="card"><div class="grid-2"><input id="pName" placeholder="Name" required><input id="pBrand" placeholder="Brand"><input id="pModel" placeholder="Fits Model"><input id="pPrice" type="number" placeholder="Price" required></div><textarea id="pDesc"></textarea><input type="file" id="pPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish Part</button></form></div>
+                    <div id="tabMyParts" class="dash-tab"><h2>My Products</h2><div id="myPartsList" class="vehicle-grid"></div></div>
+                    <div id="tabAddService" class="dash-tab"><h2>Add Service</h2><form id="formAddService" class="card"><div class="grid-2"><input id="sName" placeholder="Name" required><input id="sPrice" type="number" placeholder="Price"></div><textarea id="sDesc"></textarea><input type="file" id="sPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish Service</button></form></div>
+                    <div id="tabMyServices" class="dash-tab"><h2>My Services</h2><div id="myServicesList" class="vehicle-grid"></div></div>
+
+                    <!-- E. PAGE BUILDER (LAUNCHER - RESTORED) -->
+                    <div id="tabWebsite" class="dash-tab">
+                        <h2>Page Builder</h2>
+                        
+                        <div id="websiteLockScreen" class="lock-overlay">
+                            <h3>Setup Your Business Page</h3>
+                            <p>Update your Profile "City" first to create your unique URL.</p>
+                            <input type="text" id="initSaleName" placeholder="Business Name (e.g. Sahan Motors)">
+                            <button id="btnUnlockWebsite" class="btn btn-primary">Create Page</button>
+                        </div>
+
+                        <!-- THE WIX-STYLE LAUNCHER -->
+                        <div id="websiteEditor" class="hidden">
+                            <div class="info-banner mb-2">
+                                <strong>Your Page URL:</strong><br>
+                                <a href="#" id="mySiteLink" target="_blank" class="font-bold text-lg">...</a>
+                            </div>
+
+                            <div class="card text-center" style="padding: 4rem 2rem;">
+                                <i class="fa-solid fa-paintbrush text-accent" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                                <h3>Design Your Page</h3>
+                                <p class="text-secondary" style="max-width: 500px; margin: 0 auto 30px;">
+                                    Use our visual editor to customize colors, themes, and content.
+                                </p>
+                                <a href="pagebuilder.html" class="btn btn-primary btn-lg">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Open Visual Editor
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- F. MARKETPLACE -->
+                    <div id="tabBuyerBrowse" class="dash-tab">
+                        <h2>Marketplace</h2>
+                        <div class="tabs-header">
+                            <button class="chip active" onclick="app.buyerFilter('vehicles')">Vehicles</button>
+                            <button class="chip" onclick="app.buyerFilter('parts')">Parts</button>
+                            <button class="chip" onclick="app.buyerFilter('services')">Services</button>
+                        </div>
+                        <input type="text" id="buyerSearch" placeholder="Search..." class="full-width mt-2 mb-2">
+                        <div id="buyerGrid" class="vehicle-grid"></div>
+                    </div>
+
+                    <!-- G. DIRECTORY -->
+                    <div id="tabDirectory" class="dash-tab">
+                        <h2>Business Directory</h2>
+                        <div class="tabs-header">
+                            <button class="chip active" onclick="app.connectFilter('all')">All</button>
+                            <button class="chip" onclick="app.connectFilter('seller')">Car Sales</button>
+                            <button class="chip" onclick="app.connectFilter('parts')">Parts</button>
+                            <button class="chip" onclick="app.connectFilter('service')">Services</button>
+                            <button class="chip" onclick="app.connectFilter('finance')">Finance</button>
+                        </div>
+                        <div class="grid-2 mb-2">
+                            <input type="text" id="connectSearch" placeholder="Search Name...">
+                            <input type="text" id="connectCity" placeholder="Filter City...">
+                        </div>
+                        <div id="sellersGrid" class="connect-grid"></div>
+                    </div>
+
+                    <!-- H. SOCIAL CONNECT -->
+                    <div id="tabConnect" class="dash-tab">
+                        <h2>Social Connect</h2>
+                        <div id="socialLockScreen" class="lock-overlay hidden">
+                            <i class="fa-solid fa-user-shield text-primary" style="font-size:3rem;"></i>
+                            <h3>Setup Social Profile</h3>
+                            <p>Real Name & Photo required to build trust.</p>
+                            <input type="text" id="socialRealName" placeholder="Real Name" class="mt-4">
+                            <input type="file" id="socialRealPhoto" class="mt-2">
+                            <button id="btnUnlockSocial" class="btn btn-primary mt-2">Join</button>
+                        </div>
+                        <div id="socialFeedArea" class="hidden">
+                            <div class="tabs-header"><button class="chip active" onclick="app.showFeed()">Feed</button><button class="chip" onclick="app.showPeople()">People</button></div>
+                            <div id="postCreator" class="card">
+                                <form id="formPostFeed"><textarea id="feedText" class="full-width" rows="2" placeholder="Share update..."></textarea><input type="file" id="feedImage" class="mt-2"><button class="btn btn-primary mt-2">Post</button></form>
+                            </div>
+                            <div id="feedStream" class="feed-grid"></div>
+                            <div id="peopleStream" class="hidden connect-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- I. PROMOTE -->
+                    <div id="tabPromote" class="dash-tab">
+                        <h2>Promote Your Business</h2>
+                        <div class="grid-2">
+                            <div class="card">
+                                <h3>Create Ad</h3>
+                                <input type="file" id="adImage">
+                                <select id="adTarget" class="mt-2"><option value="all">All</option><option value="seller">Sellers</option></select>
+                                <input type="url" id="adUrl" placeholder="Link" class="mt-2">
+                                <div class="alert-box warning mt-2">Rs. 5000 / Month</div>
+                            </div>
+                            <div class="card">
+                                <h3>Payment</h3>
+                                <p><strong>Commercial Bank (Homagama)</strong><br>8750053306 (COLOMBAGE SD)</p>
+                                <label>Upload Receipt</label><input type="file" id="adReceipt">
+                                <button id="btnSubmitAd" class="btn btn-success full-width mt-4">Submit</button>
+                            </div>
+                        </div>
+                        <div class="card"><h3>My Ads</h3><div id="myAdsList"></div></div>
+                    </div>
+
+                    <div id="tabAdmin" class="dash-tab"><h2>Admin</h2><div id="adminAdList" class="connect-grid"></div></div>
+                </main>
+            </div>
+        </section>
+    </div>
+
+    <!-- =======================================================
+         GENERATED SITE (AUTOMARKET DARK)
+    ======================================================== -->
+    <div id="generatedSite" class="hidden dark-theme-site">
+        <header class="gen-header">
+            <div class="wrap nav">
+                <div class="brand">
+                    <div class="logo">AM</div>
+                    <div><div class="site-name" id="genSiteName"></div><div class="site-tag" id="genSiteCity"></div></div>
                 </div>
+                <nav><ul><li><a href="#vehicles">Inventory</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav>
             </div>
-
-            <div class="control-group">
-                <label>Brand Color</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <input type="color" id="brandColor" value="#2563eb" style="width:50px; height:40px; padding:0; border:none;">
-                    <span style="font-size:0.8rem; color:#666;">Main buttons & accents</span>
+        </header>
+        <main class="wrap">
+            <section class="hero">
+                <div class="hero-card">
+                    <h1 id="genHeroTitle"></h1>
+                    <p id="genHeroSub"></p>
+                    <div class="search-inline"><input id="genSearch" placeholder="Search inventory..."><button onclick="siteRenderer.filterGenGrid()">Search</button></div>
                 </div>
-            </div>
+            </section>
+            <section id="vehicles" class="vehicles">
+                <div class="flex-head"><h2>Inventory</h2></div>
+                <div id="genGrid" class="vehicles-grid"></div>
+            </section>
+            <section id="about" class="about">
+                <div class="grid-2">
+                    <div class="hero-card"><h3>About Us</h3><p id="genAboutContent"></p></div>
+                    <div class="hero-card"><h3>Why Choose Us</h3><p id="genWhyContent" style="white-space: pre-line;"></p></div>
+                </div>
+            </section>
+            <section id="contact" class="contact">
+                <h3>Contact Us</h3>
+                <div class="grid-2">
+                    <div class="hero-card"><h4>Visit Us</h4><p id="genContactAddress" class="text-muted"></p><h4 class="mt-4">Call Us</h4><p id="genContactPhone" class="text-muted"></p></div>
+                </div>
+            </section>
+            <footer>© 2025 Powered by VehicleBuilder</footer>
+        </main>
+        <a id="floatWhatsapp" class="whatsapp-float" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+    </div>
 
-            <div class="control-group">
-                <label>Navbar Style</label>
-                <select id="navStyle">
-                    <option value="1">Centered Logo</option>
-                    <option value="2">Left Logo</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- TAB: CONTENT -->
-        <div id="tab-content" class="editor-content" style="display:none;">
-            <div class="control-group">
-                <label>Hero Title</label>
-                <input type="text" id="heroTitle" placeholder="Welcome to..." oninput="updatePreview()">
-            </div>
-            <div class="control-group">
-                <label>Hero Subtitle</label>
-                <input type="text" id="heroSub" placeholder="Tagline..." oninput="updatePreview()">
-            </div>
-            <div class="control-group">
-                <label>About Us</label>
-                <textarea id="aboutText" placeholder="We are..." oninput="updatePreview()"></textarea>
-            </div>
-            <div class="control-group">
-                <label>Why Choose Us (List)</label>
-                <textarea id="whyText" placeholder="Best Price..." oninput="updatePreview()"></textarea>
-            </div>
-        </div>
-
-        <!-- TAB: SETTINGS -->
-        <div id="tab-settings" class="editor-content" style="display:none;">
-            <div class="control-group">
-                <label>Business Name</label>
-                <input type="text" id="bizName" oninput="updatePreview()">
-            </div>
-            <div class="control-group">
-                <label>Facebook Link</label>
-                <input type="text" id="fbLink">
-            </div>
-            <div class="control-group">
-                <label>Section Visibility</label>
-                <label style="font-weight:400;"><input type="checkbox" id="showReviews" checked> Show Reviews</label>
-                <label style="font-weight:400;"><input type="checkbox" id="showGallery" checked> Show Gallery</label>
-            </div>
-        </div>
-
-        <div class="editor-footer">
-            <button class="btn-save" onclick="saveChanges()"><i class="fa-solid fa-save"></i> Save & Publish</button>
-        </div>
-    </aside>
-
-    <!-- RIGHT: PREVIEW -->
-    <main class="preview-area" id="previewArea">
-        <div class="preview-toolbar">
-            <i class="fa-solid fa-mobile-screen device-btn" onclick="setDevice('mobile')"></i>
-            <i class="fa-solid fa-tablet-screen-button device-btn" onclick="setDevice('tablet')"></i>
-            <i class="fa-solid fa-desktop device-btn active" onclick="setDevice('desktop')"></i>
-        </div>
-        
-        <!-- The Preview Container -->
-        <div id="previewFrame" class="preview-frame">
-            <!-- This content will be dynamically updated by JS -->
-            <div id="prevContainer" style="height:100%; overflow-y:auto;">
-                <!-- DYNAMIC CONTENT LOADED HERE -->
-            </div>
-        </div>
-    </main>
-
-    <!-- FIREBASE SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
-    <script>
-        // --- 1. FIREBASE INIT ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBUjzMFao9BS3uXBOW3qYrLVqHaGn8qIk4", 
-            authDomain: "onlineshop-30cd1.firebaseapp.com",
-            projectId: "onlineshop-30cd1",
-            storageBucket: "onlineshop-30cd1.firebasestorage.app",
-            messagingSenderId: "818252574868",
-            appId: "1:818252574868:web:8dd36825db589a886cc481"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // --- 2. STATE ---
-        let currentUser = null;
-        let siteData = {};
-
-        // --- 3. INIT LOGIC ---
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                currentUser = user;
-                await loadSiteData();
-                document.getElementById('loader').style.display = 'none';
-            } else {
-                window.location.href = 'index.html';
-            }
-        });
-
-        async function loadSiteData() {
-            const doc = await db.collection('sites').doc(currentUser.uid).get();
-            if (doc.exists) {
-                siteData = doc.data();
-                // Fill Inputs
-                document.getElementById('bizName').value = siteData.saleName || '';
-                document.getElementById('heroTitle').value = siteData.heroTitle || '';
-                document.getElementById('heroSub').value = siteData.heroSub || '';
-                document.getElementById('aboutText').value = siteData.about || '';
-                document.getElementById('whyText').value = siteData.why || '';
-                document.getElementById('fbLink').value = siteData.fb || '';
-                document.getElementById('navStyle').value = siteData.navStyle || '1';
-                document.getElementById('brandColor').value = siteData.primaryColor || '#2563eb';
-                
-                // Set Theme UI
-                setThemeUI(siteData.theme || 'dark');
-                
-                renderPreview(); // Initial Render
-            }
-        }
-
-        // --- 4. EDITOR LOGIC ---
-        function switchTab(tab) {
-            document.querySelectorAll('.editor-content').forEach(el => el.style.display = 'none');
-            document.getElementById(`tab-${tab}`).style.display = 'block';
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-
-        function setDevice(device) {
-            const area = document.getElementById('previewArea');
-            const btns = document.querySelectorAll('.device-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            area.classList.remove('mobile', 'tablet');
-            if(device !== 'desktop') area.classList.add(device);
-        }
-
-        function setTheme(theme) {
-            siteData.theme = theme;
-            setThemeUI(theme);
-            renderPreview();
-        }
-
-        function setThemeUI(theme) {
-            document.querySelectorAll('.theme-card').forEach(el => el.classList.remove('selected'));
-            document.getElementById(`theme-${theme}`).classList.add('selected');
-        }
-
-        // --- 5. RENDER PREVIEW (The "Crazy" Part) ---
-        function updatePreview() {
-            // Pull values from inputs into temp object for instant feedback
-            siteData.saleName = document.getElementById('bizName').value;
-            siteData.heroTitle = document.getElementById('heroTitle').value;
-            siteData.heroSub = document.getElementById('heroSub').value;
-            siteData.about = document.getElementById('aboutText').value;
-            // Re-render
-            renderPreview(); 
-        }
-
-        document.getElementById('brandColor').addEventListener('input', (e) => {
-            document.getElementById('prevContainer').style.setProperty('--gen-primary', e.target.value);
-        });
-
-        document.getElementById('navStyle').addEventListener('change', renderPreview);
-
-        function renderPreview() {
-            const container = document.getElementById('prevContainer');
-            const theme = siteData.theme || 'dark';
-            const color = document.getElementById('brandColor').value;
-            const navStyle = document.getElementById('navStyle').value;
-
-            // CSS Variables for Preview
-            let cssVars = `
-                --gen-primary: ${color}; 
-                --gen-bg: ${theme === 'light' ? '#ffffff' : '#0f1724'};
-                --gen-text: ${theme === 'light' ? '#1e293b' : '#e6eef6'};
-                --gen-card: ${theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)'};
-            `;
-            
-            if(theme === 'red') {
-                 cssVars = `--gen-primary: #dc2626; --gen-bg: #000000; --gen-text: #ffffff; --gen-card: #111;`;
-            }
-
-            const navHTML = navStyle === '1' 
-                ? `<div style="text-align:center; padding:15px; border-bottom:1px solid rgba(128,128,128,0.2);">
-                     <h2 style="margin:0; color:var(--gen-text)">${siteData.saleName || 'Business Name'}</h2>
-                   </div>`
-                : `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid rgba(128,128,128,0.2); align-items:center;">
-                     <h2 style="margin:0; color:var(--gen-text)">${siteData.saleName || 'Business Name'}</h2>
-                     <span style="font-size:1.5rem;">☰</span>
-                   </div>`;
-
-            // HTML Structure
-            container.innerHTML = `
-                <style>
-                    #prevContainer { ${cssVars} font-family: 'Inter', sans-serif; background: var(--gen-bg); color: var(--gen-text); }
-                    .prev-hero { padding: 40px 20px; text-align: center; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)); border-bottom: 1px solid var(--gen-card); }
-                    .prev-btn { background: var(--gen-primary); color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; margin-top:10px; display:inline-block; }
-                    .prev-section { padding: 30px 20px; }
-                    .prev-card { background: var(--gen-card); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(128,128,128,0.1); }
-                </style>
-                
-                ${navHTML}
-
-                <div class="prev-hero">
-                    <h1 style="font-size: 2.5rem; margin-bottom:10px;">${siteData.heroTitle || 'Welcome'}</h1>
-                    <p style="opacity:0.8;">${siteData.heroSub || 'Tagline here'}</p>
-                    <div class="prev-btn">Browse Inventory</div>
-                </div>
-
-                <div class="prev-section">
-                    <h3 style="text-align:center; margin-bottom:20px;">Latest Arrivals</h3>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                         <div class="prev-card" style="height:150px;"></div>
-                         <div class="prev-card" style="height:150px;"></div>
-                    </div>
-                </div>
-
-                <div class="prev-section" style="background: rgba(128,128,128,0.05);">
-                    <h3>About Us</h3>
-                    <p style="font-size:0.9rem; line-height:1.5;">${siteData.about || 'About content...'}</p>
-                </div>
-            `;
-        }
-
-        // --- 6. SAVE ---
-        async function saveChanges() {
-            const btn = document.querySelector('.btn-save');
-            btn.innerText = 'Saving...';
-            try {
-                await db.collection('sites').doc(currentUser.uid).update({
-                    saleName: document.getElementById('bizName').value,
-                    heroTitle: document.getElementById('heroTitle').value,
-                    heroSub: document.getElementById('heroSub').value,
-                    about: document.getElementById('aboutText').value,
-                    why: document.getElementById('whyText').value,
-                    fb: document.getElementById('fbLink').value,
-                    theme: siteData.theme,
-                    primaryColor: document.getElementById('brandColor').value,
-                    navStyle: document.getElementById('navStyle').value
-                });
-                alert('Website Updated Successfully!');
-                btn.innerText = 'Save & Publish';
-            } catch (e) {
-                alert('Error saving: ' + e.message);
-                btn.innerText = 'Save & Publish';
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
