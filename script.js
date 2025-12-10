@@ -32,9 +32,7 @@ window.ui = {
         document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('active');
     },
     switchTab: (id) => {
-        // PROFILE LOCK CHECK
         if(state.user && !state.profileComplete && id !== 'tabProfile') return ui.toast("Please complete your Profile Settings first!", "error");
-        
         document.querySelectorAll('.dash-tab').forEach(el => { el.classList.remove('active'); el.classList.add('hidden'); });
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('active');
@@ -45,18 +43,12 @@ window.ui = {
             if(id === 'tabMyVehicles') app.loadMyData('vehicles', 'myVehiclesList');
             if(id === 'tabMyParts') app.loadMyData('parts', 'myPartsList');
             if(id === 'tabMyServices') app.loadMyData('services', 'myServicesList');
-            if(id === 'tabDirectory') app.loadDirectory();
-            if(id === 'tabConnect') app.loadConnectSection();
             if(id === 'tabProfile') app.loadProfile();
             if(id === 'tabWebsite') app.loadWebsiteSettings();
-            if(id === 'tabBuyerBrowse') app.buyerFilter('vehicles');
-            if(id === 'tabPromote') app.loadMyAds();
-            if(id === 'tabAdmin') app.loadAdminAds();
         }
     },
     closeModal: () => document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden')),
     
-    // GHOST DATA FIX
     resetDashboard: () => {
         const safeVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
         safeVal('profPhone', ''); safeVal('profWhatsapp', ''); safeVal('profAddress', ''); safeVal('profCity', '');
@@ -82,11 +74,7 @@ window.ui = {
         if(role === 'seller') html += `<button onclick="ui.switchTab('tabAddVehicle')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Vehicle</button><button onclick="ui.switchTab('tabMyVehicles')" class="nav-item"><i class="fa-solid fa-list"></i> My Vehicles</button><button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
         else if(role === 'parts') html += `<button onclick="ui.switchTab('tabAddPart')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Product</button><button onclick="ui.switchTab('tabMyParts')" class="nav-item"><i class="fa-solid fa-box"></i> My Products</button><button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
         else if(role === 'service' || role === 'finance') html += `<button onclick="ui.switchTab('tabAddService')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Service</button><button onclick="ui.switchTab('tabMyServices')" class="nav-item"><i class="fa-solid fa-list-check"></i> My Services</button><button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
-        else if(role === 'buyer') html += `<button onclick="ui.switchTab('tabBuyerBrowse')" class="nav-item"><i class="fa-solid fa-search"></i> Browse</button>`;
         
-        html += `<button onclick="ui.switchTab('tabDirectory')" class="nav-item"><i class="fa-solid fa-address-book"></i> Directory</button>`;
-        html += `<button onclick="ui.switchTab('tabConnect')" class="nav-item"><i class="fa-solid fa-share-nodes"></i> Connect</button>`;
-        html += `<button onclick="ui.switchTab('tabPromote')" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Promote</button>`;
         nav.innerHTML = html;
         document.getElementById('dashRole').innerText = role ? role.toUpperCase() : 'USER';
     }
@@ -116,10 +104,10 @@ const app = {
             return;
         }
 
-        const sel = document.getElementById('vCat');
-        if(sel && sel.options.length === 0) state.categories.forEach(c => sel.appendChild(new Option(c, c)));
-        const editSel = document.getElementById('editVCat');
-        if(editSel && editSel.options.length === 0) state.categories.forEach(c => editSel.appendChild(new Option(c, c)));
+        ['vCat', 'editVCat'].forEach(id => {
+            const sel = document.getElementById(id);
+            if(sel) { sel.innerHTML = ''; state.categories.forEach(c => sel.appendChild(new Option(c, c))); }
+        });
 
         auth.onAuthStateChanged(async user => {
             document.getElementById('initLoader').classList.add('hidden');
@@ -136,7 +124,6 @@ const app = {
                     ui.showView('viewDashboard');
                     document.getElementById('btnLoginNav').classList.add('hidden');
                     document.getElementById('btnLogoutNav').classList.remove('hidden');
-                    if(user.email === 'admin@vehiclebuilder.com') document.getElementById('navAdmin')?.classList.remove('hidden');
                     ui.switchTab('tabProfile'); 
                 }
             } else {
@@ -162,6 +149,7 @@ const app = {
             const city = document.getElementById('profCity').value;
             const addr = document.getElementById('profAddress').value;
             if(!phone || !wa || !addr || !city) return ui.toast("All fields required", "error");
+            
             const formatPhone = (p) => { let n = p.trim(); if(n.startsWith('0')) n = '+94' + n.substring(1); else if(!n.startsWith('+')) n = '+94' + n; return n; };
             phone = formatPhone(phone); wa = formatPhone(wa);
 
@@ -176,7 +164,6 @@ const app = {
                 state.profileComplete = true; 
                 app.loadProfile(); 
                 ui.toast("Profile Saved! Dashboard Unlocked.");
-                document.getElementById('profPhone').value = phone; document.getElementById('profWhatsapp').value = wa;
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
@@ -212,17 +199,14 @@ const app = {
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
-        // WEBSITE BUILDER (FIXED)
+        // AUTOMATIC PAGE BUILDER
         document.getElementById('btnUnlockWebsite').onclick = async () => {
             const name = document.getElementById('initSaleName').value.trim(); if(!name) return ui.toast("Enter a name", "error");
             
-            // Re-fetch user to get the latest City
             const userDoc = await db.collection('users').doc(state.user.uid).get();
             const userData = userDoc.data();
             
-            if(!userData.city) {
-                return ui.toast("Update City in Profile first!", "error");
-            }
+            if(!userData.city) return ui.toast("Update City in Profile first!", "error");
 
             const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
             const cleanCity = userData.city.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -243,59 +227,12 @@ const app = {
         document.getElementById('saveWebsite').onclick = async () => {
             ui.showLoader(true);
             try {
-                const data = { saleName: document.getElementById('webName').value, heroTitle: document.getElementById('webHeroTitle').value, heroSub: document.getElementById('webHeroSub').value, about: document.getElementById('webAbout').value, why: document.getElementById('webWhy').value, fb: document.getElementById('webFb').value, navStyle: document.getElementById('webNavStyle').value };
+                const userDoc = await db.collection('users').doc(state.user.uid).get();
+                const slug = `${document.getElementById('webName').value.toLowerCase().replace(/[^a-z0-9]/g, '')}-${userDoc.data().city.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                const data = { saleName: document.getElementById('webName').value, slug: slug, role: state.role, city: userDoc.data().city, about: document.getElementById('webAbout').value, why: document.getElementById('webWhy').value, fb: document.getElementById('webFb').value, navStyle: document.getElementById('webNavStyle').value };
                 const logoFile = document.getElementById('webLogo').files[0]; if(logoFile) { const blob = await compressImage(logoFile); const ref = storage.ref(`sites/${state.user.uid}/logo`); await ref.put(blob); data.logo = await ref.getDownloadURL(); }
                 await db.collection('sites').doc(state.user.uid).set(data, {merge: true}); ui.toast("Published!");
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
-        };
-
-        document.getElementById('btnUnlockSocial').onclick = async () => {
-            const name = document.getElementById('socialRealName').value; const file = document.getElementById('socialRealPhoto').files[0];
-            if(!name || !file) return ui.toast("Real Name and Photo Required", "error");
-            ui.showLoader(true);
-            try {
-                const blob = await compressImage(file); const ref = storage.ref(`social/${state.user.uid}`); await ref.put(blob); const url = await ref.getDownloadURL();
-                await db.collection('users').doc(state.user.uid).update({ socialName: name, socialPhoto: url });
-                app.loadConnectSection();
-            } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
-        };
-
-        document.getElementById('formPostFeed').onsubmit = async (e) => {
-            e.preventDefault(); ui.showLoader(true);
-            try {
-                let imgUrl = null; const file = document.getElementById('feedImage').files[0];
-                if(file) { const blob = await compressImage(file); const ref = storage.ref(`posts/${Date.now()}`); await ref.put(blob); imgUrl = await ref.getDownloadURL(); }
-                const userDoc = await db.collection('users').doc(state.user.uid).get();
-                await db.collection('posts').add({ uid: state.user.uid, author: userDoc.data().socialName, avatar: userDoc.data().socialPhoto, text: document.getElementById('feedText').value, image: imgUrl, createdAt: firebase.firestore.FieldValue.serverTimestamp(), role: state.role });
-                document.getElementById('formPostFeed').reset(); ui.toast("Posted!"); app.loadFeed();
-            } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
-        };
-
-        document.getElementById('btnSendMsg').onclick = () => {
-            const today = new Date().toDateString();
-            const count = parseInt(localStorage.getItem(`msg_count_${today}`)) || 0;
-            if(count >= 10) return ui.toast("Daily limit of 10 messages reached.", "error");
-            
-            const targetPhone = document.getElementById('msgTargetPhone').value;
-            const text = document.getElementById('msgText').value;
-            const url = `https://wa.me/${targetPhone.replace('+','')}?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
-            localStorage.setItem(`msg_count_${today}`, count + 1);
-            document.getElementById('msgModal').classList.add('hidden');
-        };
-
-        document.getElementById('btnSubmitAd').onclick = async () => {
-            const file = document.getElementById('adImage').files[0]; const receipt = document.getElementById('adReceipt').files[0];
-            const url = document.getElementById('adUrl').value;
-            if(!file || !receipt || !url) return ui.toast("All fields required", "error");
-            ui.showLoader(true);
-            try {
-                const imgBlob = await compressImage(file); const recBlob = await compressImage(receipt);
-                const imgRef = storage.ref(`ads/${state.user.uid}_img`); await imgRef.put(imgBlob);
-                const recRef = storage.ref(`ads/${state.user.uid}_rec`); await recRef.put(recBlob);
-                await db.collection('ads').add({ uid: state.user.uid, image: await imgRef.getDownloadURL(), receipt: await recRef.getDownloadURL(), url: url, target: document.getElementById('adTarget').value, status: 'pending', clicks: 0, createdAt: new Date() });
-                ui.toast("Ad Submitted for Review!"); app.loadMyAds();
-            } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
         };
     },
 
@@ -309,7 +246,7 @@ const app = {
             document.getElementById('profPhone').value = d.phone || ''; document.getElementById('profWhatsapp').value = d.whatsapp || ''; document.getElementById('profAddress').value = d.address || ''; document.getElementById('profCity').value = d.city || '';
             if(state.profileComplete) {
                 document.getElementById('profFields').disabled = true;
-                document.getElementById('profileNotice').classList.add('hidden'); // REMOVE NOTICE
+                document.getElementById('profileNotice').classList.add('hidden'); 
                 document.getElementById('saveProfile').classList.add('hidden');
                 document.getElementById('editProfileBtn').classList.remove('hidden');
                 if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
@@ -330,12 +267,12 @@ const app = {
         const hasHidden = items.some(i => i.published === false);
         const hasPublished = items.some(i => i.published === true);
         
-        // DYNAMIC TIP LOGIC
-        if(hasPublished) {
-            tipBox.innerHTML = `<i class="fa-solid fa-lightbulb text-primary"></i> <strong>Tip:</strong> Use the "Hide" button to remove vehicles from your page without deleting them.`;
-            tipBox.style.display = 'block';
-        } else if(hasHidden) {
+        // DYNAMIC TIP
+        if(hasHidden) {
             tipBox.innerHTML = `<i class="fa-solid fa-lightbulb text-primary"></i> <strong>Tip:</strong> Use the "Show" button to display your vehicle on your page again.`;
+            tipBox.style.display = 'block';
+        } else if(hasPublished) {
+            tipBox.innerHTML = `<i class="fa-solid fa-lightbulb text-primary"></i> <strong>Tip:</strong> Use the "Hide" button to remove vehicles from your page without deleting them.`;
             tipBox.style.display = 'block';
         } else {
             tipBox.style.display = 'none';
@@ -345,7 +282,7 @@ const app = {
         items.forEach(d => {
             const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
             const img = d.images && d.images.length ? d.images[0] : 'https://via.placeholder.com/300';
-            list.innerHTML += `<div class="v-card">${badge}<img src="${img}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p><div class="v-actions"><button class="btn btn-primary btn-sm" onclick="app.openEditModal('${d.id}')">Edit</button><button class="btn btn-outline btn-sm" onclick="app.togglePublish('vehicles', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('vehicles', '${d.id}')">Delete</button></div></div></div>`;
+            list.innerHTML += `<div class="v-card">${badge}<img src="${img}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p><div class="v-actions"><button class="btn btn-primary btn-sm" onclick="app.openEditModal('${d.id}')">Edit</button><button class="btn btn-outline btn-sm" onclick="app.togglePublish('vehicles', '${d.id}', ${d.published})">${d.published ? 'Show' : 'Hide'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('vehicles', '${d.id}')">Delete</button></div></div></div>`;
         });
     },
 
@@ -364,31 +301,10 @@ const app = {
 
     togglePublish: async (col, id, status) => { ui.showLoader(true); await db.collection(col).doc(id).update({published: !status}); app.loadMyData(col, 'myVehiclesList'); ui.showLoader(false); },
     deleteItem: async (col, id) => { if(!confirm("Are you sure?")) return; ui.showLoader(true); await db.collection(col).doc(id).delete(); app.loadMyData(col, 'myVehiclesList'); ui.showLoader(false); },
-    loadWebsiteSettings: async () => { const doc = await db.collection('sites').doc(state.user.uid).get(); if(doc.exists && doc.data().saleName) { const d = doc.data(); document.getElementById('websiteLockScreen').classList.add('hidden'); document.getElementById('websiteEditor').classList.remove('hidden'); document.getElementById('webName').value = d.saleName; if(d.slug) { const link = `${window.location.origin}${window.location.pathname}#/${d.slug}`; document.getElementById('mySiteLink').innerText = link; document.getElementById('mySiteLink').href = link; } } },
-    loadDirectory: async () => { const grid = document.getElementById('sellersGrid'); grid.innerHTML = 'Loading...'; const snap = await db.collection('sites').orderBy('saleName').limit(50).get(); state.allSites = []; snap.forEach(doc => { const d = doc.data(); if(d.saleName && d.slug) state.allSites.push({id: doc.id, ...d}); }); app.filterConnect(); },
-    connectFilter: (role) => { app.currentConnectRole = role; app.filterConnect(); },
-    filterConnect: () => { const search = document.getElementById('connectSearch').value.toLowerCase(); const city = document.getElementById('connectCity').value.toLowerCase(); let filtered = state.allSites; if(app.currentConnectRole && app.currentConnectRole !== 'all') filtered = filtered.filter(s => s.role === app.currentConnectRole); if(search) filtered = filtered.filter(s => s.saleName.toLowerCase().includes(search)); if(city) filtered = filtered.filter(s => s.city && s.city.toLowerCase().includes(city)); const grid = document.getElementById('sellersGrid'); grid.innerHTML = ''; filtered.forEach(s => { const logo = s.logo || 'https://via.placeholder.com/80'; const link = `${window.location.origin}${window.location.pathname}#/${s.slug}`; grid.innerHTML += `<div class="biz-card"><div class="biz-banner"></div><div class="biz-content"><img src="${logo}" class="biz-logo"><h3>${s.saleName}</h3><div class="biz-meta"><span><i class="fa-solid fa-location-dot"></i> ${s.city||'Sri Lanka'}</span><span class="badge">${s.role}</span></div><div class="biz-actions"><a href="${link}" target="_blank" class="btn btn-primary btn-sm full-width">Visit Page</a></div></div></div>`; }); },
-    loadConnectSection: async () => { const doc = await db.collection('users').doc(state.user.uid).get(); if(!doc.data().socialName) { document.getElementById('socialLockScreen').classList.remove('hidden'); document.getElementById('socialFeedArea').classList.add('hidden'); } else { document.getElementById('socialLockScreen').classList.add('hidden'); document.getElementById('socialFeedArea').classList.remove('hidden'); app.loadFeed(); } },
-    loadFeed: async () => { const div = document.getElementById('feedStream'); div.innerHTML = '<p class="text-center">Loading updates...</p>'; const snap = await db.collection('posts').orderBy('createdAt', 'desc').limit(20).get(); div.innerHTML = ''; snap.forEach(doc => { const p = doc.data(); const date = p.createdAt ? new Date(p.createdAt.toDate()).toLocaleDateString() : ''; const imgHtml = p.image ? `<img src="${p.image}" class="feed-img">` : ''; div.innerHTML += `<div class="feed-card"><div class="feed-header"><img src="${p.avatar}" class="feed-avatar"><div><strong>${p.author}</strong><br><small class="text-secondary">${date}</small></div></div><p>${p.text}</p>${imgHtml}</div>`; }); },
-    showFeed: () => { document.getElementById('feedStream').classList.remove('hidden'); document.getElementById('peopleStream').classList.add('hidden'); document.getElementById('postCreator').classList.remove('hidden'); },
-    showPeople: async () => {
-        document.getElementById('feedStream').classList.add('hidden'); document.getElementById('postCreator').classList.add('hidden');
-        const grid = document.getElementById('peopleStream'); grid.classList.remove('hidden'); grid.innerHTML = 'Loading...';
-        const snap = await db.collection('users').where('socialName', '!=', null).limit(20).get();
-        grid.innerHTML = '';
-        snap.forEach(doc => {
-            const u = doc.data();
-            if(u.role === 'buyer' || doc.id === state.user.uid) return;
-            grid.innerHTML += `<div class="biz-card" style="padding:10px;text-align:center;"><div class="online-dot" style="position:absolute;top:10px;right:10px;"></div><img src="${u.socialPhoto}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 10px;border:2px solid #2563eb;"><h4>${u.socialName}</h4><button class="btn btn-success btn-sm full-width mt-2" onclick="app.openMsgModal('${u.phone}')">Message</button></div>`;
-        });
-    },
-    openMsgModal: (phone) => { document.getElementById('msgTargetPhone').value = phone; document.getElementById('msgModal').classList.remove('hidden'); },
-    loadMyAds: async () => { const div = document.getElementById('myAdsList'); div.innerHTML = 'Loading...'; const snap = await db.collection('ads').where('uid', '==', state.user.uid).get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); const badge = a.status === 'active' ? '<span class="badge" style="background:green;color:white">Active</span>' : '<span class="badge">Pending</span>'; div.innerHTML += `<div class="card" style="padding:10px;">${badge} <strong>Target: ${a.target}</strong> <br> Clicks: ${a.clicks || 0}</div>`; }); },
-    loadAdminAds: async () => { const div = document.getElementById('adminAdList'); div.innerHTML = 'Loading Pending Ads...'; const snap = await db.collection('ads').where('status', '==', 'pending').get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); div.innerHTML += `<div class="biz-card"><img src="${a.receipt}" style="width:100%;height:150px;object-fit:cover"><div class="biz-content"><p>User: ${a.uid}</p><button class="btn btn-success btn-sm" onclick="app.approveAd('${doc.id}')">Approve</button></div></div>`; }); },
-    approveAd: async (id) => { await db.collection('ads').doc(id).update({status: 'active'}); ui.toast("Ad Approved"); app.loadAdminAds(); },
-    buyerFilter: async (type) => { /* Logic is handled in render vehicle list or similar buyer specific logic */ }
+    loadWebsiteSettings: async () => { const doc = await db.collection('sites').doc(state.user.uid).get(); if(doc.exists && doc.data().saleName) { const d = doc.data(); document.getElementById('websiteLockScreen').classList.add('hidden'); document.getElementById('websiteEditor').classList.remove('hidden'); document.getElementById('webName').value = d.saleName; if(d.slug) { const link = `${window.location.origin}${window.location.pathname}#/${d.slug}`; document.getElementById('mySiteLink').innerText = link; document.getElementById('mySiteLink').href = link; } } }
 };
 
+// SITE RENDERER
 const siteRenderer = {
     loadBySlug: async (slug) => {
         ui.showLoader(true, "Building Experience...");
