@@ -59,7 +59,7 @@
         <img id="lightboxImg" src="">
     </div>
 
-    <!-- 4. GLOBAL AD MODAL (Money Making) -->
+    <!-- 4. GLOBAL AD MODAL (MONETIZATION) -->
     <div id="adModal" class="modal-overlay hidden">
         <div class="modal-content ad-content">
             <button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button>
@@ -67,14 +67,15 @@
         </div>
     </div>
 
-    <!-- 5. MESSAGE MODAL -->
+    <!-- 5. SOCIAL MESSAGE MODAL -->
     <div id="msgModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-modal" onclick="document.getElementById('msgModal').classList.add('hidden')">&times;</button>
             <h3>Send Message</h3>
-            <p class="text-secondary text-sm">You can send <span id="msgCount">10</span> more messages today.</p>
-            <textarea id="msgText" rows="4" class="full-width mt-2" placeholder="Hi, I saw your profile..."></textarea>
-            <button id="btnSendMsg" class="btn btn-primary full-width mt-4">Send via WhatsApp</button>
+            <p class="text-secondary text-sm">Outbox Limit: You can contact <span id="msgCountDisplay">10</span> more new people today.</p>
+            <textarea id="msgText" rows="4" class="full-width mt-2" placeholder="Hi, I am interested in your business..."></textarea>
+            <input type="hidden" id="msgTargetPhone">
+            <button id="btnSendMsg" class="btn btn-success full-width mt-4"><i class="fa-brands fa-whatsapp"></i> Send via WhatsApp</button>
         </div>
     </div>
 
@@ -127,11 +128,11 @@
 
                 <main class="dash-content">
                     
-                    <!-- A. COMMON: PROFILE -->
+                    <!-- A. PROFILE -->
                     <div id="tabProfile" class="dash-tab active">
                         <h2>Profile Settings</h2>
                         <div class="card">
-                            <div class="alert-box" id="profileNotice">
+                            <div class="alert-box warning" id="profileNotice">
                                 <i class="fa-solid fa-lock"></i> 
                                 <strong>You must complete your profile to unlock your dashboard.</strong>
                             </div>
@@ -145,12 +146,12 @@
                                     <div class="form-group">
                                         <label>Phone Number (Required)</label>
                                         <input type="tel" id="profPhone" placeholder="771234567" required>
-                                        <small class="text-secondary">Enter without '0'. We auto-add +94.</small>
+                                        <small class="text-secondary text-primary font-bold">Please enter without '0'. We auto-add +94.</small>
                                     </div>
                                     <div class="form-group">
                                         <label>WhatsApp Number (Required)</label>
                                         <input type="tel" id="profWhatsapp" placeholder="771234567" required>
-                                        <small class="text-secondary">Enter without '0'. We auto-add +94.</small>
+                                        <small class="text-secondary text-primary font-bold">Please enter without '0'. We auto-add +94.</small>
                                     </div>
                                 </div>
                                 <div class="grid-2">
@@ -173,7 +174,7 @@
                         </div>
                     </div>
 
-                    <!-- B. ROLE: VEHICLE SELLER -->
+                    <!-- B. ADD VEHICLE -->
                     <div id="tabAddVehicle" class="dash-tab">
                         <h2>Add Vehicle</h2>
                         <form id="formAddVehicle" class="card">
@@ -204,23 +205,21 @@
                         </form>
                     </div>
                     
+                    <!-- MY VEHICLES -->
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
                         <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2">
                         
                         <!-- DYNAMIC TIP BOX -->
-                        <div class="alert-box" style="font-size:0.9rem; margin-top:10px;">
-                            <i class="fa-solid fa-lightbulb text-primary"></i> 
-                            <div>
-                                <strong>Tip:</strong> Use the "Hide" button to remove vehicles without deleting.<br>
-                                Use the "Show" button to display them on your page again.
-                            </div>
+                        <div class="alert-box" style="font-size:0.9rem; margin-top:10px; display:block;">
+                            <p class="mb-2"><i class="fa-solid fa-lightbulb text-primary"></i> <strong>Tip 1:</strong> Use the "Hide" button to remove vehicles from your page without deleting them.</p>
+                            <p><i class="fa-solid fa-lightbulb text-primary"></i> <strong>Tip 2:</strong> Use the "Show" button to display your vehicle on your page again.</p>
                         </div>
                         
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- C. PARTS & D. SERVICES (Forms) -->
+                    <!-- C. PARTS & D. SERVICES -->
                     <div id="tabAddPart" class="dash-tab">
                         <h2>Add Auto Part</h2>
                         <form id="formAddPart" class="card">
@@ -299,43 +298,34 @@
                         <div id="buyerGrid" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- G. DIRECTORY -->
-                    <div id="tabDirectory" class="dash-tab">
-                        <h2>Business Directory</h2>
-                        <div class="tabs-header">
-                            <button class="chip active" onclick="app.connectFilter('all')">All</button>
-                            <button class="chip" onclick="app.connectFilter('seller')">Car Sales</button>
-                            <button class="chip" onclick="app.connectFilter('parts')">Spare Parts</button>
-                            <button class="chip" onclick="app.connectFilter('service')">Services</button>
-                            <button class="chip" onclick="app.connectFilter('finance')">Finance</button>
-                        </div>
-                        <div class="grid-2 mb-2">
-                            <input type="text" id="connectSearch" placeholder="Search Business...">
-                            <input type="text" id="connectCity" placeholder="Filter by City...">
-                        </div>
-                        <div id="sellersGrid" class="connect-grid"></div>
-                    </div>
-
-                    <!-- H. SOCIAL CONNECT (NEW LOGIC) -->
+                    <!-- G. SOCIAL CONNECT (NEW LOGIC) -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Social Connect</h2>
                         
-                        <!-- Social Profile Lock -->
+                        <!-- Lock Screen -->
                         <div id="socialLockScreen" class="lock-overlay hidden">
                             <i class="fa-solid fa-user-shield text-primary" style="font-size:3rem;"></i>
                             <h3>Setup Social Profile</h3>
-                            <p>To ensure trust in our business community, you must use your <strong>Real Name</strong> and <strong>Real Photo</strong>.</p>
+                            <p class="text-secondary mt-2"><strong>Why?</strong> Your social profile displays your Business Page link. To build customer trust and prevent spam, you must verify your identity with your <strong>Real Name</strong> and <strong>Real Photo</strong>.</p>
                             <div class="card mt-4" style="max-width:400px; margin:20px auto;">
-                                <input type="text" id="socialRealName" placeholder="Your Real Name" class="mb-2">
-                                <label>Real Photo</label>
-                                <input type="file" id="socialRealPhoto" class="mb-2">
+                                <input type="text" id="socialRealName" placeholder="Your Real Name" class="mb-2 full-width">
+                                <div class="form-group text-left">
+                                    <label>Real Photo</label>
+                                    <input type="file" id="socialRealPhoto" class="mb-2">
+                                </div>
                                 <button id="btnUnlockSocial" class="btn btn-primary full-width">Join Community</button>
                             </div>
                         </div>
 
-                        <!-- Social Feed -->
+                        <!-- Main Feed Area -->
                         <div id="socialFeedArea" class="hidden">
-                            <div class="card">
+                            <div class="tabs-header">
+                                <button class="chip active" onclick="app.showFeed()">Feed</button>
+                                <button class="chip" onclick="app.showPeople()">People</button>
+                            </div>
+
+                            <!-- Post Creator -->
+                            <div class="card" id="postCreator">
                                 <h3>Post Update</h3>
                                 <form id="formPostFeed">
                                     <textarea id="feedText" class="full-width" rows="3" placeholder="Share an update, offer, or news..." required></textarea>
@@ -343,17 +333,19 @@
                                     <button type="submit" class="btn btn-primary mt-2">Post</button>
                                 </form>
                             </div>
+
                             <div id="feedStream" class="feed-grid"></div>
+                            <div id="peopleStream" class="hidden connect-grid"></div>
                         </div>
                     </div>
 
-                    <!-- I. PROMOTE (NEW MONEY MAKING) -->
+                    <!-- H. PROMOTE (MONETIZATION) -->
                     <div id="tabPromote" class="dash-tab">
                         <h2>Promote Your Business</h2>
                         <div class="grid-2">
                             <div class="card">
                                 <h3>Create Advertisement</h3>
-                                <p class="text-secondary text-sm mb-2">Your ad will appear as a popup on relevant dashboards and pages.</p>
+                                <p class="text-secondary text-sm mb-2">Ads appear as popups on dashboards and business pages.</p>
                                 <div class="form-group"><label>Ad Image (Landscape)</label><input type="file" id="adImage"></div>
                                 <div class="form-group"><label>Target Audience</label>
                                     <select id="adTarget">
@@ -362,12 +354,17 @@
                                         <option value="buyer">Buyers</option>
                                     </select>
                                 </div>
-                                <div class="form-group"><label>Destination URL</label><input type="url" id="adUrl" placeholder="https://..."></div>
-                                <div class="alert-box warning">Price: Rs. 5000 / Month</div>
+                                <div class="form-group"><label>Destination URL</label><input type="url" id="adUrl" placeholder="https://your-site.com"></div>
+                                <div class="alert-box warning text-center font-bold">Price: Rs. 5000 / Month</div>
                             </div>
                             <div class="card">
                                 <h3>Payment Details</h3>
-                                <p>Bank: <strong>Commercial Bank</strong><br>Branch: <strong>Homagama</strong><br>Acc Name: <strong>COLOMBAGE SD</strong><br>Acc No: <strong>8750053306</strong></p>
+                                <div style="background:#f1f5f9; padding:15px; border-radius:8px; border:1px solid #cbd5e1;">
+                                    <p>Bank: <strong>Commercial Bank</strong></p>
+                                    <p>Branch: <strong>Homagama</strong></p>
+                                    <p>Acc Name: <strong>COLOMBAGE SD</strong></p>
+                                    <p>Acc No: <strong>8750053306</strong></p>
+                                </div>
                                 <hr class="mt-4 mb-4">
                                 <div class="form-group"><label>Upload Receipt / Screenshot</label><input type="file" id="adReceipt"></div>
                                 <button id="btnSubmitAd" class="btn btn-success full-width">Submit for Review</button>
