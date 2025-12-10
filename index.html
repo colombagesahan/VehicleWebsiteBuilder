@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VehicleBuilder Dashboard</title>
+    <title>VehicleBuilder Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -18,8 +18,10 @@
     <!-- 1. FULL EDIT VEHICLE MODAL -->
     <div id="editVehicleModal" class="modal-overlay hidden">
         <div class="modal-content large-modal-content">
-            <button class="close-modal" onclick="ui.closeModal()">&times;</button>
-            <h2>Edit Vehicle Details</h2>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2>Edit Vehicle Details</h2>
+                <button class="close-modal" onclick="ui.closeModal()" style="position:static;">&times;</button>
+            </div>
             <form id="formEditVehicle">
                 <input type="hidden" id="editVId">
                 <div class="grid-2">
@@ -45,29 +47,21 @@
         </div>
     </div>
 
-    <!-- 2. PUBLIC SITE VEHICLE MODAL -->
+    <!-- 2. PUBLIC SITE MODALS -->
     <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
         <div class="modal-content large-modal dark-modal-theme">
             <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
             <div id="siteModalContent"></div>
         </div>
     </div>
-
-    <!-- 3. LIGHTBOX -->
     <div id="lightboxModal" class="lightbox-overlay hidden">
         <span class="close-lightbox" onclick="document.getElementById('lightboxModal').classList.add('hidden')">&times;</span>
         <img id="lightboxImg" src="">
     </div>
 
-    <!-- 4. AD MODAL -->
-    <div id="adModal" class="modal-overlay hidden">
-        <div class="modal-content ad-content">
-            <button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button>
-            <div id="adContentArea"></div>
-        </div>
-    </div>
-
-    <!-- 5. MESSAGE MODAL -->
+    <!-- 3. MONETIZATION & SOCIAL -->
+    <div id="adModal" class="modal-overlay hidden"><div class="modal-content ad-content"><button class="close-modal" onclick="document.getElementById('adModal').classList.add('hidden')">&times;</button><div id="adContentArea"></div></div></div>
+    <div id="fbModal" class="modal-overlay hidden"><div class="modal-content fb-content text-center"><button class="close-modal" onclick="document.getElementById('fbModal').classList.add('hidden')">&times;</button><i class="fa-brands fa-facebook text-primary" style="font-size:3rem;"></i><h3>Like us on Facebook!</h3><div id="fbLinkArea" class="mt-4"></div></div></div>
     <div id="msgModal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-modal" onclick="document.getElementById('msgModal').classList.add('hidden')">&times;</button>
@@ -80,7 +74,7 @@
     </div>
 
     <!-- =======================================================
-         PLATFORM DASHBOARD
+         DASHBOARD
     ======================================================== -->
     <div id="platformApp">
         <nav class="navbar">
@@ -91,16 +85,17 @@
             </div>
         </nav>
 
+        <!-- LANDING -->
         <section id="viewLanding" class="view">
             <div class="hero">
                 <h1 id="landingTitle">Welcome to the Platform</h1>
                 <p>Please Sign In or Create an Account to continue.</p>
                 <button class="btn btn-primary btn-lg" onclick="ui.showView('viewAuth')">Sign In / Register</button>
-                <br><br>
-                <a href="home.html" style="text-decoration: underline; color: #2563eb;">&larr; Back to Role Selection</a>
+                <br><br><a href="home.html" style="text-decoration: underline; color: #2563eb;">&larr; Back to Role Selection</a>
             </div>
         </section>
 
+        <!-- AUTH -->
         <section id="viewAuth" class="view hidden">
             <div class="auth-container">
                 <h2>Account Access</h2>
@@ -115,6 +110,7 @@
             </div>
         </section>
 
+        <!-- MAIN DASHBOARD -->
         <section id="viewDashboard" class="view hidden">
             <div class="dash-layout">
                 <aside class="dash-sidebar">
@@ -136,6 +132,7 @@
                                 <i class="fa-solid fa-lock"></i> 
                                 <strong>You must complete your profile to unlock your dashboard.</strong>
                             </div>
+                            <!-- FIXED: No black border (CSS updated) -->
                             <fieldset id="profFields">
                                 <div class="form-group"><label>Profile Photo (Required)</label><input type="file" id="profPhoto" accept="image/*"></div>
                                 <div class="grid-2">
@@ -151,7 +148,7 @@
                                 <div class="grid-2">
                                     <div class="form-group">
                                         <label>City / Town (Required)</label><input type="text" id="profCity" placeholder="e.g. Athurugiriya" required>
-                                        <small class="text-secondary text-primary">Adding correct city boosts SEO.</small>
+                                        <small class="text-secondary text-primary">Adding correct city boosts SEO and Sales.</small>
                                     </div>
                                     <div class="form-group"><label>Address</label><input type="text" id="profAddress" placeholder="Full Address" required></div>
                                 </div>
@@ -193,53 +190,54 @@
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Vehicle</button>
                         </form>
                     </div>
-                    
+
+                    <!-- MY INVENTORY (With Tips) -->
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
                         <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2">
+                        <!-- Dynamic Tip Box -->
                         <div id="inventoryTip" class="alert-box" style="font-size:0.9rem; margin-top:10px;"></div>
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- C. PARTS/SERVICES -->
+                    <!-- OTHER ROLES (Parts, Services) -->
                     <div id="tabAddPart" class="dash-tab"><h2>Add Part</h2><form id="formAddPart" class="card"><div class="grid-2"><input id="pName" placeholder="Name" required><input id="pBrand" placeholder="Brand"><input id="pModel" placeholder="Fits Model"><input id="pPrice" type="number" placeholder="Price" required></div><textarea id="pDesc"></textarea><input type="file" id="pPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish Part</button></form></div>
-                    <div id="tabMyParts" class="dash-tab"><h2>My Parts</h2><div id="myPartsList" class="vehicle-grid"></div></div>
-                    <div id="tabAddService" class="dash-tab"><h2>Add Service</h2><form id="formAddService" class="card"><div class="grid-2"><input id="sName" placeholder="Service Name" required><input id="sPrice" type="number" placeholder="Price"></div><textarea id="sDesc"></textarea><input type="file" id="sPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish Service</button></form></div>
+                    <div id="tabMyParts" class="dash-tab"><h2>My Products</h2><div id="myPartsList" class="vehicle-grid"></div></div>
+                    <div id="tabAddService" class="dash-tab"><h2>Add Service</h2><form id="formAddService" class="card"><div class="grid-2"><input id="sName" placeholder="Name" required><input id="sPrice" type="number" placeholder="Price"></div><textarea id="sDesc"></textarea><input type="file" id="sPhotos" multiple><button class="btn btn-primary full-width mt-4">Publish Service</button></form></div>
                     <div id="tabMyServices" class="dash-tab"><h2>My Services</h2><div id="myServicesList" class="vehicle-grid"></div></div>
 
-                    <!-- E. PAGE BUILDER -->
+                    <!-- E. PAGE BUILDER (LAUNCHER - RESTORED) -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Page Builder</h2>
+                        
                         <div id="websiteLockScreen" class="lock-overlay">
                             <h3>Setup Your Business Page</h3>
                             <p>Update your Profile "City" first to create your unique URL.</p>
-                            <input type="text" id="initSaleName" placeholder="Business Name">
+                            <input type="text" id="initSaleName" placeholder="Business Name (e.g. Sahan Motors)">
                             <button id="btnUnlockWebsite" class="btn btn-primary">Create Page</button>
                         </div>
+
+                        <!-- THE WIX-STYLE LAUNCHER -->
                         <div id="websiteEditor" class="hidden">
                             <div class="info-banner mb-2">
-                                <strong>Your Unique Page Link:</strong><br>
+                                <strong>Your Page URL:</strong><br>
                                 <a href="#" id="mySiteLink" target="_blank" class="font-bold text-lg">...</a>
                             </div>
-                            <div class="card">
-                                <h3>Branding</h3>
-                                <input type="text" id="webName" placeholder="Business Name">
-                                <div class="grid-2"><div class="form-group"><label>Logo</label><input type="file" id="webLogo"></div><div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div></div>
-                                <select id="webNavStyle"><option value="1">Centered</option><option value="2">Left</option></select>
-                                <h3>Content</h3>
-                                <input type="text" id="webHeroTitle" placeholder="Hero Title">
-                                <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
-                                <textarea id="webAbout" placeholder="About Us..."></textarea>
-                                <textarea id="webWhy" placeholder="Why Choose Us..."></textarea>
-                                <h3>Media</h3>
-                                <input type="file" id="webGallery" multiple>
-                                <input type="text" id="webFb" placeholder="Facebook Page Link">
-                                <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update</button>
+
+                            <div class="card text-center" style="padding: 4rem 2rem;">
+                                <i class="fa-solid fa-paintbrush text-accent" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                                <h3>Design Your Page</h3>
+                                <p class="text-secondary" style="max-width: 500px; margin: 0 auto 30px;">
+                                    Use our visual editor to customize colors, themes, and content.
+                                </p>
+                                <a href="pagebuilder.html" class="btn btn-primary btn-lg">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Open Visual Editor
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- F. BUYER -->
+                    <!-- F. MARKETPLACE -->
                     <div id="tabBuyerBrowse" class="dash-tab">
                         <h2>Marketplace</h2>
                         <div class="tabs-header">
@@ -256,7 +254,7 @@
                         <h2>Business Directory</h2>
                         <div class="tabs-header">
                             <button class="chip active" onclick="app.connectFilter('all')">All</button>
-                            <button class="chip" onclick="app.connectFilter('seller')">Sellers</button>
+                            <button class="chip" onclick="app.connectFilter('seller')">Car Sales</button>
                             <button class="chip" onclick="app.connectFilter('parts')">Parts</button>
                             <button class="chip" onclick="app.connectFilter('service')">Services</button>
                             <button class="chip" onclick="app.connectFilter('finance')">Finance</button>
@@ -268,13 +266,13 @@
                         <div id="sellersGrid" class="connect-grid"></div>
                     </div>
 
-                    <!-- H. SOCIAL -->
+                    <!-- H. SOCIAL CONNECT -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Social Connect</h2>
                         <div id="socialLockScreen" class="lock-overlay hidden">
                             <i class="fa-solid fa-user-shield text-primary" style="font-size:3rem;"></i>
                             <h3>Setup Social Profile</h3>
-                            <p>Real Name & Photo required.</p>
+                            <p>Real Name & Photo required to build trust.</p>
                             <input type="text" id="socialRealName" placeholder="Real Name" class="mt-4">
                             <input type="file" id="socialRealPhoto" class="mt-2">
                             <button id="btnUnlockSocial" class="btn btn-primary mt-2">Join</button>
@@ -317,7 +315,7 @@
     </div>
 
     <!-- =======================================================
-         GENERATED WEBSITE (AUTOMARKET DARK)
+         GENERATED SITE (AUTOMARKET DARK)
     ======================================================== -->
     <div id="generatedSite" class="hidden dark-theme-site">
         <header class="gen-header">
