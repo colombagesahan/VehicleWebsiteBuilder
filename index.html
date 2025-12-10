@@ -15,7 +15,7 @@
     <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loaderText">Processing...</p></div>
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- 1. FULL EDIT VEHICLE MODAL (Updated with ALL fields) -->
+    <!-- 1. FULL EDIT VEHICLE MODAL -->
     <div id="editVehicleModal" class="modal-overlay hidden">
         <div class="modal-content large-modal-content">
             <button class="close-modal" onclick="ui.closeModal()">&times;</button>
@@ -122,7 +122,6 @@
                                 <i class="fa-solid fa-lock"></i> 
                                 <strong>You must complete your profile to unlock your dashboard.</strong>
                             </div>
-                            <!-- REMOVED BLACK LINE BY USING CSS ON FIELDSET -->
                             <fieldset id="profileFieldset">
                                 <div class="form-group">
                                     <label>Profile Photo (Required)</label>
@@ -131,20 +130,20 @@
                                 <div class="grid-2">
                                     <div class="form-group">
                                         <label>Phone Number (Required)</label>
-                                        <input type="tel" id="profPhone" placeholder="0771234567" required>
-                                        <small class="text-secondary">Customers will call this number.</small>
+                                        <input type="tel" id="profPhone" placeholder="771234567" required>
+                                        <small class="text-secondary text-primary font-bold">Please enter without 0. We auto-add +94.</small>
                                     </div>
                                     <div class="form-group">
                                         <label>WhatsApp Number (Required)</label>
-                                        <input type="tel" id="profWhatsapp" placeholder="0771234567" required>
-                                        <small class="text-secondary">Used for the chat button.</small>
+                                        <input type="tel" id="profWhatsapp" placeholder="771234567" required>
+                                        <small class="text-secondary text-primary font-bold">Please enter without 0. We auto-add +94.</small>
                                     </div>
                                 </div>
                                 <div class="grid-2">
                                     <div class="form-group">
                                         <label>City / Town (Required)</label>
-                                        <input type="text" id="profCity" placeholder="e.g. Kurunegala" required>
-                                        <small class="text-secondary text-primary">Adding the correct city increases your SEO and sales visibility.</small>
+                                        <input type="text" id="profCity" placeholder="e.g. Athurugiriya" required>
+                                        <small class="text-secondary text-primary">Adding correct city boosts SEO and Sales.</small>
                                     </div>
                                     <div class="form-group">
                                         <label>Address (Required)</label>
@@ -197,7 +196,7 @@
                         <!-- SEARCH BAR -->
                         <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2" onkeyup="app.searchVehicles()">
                         
-                        <div class="alert-box" style="font-size:0.9rem;">
+                        <div class="alert-box" style="font-size:0.9rem; margin-top:10px;">
                             <i class="fa-solid fa-lightbulb text-primary"></i> 
                             <strong>Tip:</strong> Use the "Hide" button to temporarily remove a vehicle from your site without deleting it.
                         </div>
