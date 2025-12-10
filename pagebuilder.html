@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Page Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --sidebar-w: 350px; --primary: #2563eb; --dark: #0f172a; --light: #f1f5f9; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { display: flex; height: 100vh; overflow: hidden; background: #1e1e1e; }
+
+        /* --- LEFT SIDEBAR (TOOLS) --- */
+        .editor-sidebar { width: var(--sidebar-w); background: #ffffff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 10; }
+        .editor-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+        .back-btn { text-decoration: none; color: #64748b; font-weight: 600; font-size: 0.9rem; }
+        .back-btn:hover { color: var(--primary); }
+        
+        .editor-tabs { display: flex; border-bottom: 1px solid #eee; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: white; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: #eff6ff; }
+
+        .editor-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .control-group { margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px; }
+        .control-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #334155; }
+        .control-group input, .control-group textarea, .control-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .control-group textarea { resize: vertical; min-height: 80px; }
+        
+        /* Theme Cards */
+        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .theme-card { border: 2px solid #eee; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .theme-card:hover { border-color: var(--primary); }
+        .theme-card.selected { border-color: var(--primary); background: #eff6ff; }
+        .theme-preview { height: 40px; border-radius: 4px; margin-bottom: 5px; }
+
+        .editor-footer { padding: 15px; border-top: 1px solid #eee; background: white; }
+        .btn-save { width: 100%; padding: 12px; background: var(--success, #10b981); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        .btn-save:hover { background: #059669; }
+
+        /* --- RIGHT SIDE (PREVIEW) --- */
+        .preview-area { flex: 1; background: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
+        .preview-toolbar { position: absolute; top: 20px; background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 30px; display: flex; gap: 15px; z-index: 20; }
+        .device-btn { color: #ccc; cursor: pointer; font-size: 1.2rem; }
+        .device-btn:hover, .device-btn.active { color: white; }
+        
+        .preview-frame {
+            background: white; transition: width 0.3s; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border: none; width: 100%; height: 100%; max-width: 100%; border-radius: 8px; overflow: hidden;
+        }
+        /* Device Sizes */
+        .preview-area.mobile .preview-frame { width: 375px; height: 750px; border-radius: 30px; border: 8px solid #111; }
+        .preview-area.tablet .preview-frame { width: 768px; }
+
+        /* --- LOADER --- */
+        .loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- LOADER -->
+    <div id="loader" class="loader">
+        <div class="spinner"></div>
+        <p style="margin-top:10px; color:#666;">Loading Editor...</p>
+    </div>
+
+    <!-- LEFT: EDITOR -->
+    <aside class="editor-sidebar">
+        <div class="editor-header">
+            <span><strong>Page Builder</strong></span>
+            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+        </div>
+        
+        <div class="editor-tabs">
+            <button class="tab-btn active" onclick="switchTab('design')">Design</button>
+            <button class="tab-btn" onclick="switchTab('content')">Content</button>
+            <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+        </div>
+
+        <!-- TAB: DESIGN -->
+        <div id="tab-design" class="editor-content">
+            <div class="control-group">
+                <label>Select Theme</label>
+                <div class="theme-grid">
+                    <div class="theme-card selected" onclick="setTheme('dark')" id="theme-dark">
+                        <div class="theme-preview" style="background:#0f1724;"></div>
+                        <small>Midnight</small>
+                    </div>
+                    <div class="theme-card" onclick="setTheme('light')" id="theme-light">
+                        <div class="theme-preview" style="background:#ffffff; border:1px solid #ccc;"></div>
+                        <small>Clean White</small>
+                    </div>
+                    <div class="theme-card" onclick="setTheme('red')" id="theme-red">
+                        <div class="theme-preview" style="background:#111; border-bottom: 4px solid red;"></div>
+                        <small>Sport Red</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Brand Color</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="color" id="brandColor" value="#2563eb" style="width:50px; height:40px; padding:0; border:none;">
+                    <span style="font-size:0.8rem; color:#666;">Main buttons & accents</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Navbar Style</label>
+                <select id="navStyle">
+                    <option value="1">Centered Logo</option>
+                    <option value="2">Left Logo</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- TAB: CONTENT -->
+        <div id="tab-content" class="editor-content" style="display:none;">
+            <div class="control-group">
+                <label>Hero Title</label>
+                <input type="text" id="heroTitle" placeholder="Welcome to..." oninput="updatePreview()">
+            </div>
+            <div class="control-group">
+                <label>Hero Subtitle</label>
+                <input type="text" id="heroSub" placeholder="Tagline..." oninput="updatePreview()">
+            </div>
+            <div class="control-group">
+                <label>About Us</label>
+                <textarea id="aboutText" placeholder="We are..." oninput="updatePreview()"></textarea>
+            </div>
+            <div class="control-group">
+                <label>Why Choose Us (List)</label>
+                <textarea id="whyText" placeholder="Best Price..." oninput="updatePreview()"></textarea>
+            </div>
+        </div>
+
+        <!-- TAB: SETTINGS -->
+        <div id="tab-settings" class="editor-content" style="display:none;">
+            <div class="control-group">
+                <label>Business Name</label>
+                <input type="text" id="bizName" oninput="updatePreview()">
+            </div>
+            <div class="control-group">
+                <label>Facebook Link</label>
+                <input type="text" id="fbLink">
+            </div>
+            <div class="control-group">
+                <label>Section Visibility</label>
+                <label style="font-weight:400;"><input type="checkbox" id="showReviews" checked> Show Reviews</label>
+                <label style="font-weight:400;"><input type="checkbox" id="showGallery" checked> Show Gallery</label>
+            </div>
+        </div>
+
+        <div class="editor-footer">
+            <button class="btn-save" onclick="saveChanges()"><i class="fa-solid fa-save"></i> Save & Publish</button>
+        </div>
+    </aside>
+
+    <!-- RIGHT: PREVIEW -->
+    <main class="preview-area" id="previewArea">
+        <div class="preview-toolbar">
+            <i class="fa-solid fa-mobile-screen device-btn" onclick="setDevice('mobile')"></i>
+            <i class="fa-solid fa-tablet-screen-button device-btn" onclick="setDevice('tablet')"></i>
+            <i class="fa-solid fa-desktop device-btn active" onclick="setDevice('desktop')"></i>
+        </div>
+        
+        <!-- The Preview Container -->
+        <div id="previewFrame" class="preview-frame">
+            <!-- This content will be dynamically updated by JS -->
+            <div id="prevContainer" style="height:100%; overflow-y:auto;">
+                <!-- DYNAMIC CONTENT LOADED HERE -->
+            </div>
+        </div>
+    </main>
+
+    <!-- FIREBASE SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+    <script>
+        // --- 1. FIREBASE INIT ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUjzMFao9BS3uXBOW3qYrLVqHaGn8qIk4", 
+            authDomain: "onlineshop-30cd1.firebaseapp.com",
+            projectId: "onlineshop-30cd1",
+            storageBucket: "onlineshop-30cd1.firebasestorage.app",
+            messagingSenderId: "818252574868",
+            appId: "1:818252574868:web:8dd36825db589a886cc481"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- 2. STATE ---
+        let currentUser = null;
+        let siteData = {};
+
+        // --- 3. INIT LOGIC ---
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                currentUser = user;
+                await loadSiteData();
+                document.getElementById('loader').style.display = 'none';
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        async function loadSiteData() {
+            const doc = await db.collection('sites').doc(currentUser.uid).get();
+            if (doc.exists) {
+                siteData = doc.data();
+                // Fill Inputs
+                document.getElementById('bizName').value = siteData.saleName || '';
+                document.getElementById('heroTitle').value = siteData.heroTitle || '';
+                document.getElementById('heroSub').value = siteData.heroSub || '';
+                document.getElementById('aboutText').value = siteData.about || '';
+                document.getElementById('whyText').value = siteData.why || '';
+                document.getElementById('fbLink').value = siteData.fb || '';
+                document.getElementById('navStyle').value = siteData.navStyle || '1';
+                document.getElementById('brandColor').value = siteData.primaryColor || '#2563eb';
+                
+                // Set Theme UI
+                setThemeUI(siteData.theme || 'dark');
+                
+                renderPreview(); // Initial Render
+            }
+        }
+
+        // --- 4. EDITOR LOGIC ---
+        function switchTab(tab) {
+            document.querySelectorAll('.editor-content').forEach(el => el.style.display = 'none');
+            document.getElementById(`tab-${tab}`).style.display = 'block';
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function setDevice(device) {
+            const area = document.getElementById('previewArea');
+            const btns = document.querySelectorAll('.device-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            area.classList.remove('mobile', 'tablet');
+            if(device !== 'desktop') area.classList.add(device);
+        }
+
+        function setTheme(theme) {
+            siteData.theme = theme;
+            setThemeUI(theme);
+            renderPreview();
+        }
+
+        function setThemeUI(theme) {
+            document.querySelectorAll('.theme-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById(`theme-${theme}`).classList.add('selected');
+        }
+
+        // --- 5. RENDER PREVIEW (The "Crazy" Part) ---
+        function updatePreview() {
+            // Pull values from inputs into temp object for instant feedback
+            siteData.saleName = document.getElementById('bizName').value;
+            siteData.heroTitle = document.getElementById('heroTitle').value;
+            siteData.heroSub = document.getElementById('heroSub').value;
+            siteData.about = document.getElementById('aboutText').value;
+            // Re-render
+            renderPreview(); 
+        }
+
+        document.getElementById('brandColor').addEventListener('input', (e) => {
+            document.getElementById('prevContainer').style.setProperty('--gen-primary', e.target.value);
+        });
+
+        document.getElementById('navStyle').addEventListener('change', renderPreview);
+
+        function renderPreview() {
+            const container = document.getElementById('prevContainer');
+            const theme = siteData.theme || 'dark';
+            const color = document.getElementById('brandColor').value;
+            const navStyle = document.getElementById('navStyle').value;
+
+            // CSS Variables for Preview
+            let cssVars = `
+                --gen-primary: ${color}; 
+                --gen-bg: ${theme === 'light' ? '#ffffff' : '#0f1724'};
+                --gen-text: ${theme === 'light' ? '#1e293b' : '#e6eef6'};
+                --gen-card: ${theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)'};
+            `;
+            
+            if(theme === 'red') {
+                 cssVars = `--gen-primary: #dc2626; --gen-bg: #000000; --gen-text: #ffffff; --gen-card: #111;`;
+            }
+
+            const navHTML = navStyle === '1' 
+                ? `<div style="text-align:center; padding:15px; border-bottom:1px solid rgba(128,128,128,0.2);">
+                     <h2 style="margin:0; color:var(--gen-text)">${siteData.saleName || 'Business Name'}</h2>
+                   </div>`
+                : `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid rgba(128,128,128,0.2); align-items:center;">
+                     <h2 style="margin:0; color:var(--gen-text)">${siteData.saleName || 'Business Name'}</h2>
+                     <span style="font-size:1.5rem;">☰</span>
+                   </div>`;
+
+            // HTML Structure
+            container.innerHTML = `
+                <style>
+                    #prevContainer { ${cssVars} font-family: 'Inter', sans-serif; background: var(--gen-bg); color: var(--gen-text); }
+                    .prev-hero { padding: 40px 20px; text-align: center; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)); border-bottom: 1px solid var(--gen-card); }
+                    .prev-btn { background: var(--gen-primary); color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; margin-top:10px; display:inline-block; }
+                    .prev-section { padding: 30px 20px; }
+                    .prev-card { background: var(--gen-card); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(128,128,128,0.1); }
+                </style>
+                
+                ${navHTML}
+
+                <div class="prev-hero">
+                    <h1 style="font-size: 2.5rem; margin-bottom:10px;">${siteData.heroTitle || 'Welcome'}</h1>
+                    <p style="opacity:0.8;">${siteData.heroSub || 'Tagline here'}</p>
+                    <div class="prev-btn">Browse Inventory</div>
+                </div>
+
+                <div class="prev-section">
+                    <h3 style="text-align:center; margin-bottom:20px;">Latest Arrivals</h3>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                         <div class="prev-card" style="height:150px;"></div>
+                         <div class="prev-card" style="height:150px;"></div>
+                    </div>
+                </div>
+
+                <div class="prev-section" style="background: rgba(128,128,128,0.05);">
+                    <h3>About Us</h3>
+                    <p style="font-size:0.9rem; line-height:1.5;">${siteData.about || 'About content...'}</p>
+                </div>
+            `;
+        }
+
+        // --- 6. SAVE ---
+        async function saveChanges() {
+            const btn = document.querySelector('.btn-save');
+            btn.innerText = 'Saving...';
+            try {
+                await db.collection('sites').doc(currentUser.uid).update({
+                    saleName: document.getElementById('bizName').value,
+                    heroTitle: document.getElementById('heroTitle').value,
+                    heroSub: document.getElementById('heroSub').value,
+                    about: document.getElementById('aboutText').value,
+                    why: document.getElementById('whyText').value,
+                    fb: document.getElementById('fbLink').value,
+                    theme: siteData.theme,
+                    primaryColor: document.getElementById('brandColor').value,
+                    navStyle: document.getElementById('navStyle').value
+                });
+                alert('Website Updated Successfully!');
+                btn.innerText = 'Save & Publish';
+            } catch (e) {
+                alert('Error saving: ' + e.message);
+                btn.innerText = 'Save & Publish';
+            }
+        }
+    </script>
+</body>
+</html>
