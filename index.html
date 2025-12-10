@@ -15,28 +15,37 @@
     <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loaderText">Processing...</p></div>
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- 1. EDIT VEHICLE MODAL (Full Edit) -->
+    <!-- 1. FULL EDIT VEHICLE MODAL (Updated with ALL fields) -->
     <div id="editVehicleModal" class="modal-overlay hidden">
-        <div class="modal-content">
+        <div class="modal-content large-modal-content">
             <button class="close-modal" onclick="ui.closeModal()">&times;</button>
             <h2>Edit Vehicle Details</h2>
             <form id="formEditVehicle">
                 <input type="hidden" id="editVId">
                 <div class="grid-2">
+                    <div class="form-group"><label>Category</label><select id="editVCat"></select></div>
                     <div class="form-group"><label>Brand</label><input type="text" id="editVBrand" required></div>
                     <div class="form-group"><label>Model</label><input type="text" id="editVModel" required></div>
+                    <div class="form-group"><label>Trim</label><input type="text" id="editVTrim"></div>
+                    <div class="form-group"><label>Year</label><input type="number" id="editVYear" required></div>
+                    <div class="form-group"><label>Condition</label><input type="text" id="editVCond"></div>
+                    <div class="form-group"><label>Transmission</label><select id="editVTrans"><option>Automatic</option><option>Manual</option><option>Tiptronic</option></select></div>
+                    <div class="form-group"><label>Fuel</label><select id="editVFuel"><option>Petrol</option><option>Diesel</option><option>Hybrid</option><option>Electric</option></select></div>
                     <div class="form-group"><label>Price (Rs)</label><input type="number" id="editVPrice" required></div>
                     <div class="form-group"><label>Mileage (km)</label><input type="number" id="editVMileage" required></div>
-                    <div class="form-group"><label>Condition</label><input type="text" id="editVCond"></div>
-                    <div class="form-group"><label>YouTube Link</label><input type="url" id="editVYoutube"></div>
+                    <div class="form-group"><label>Body</label><input type="text" id="editVBody"></div>
+                    <div class="form-group"><label>Engine</label><input type="text" id="editVEngine"></div>
+                    <div class="form-group"><label>Book</label><select id="editVBook"><option>Original Book</option><option>Duplicate Book</option></select></div>
+                    <div class="form-group"><label>Finance</label><select id="editVFinance"><option value="no">No Finance</option><option value="yes">Has Finance</option></select></div>
                 </div>
                 <div class="form-group"><label>Description</label><textarea id="editVDesc" rows="5"></textarea></div>
-                <button type="submit" class="btn btn-primary full-width">Update Changes</button>
+                <div class="form-group"><label>YouTube Link</label><input type="url" id="editVYoutube"></div>
+                <button type="submit" class="btn btn-primary full-width">Save Changes</button>
             </form>
         </div>
     </div>
 
-    <!-- 2. PUBLIC SITE VEHICLE MODAL (Slider & Details) -->
+    <!-- 2. PUBLIC SITE VEHICLE MODAL -->
     <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
         <div class="modal-content large-modal">
             <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
@@ -66,7 +75,6 @@
             </div>
         </nav>
 
-        <!-- LANDING -->
         <section id="viewLanding" class="view">
             <div class="hero">
                 <h1 id="landingTitle">Welcome to the Platform</h1>
@@ -77,7 +85,6 @@
             </div>
         </section>
 
-        <!-- AUTH -->
         <section id="viewAuth" class="view hidden">
             <div class="auth-container">
                 <h2>Account Access</h2>
@@ -92,7 +99,6 @@
             </div>
         </section>
 
-        <!-- DASHBOARD -->
         <section id="viewDashboard" class="view hidden">
             <div class="dash-layout">
                 <aside class="dash-sidebar">
@@ -114,8 +120,9 @@
                         <div class="card">
                             <div class="alert-box warning">
                                 <i class="fa-solid fa-lock"></i> 
-                                <strong>Action Required:</strong> You must complete and save your profile to unlock your dashboard features.
+                                <strong>You must complete your profile to unlock your dashboard.</strong>
                             </div>
+                            <!-- REMOVED BLACK LINE BY USING CSS ON FIELDSET -->
                             <fieldset id="profileFieldset">
                                 <div class="form-group">
                                     <label>Profile Photo (Required)</label>
@@ -123,21 +130,21 @@
                                 </div>
                                 <div class="grid-2">
                                     <div class="form-group">
-                                        <label>Phone Number (e.g. 077...)</label>
+                                        <label>Phone Number (Required)</label>
                                         <input type="tel" id="profPhone" placeholder="0771234567" required>
-                                        <small class="text-secondary">Will save as +94...</small>
+                                        <small class="text-secondary">Customers will call this number.</small>
                                     </div>
                                     <div class="form-group">
-                                        <label>WhatsApp Number (e.g. 077...)</label>
+                                        <label>WhatsApp Number (Required)</label>
                                         <input type="tel" id="profWhatsapp" placeholder="0771234567" required>
-                                        <small class="text-secondary">Will save as +94...</small>
+                                        <small class="text-secondary">Used for the chat button.</small>
                                     </div>
                                 </div>
                                 <div class="grid-2">
                                     <div class="form-group">
-                                        <label>City / Town (Required for SEO)</label>
+                                        <label>City / Town (Required)</label>
                                         <input type="text" id="profCity" placeholder="e.g. Kurunegala" required>
-                                        <small class="text-secondary">Helping customers find you locally.</small>
+                                        <small class="text-secondary text-primary">Adding the correct city increases your SEO and sales visibility.</small>
                                     </div>
                                     <div class="form-group">
                                         <label>Address (Required)</label>
@@ -175,7 +182,6 @@
                             <textarea id="vDesc" placeholder="Description (Max 500 words)" maxlength="2500"></textarea>
                             <input type="url" id="vYoutube" placeholder="YouTube Video Link">
                             
-                            <!-- Enhanced Photo Upload -->
                             <div class="form-group mt-4">
                                 <label>Upload Photos (Max 10)</label>
                                 <input type="file" id="vPhotosInput" multiple accept="image/*" class="mb-2">
@@ -185,9 +191,17 @@
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Vehicle</button>
                         </form>
                     </div>
+                    
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
-                        <input type="text" id="searchV" placeholder="Search..." class="full-width mb-2">
+                        <!-- SEARCH BAR -->
+                        <input type="text" id="searchV" placeholder="Search by brand or model..." class="full-width mb-2" onkeyup="app.searchVehicles()">
+                        
+                        <div class="alert-box" style="font-size:0.9rem;">
+                            <i class="fa-solid fa-lightbulb text-primary"></i> 
+                            <strong>Tip:</strong> Use the "Hide" button to temporarily remove a vehicle from your site without deleting it.
+                        </div>
+                        
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
@@ -252,7 +266,7 @@
                                     <div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div>
                                 </div>
                                 <select id="webNavStyle"><option value="1">Style 1: Centered</option><option value="2">Style 2: Left</option></select>
-                                <h3>Content (Auto-Generated Defaults)</h3>
+                                <h3>Content</h3>
                                 <input type="text" id="webHeroTitle" placeholder="Hero Title">
                                 <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
                                 <textarea id="webAbout" placeholder="About Us content..."></textarea>
@@ -265,7 +279,7 @@
                         </div>
                     </div>
 
-                    <!-- F. ROLE: BUYER BROWSE -->
+                    <!-- F. BUYER BROWSE -->
                     <div id="tabBuyerBrowse" class="dash-tab">
                         <h2>Marketplace</h2>
                         <div class="tabs-header">
@@ -277,7 +291,7 @@
                         <div id="buyerGrid" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- G. COMMON: CONNECT & ADMIN -->
+                    <!-- G. CONNECT & ADMIN -->
                     <div id="tabConnect" class="dash-tab">
                         <h2>Business Directory</h2>
                         <div class="tabs-header">
@@ -305,7 +319,7 @@
     </div>
 
     <!-- =======================================================
-         GENERATED WEBSITE (Super Premium)
+         GENERATED WEBSITE
     ======================================================== -->
     <div id="generatedSite" class="hidden">
         <header id="genHeader"></header>
