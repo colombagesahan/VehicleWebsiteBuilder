@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VehicleBuilder Dashboard</title>
+    <title>DriveHub Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -15,7 +15,7 @@
     <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loaderText">Processing...</p></div>
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- 1. EDIT VEHICLE MODAL (Preserved) -->
+    <!-- 1. EDIT VEHICLE MODAL -->
     <div id="editVehicleModal" class="modal-overlay hidden">
         <div class="modal-content large-modal-content">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -47,7 +47,7 @@
         </div>
     </div>
 
-    <!-- 2. PUBLIC SITE VEHICLE MODAL (Preserved) -->
+    <!-- 2. PUBLIC SITE VEHICLE MODAL -->
     <div id="siteVehicleModal" class="modal-overlay hidden" style="z-index: 9999;">
         <div class="modal-content large-modal dark-modal-theme">
             <button class="close-modal" onclick="document.getElementById('siteVehicleModal').classList.add('hidden')">&times;</button>
@@ -55,13 +55,13 @@
         </div>
     </div>
 
-    <!-- 3. LIGHTBOX (Preserved) -->
+    <!-- 3. LIGHTBOX -->
     <div id="lightboxModal" class="lightbox-overlay hidden">
         <span class="close-lightbox" onclick="document.getElementById('lightboxModal').classList.add('hidden')">&times;</span>
         <img id="lightboxImg" src="">
     </div>
 
-    <!-- 4. CHAT MODAL (Preserved) -->
+    <!-- 4. CHAT MODAL -->
     <div id="chatModal" class="modal-overlay hidden">
         <div class="modal-content chat-content">
             <div class="chat-header">
@@ -82,7 +82,7 @@
     ======================================================== -->
     <div id="platformApp">
         <nav class="navbar">
-            <div class="nav-brand">Vehicle<span>Builder</span></div>
+            <div class="nav-brand">Drive<span>Hub</span></div>
             <div class="nav-links">
                 <button id="btnLoginNav" class="btn btn-primary btn-sm">Login</button>
                 <button id="btnLogoutNav" class="btn btn-outline btn-sm hidden">Logout</button>
@@ -92,7 +92,7 @@
         <!-- LANDING -->
         <section id="viewLanding" class="view">
             <div class="hero">
-                <h1 id="landingTitle">Welcome to the Platform</h1>
+                <h1 id="landingTitle">Welcome to DriveHub</h1>
                 <p>Please Sign In or Create an Account to continue.</p>
                 <button class="btn btn-primary btn-lg" onclick="ui.showView('viewAuth')">Sign In / Register</button>
                 <br><br>
@@ -131,7 +131,7 @@
 
                 <main class="dash-content">
                     
-                    <!-- A. COMMON: PROFILE (Preserved) -->
+                    <!-- A. COMMON: PROFILE -->
                     <div id="tabProfile" class="dash-tab active">
                         <h2>Profile Settings</h2>
                         <div class="card">
@@ -164,6 +164,10 @@
                                         <input type="text" id="profAddress" placeholder="Full Address" required>
                                     </div>
                                 </div>
+                                <div class="form-group">
+                                    <label>Bank Details (for earnings payout)</label>
+                                    <textarea id="profBank" rows="2" placeholder="Bank Name, Account Number, Branch"></textarea>
+                                </div>
                             </fieldset>
                             <div class="btn-group">
                                 <button id="saveProfile" class="btn btn-primary">Save Profile</button>
@@ -172,7 +176,7 @@
                         </div>
                     </div>
 
-                    <!-- B. ROLE: VEHICLE SELLER (Preserved) -->
+                    <!-- B. ROLE: VEHICLE SELLER -->
                     <div id="tabAddVehicle" class="dash-tab">
                         <h2>Add Vehicle</h2>
                         <form id="formAddVehicle" class="card">
@@ -205,11 +209,10 @@
                     <div id="tabMyVehicles" class="dash-tab">
                         <h2>My Inventory</h2>
                         <input type="text" id="searchV" placeholder="Search..." class="full-width mb-2" onkeyup="app.searchVehicles()">
-                        <div id="inventoryTip" class="alert-box"></div>
                         <div id="myVehiclesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- C. ROLE: PARTS SELLER (Preserved) -->
+                    <!-- C. ROLE: PARTS SELLER -->
                     <div id="tabAddPart" class="dash-tab">
                         <h2>Add Auto Part</h2>
                         <form id="formAddPart" class="card">
@@ -230,7 +233,7 @@
                         <div id="myPartsList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- D. ROLE: SERVICE PROVIDER (Repair & Maintenance) -->
+                    <!-- D. ROLE: SERVICE PROVIDER -->
                     <div id="tabAddService" class="dash-tab">
                         <h2>Add Service / Package</h2>
                         <form id="formAddService" class="card">
@@ -248,7 +251,7 @@
                         <div id="myServicesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- E. ROLE: RENTAL PROVIDER (NEW) -->
+                    <!-- E. ROLE: RENTAL PROVIDER -->
                     <div id="tabAddRental" class="dash-tab">
                         <h2>Add Rental Vehicle</h2>
                         <form id="formAddRental" class="card">
@@ -270,7 +273,7 @@
                         <div id="myRentalsList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- F. ROLE: FINANCE PROVIDER (NEW) -->
+                    <!-- F. ROLE: FINANCE PROVIDER -->
                     <div id="tabAddFinance" class="dash-tab">
                         <h2>Add Finance Package</h2>
                         <form id="formAddFinance" class="card">
@@ -290,7 +293,7 @@
                         <div id="myFinanceList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- G. ROLE: INSURANCE PROVIDER (NEW) -->
+                    <!-- G. ROLE: INSURANCE PROVIDER -->
                     <div id="tabAddInsurance" class="dash-tab">
                         <h2>Add Insurance Policy</h2>
                         <form id="formAddInsurance" class="card">
@@ -309,7 +312,7 @@
                         <div id="myInsuranceList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- H. ROLE: BUYER / USER (NEW) -->
+                    <!-- H. ROLE: BUYER / USER -->
                     <div id="tabUserGarage" class="dash-tab">
                         <h2>My Garage</h2>
                         <div class="card mb-2">
@@ -346,7 +349,8 @@
                             <div class="card text-center" style="padding: 4rem 2rem;">
                                 <i class="fa-solid fa-paintbrush text-accent" style="font-size: 4rem; margin-bottom: 20px;"></i>
                                 <h3>Design Your Page</h3>
-                                <a href="pagebuilder.html" class="btn btn-primary btn-lg"><i class="fa-solid fa-wand-magic-sparkles"></i> Open Visual Editor</a>
+                                <p>Open the visual editor to customize your site.</p>
+                                <a href="pagebuilder.html" class="btn btn-primary btn-lg mt-4"><i class="fa-solid fa-wand-magic-sparkles"></i> Open Visual Editor</a>
                             </div>
                         </div>
                     </div>
@@ -366,7 +370,7 @@
                         <div id="buyerGrid" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- COMMON: DIRECTORY (Expanded) -->
+                    <!-- COMMON: DIRECTORY -->
                     <div id="tabDirectory" class="dash-tab">
                         <h2>Business Directory</h2>
                         <div class="tabs-header">
@@ -414,35 +418,104 @@
                         </div>
                     </div>
 
-                    <!-- COMMON: PROMOTE -->
+                    <!-- COMMON: PROMOTE (New Workflow) -->
                     <div id="tabPromote" class="dash-tab">
                         <h2>Promote Your Business</h2>
-                        <div class="grid-2">
-                            <div class="card">
-                                <h3>Create Ad</h3>
-                                <input type="file" id="adImage">
-                                <select id="adTarget" class="mt-2"><option value="all">All</option><option value="seller">Sellers</option></select>
-                                <input type="url" id="adUrl" placeholder="Link" class="mt-2">
-                                <div class="alert-box warning mt-2">Rs. 5000 / Month</div>
+                        
+                        <!-- 1. Purchase Credits -->
+                        <div class="card">
+                            <h3>1. Buy Ad Credits</h3>
+                            <p class="text-secondary mb-2">Rs. 5,000 for 1,000 Business Messages. Manual Payment.</p>
+                            <p><strong>Commercial Bank (Homagama)</strong><br>Acc: 8750053306 (COLOMBAGE SD)</p>
+                            <form id="formBuyCredits" class="mt-4">
+                                <label>Upload Payment Receipt</label>
+                                <input type="file" id="creditReceipt" required>
+                                <button type="submit" class="btn btn-success mt-2">Submit for Approval</button>
+                            </form>
+                            <div id="creditStatus" class="alert-box info mt-2 hidden"></div>
+                        </div>
+
+                        <!-- 2. Create Campaign -->
+                        <div class="card">
+                            <div style="display:flex;justify-content:space-between;">
+                                <h3>2. Send Business Message</h3>
+                                <span class="badge" style="font-size:1rem;">Credits: <span id="userAdCredits">0</span></span>
                             </div>
-                            <div class="card">
-                                <h3>Payment</h3>
-                                <p><strong>Commercial Bank (Homagama)</strong><br>8750053306 (COLOMBAGE SD)</p>
-                                <label>Upload Receipt</label><input type="file" id="adReceipt">
-                                <button id="btnSubmitAd" class="btn btn-success full-width mt-4">Submit</button>
+                            <form id="formCreateAd" class="mt-4">
+                                <div class="form-group">
+                                    <label>Message Title</label>
+                                    <input type="text" id="adTitle" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Message Content</label>
+                                    <textarea id="adContent" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Link (Your Page/Item)</label>
+                                    <input type="url" id="adLink" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Target Audience</label>
+                                    <select id="adTarget">
+                                        <option value="all">Everyone</option>
+                                        <option value="seller">Vehicle Sellers</option>
+                                        <option value="buyer">Buyers</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Image (Optional)</label>
+                                    <input type="file" id="adImage">
+                                </div>
+                                <button type="submit" class="btn btn-primary full-width">Send Message (Cost: 1 Credit)</button>
+                            </form>
+                        </div>
+                        
+                        <!-- 3. Track -->
+                        <div class="card">
+                            <h3>My Campaigns</h3>
+                            <div id="myAdsList"></div>
+                        </div>
+                    </div>
+
+                    <!-- COMMON: BIZ MESSAGES (Earning Tab) -->
+                    <div id="tabBizMessages" class="dash-tab">
+                        <h2>Biz Messages Inbox</h2>
+                        <div class="card">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <h3>Read & Earn</h3>
+                                    <p class="text-secondary">Click "Visit" on ads to earn Rs. 2 per click.</p>
+                                </div>
+                                <div class="text-center">
+                                    <span class="text-secondary">Pending Earnings</span>
+                                    <h2 class="text-success">Rs. <span id="myPendingEarnings">0</span></h2>
+                                </div>
                             </div>
                         </div>
-                        <div class="card"><h3>My Ads</h3><div id="myAdsList"></div></div>
+                        <div id="bizMessageList" class="feed-grid"></div>
                     </div>
 
                     <!-- ADMIN -->
                     <div id="tabAdmin" class="dash-tab hidden">
-                        <h2>Admin</h2>
-                        <div id="adminAdList" class="connect-grid"></div>
+                        <h2>Admin Dashboard</h2>
+                        <div class="grid-2">
+                            <div class="card">
+                                <h3>Pending Credit Requests</h3>
+                                <div id="adminCreditList"></div>
+                            </div>
+                            <div class="card">
+                                <h3>Pending Payouts (User Earnings)</h3>
+                                <div id="adminPayoutList"></div>
+                            </div>
+                        </div>
                     </div>
 
                 </main>
             </div>
+            
+            <footer style="text-align:center; padding: 20px; font-size: 0.8rem; color: #94a3b8;">
+                <p>&copy; 2025 DriveHub. <a href="#" onclick="alert('Developer Mode: Logic is in script.js and pagebuilder.html')" style="color:#64748b;">Build in Visual Studio</a></p>
+            </footer>
         </section>
     </div>
 
@@ -453,38 +526,16 @@
         <header class="gen-header">
             <div class="wrap nav">
                 <div class="brand">
-                    <div class="logo">AM</div>
+                    <div class="logo">DH</div>
                     <div><div class="site-name" id="genSiteName"></div><div class="site-tag" id="genSiteCity"></div></div>
                 </div>
                 <nav><ul><li><a href="#vehicles">Inventory</a></li><li><a href="#about">About</a></li><li><a href="#contact">Contact</a></li></ul></nav>
             </div>
         </header>
-        <main class="wrap">
-            <section class="hero">
-                <div class="hero-card">
-                    <h1 id="genHeroTitle"></h1>
-                    <p id="genHeroSub"></p>
-                    <div class="search-inline"><input id="genSearch" placeholder="Search..."><button onclick="siteRenderer.filterGenGrid()">Search</button></div>
-                </div>
-            </section>
-            <section id="vehicles" class="vehicles">
-                <div class="flex-head"><h2 id="genInventoryTitle">Inventory</h2></div>
-                <div id="genGrid" class="vehicles-grid"></div>
-            </section>
-            <section id="about" class="about">
-                <div class="grid-2">
-                    <div class="hero-card"><h3>About Us</h3><p id="genAboutContent"></p></div>
-                    <div class="hero-card"><h3>Why Choose Us</h3><p id="genWhyContent" style="white-space: pre-line;"></p></div>
-                </div>
-            </section>
-            <section id="contact" class="contact">
-                <h3>Contact Us</h3>
-                <div class="grid-2">
-                    <div class="hero-card"><h4>Visit Us</h4><p id="genContactAddress" class="text-muted"></p><h4 class="mt-4">Call Us</h4><p id="genContactPhone" class="text-muted"></p></div>
-                </div>
-            </section>
-            <footer>© 2025 Powered by VehicleBuilder</footer>
+        <main class="wrap" id="genDynamicContent">
+            <!-- DYNAMIC CONTENT LOADED HERE -->
         </main>
+        <footer>© 2025 Powered by DriveHub</footer>
         <a id="floatWhatsapp" class="whatsapp-float" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
     </div>
 
