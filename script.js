@@ -35,7 +35,6 @@ window.ui = {
         document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('active');
     },
     switchTab: (id) => {
-        // PROFILE LOCK
         if(state.user && !state.profileComplete && id !== 'tabProfile') return ui.toast("Please complete your Profile Settings first!", "error");
         
         document.querySelectorAll('.dash-tab').forEach(el => { el.classList.remove('active'); el.classList.add('hidden'); });
@@ -43,12 +42,10 @@ window.ui = {
         const tab = document.getElementById(id);
         if(tab) { tab.classList.remove('hidden'); tab.classList.add('active'); }
         
-        // Highlight Sidebar
         const btn = Array.from(document.querySelectorAll('.nav-item')).find(b => b.getAttribute('onclick')?.includes(id));
         if(btn) btn.classList.add('active');
 
         if(state.user) {
-            // Load Data based on Tab
             if(id === 'tabMyVehicles') app.loadMyData('vehicles', 'myVehiclesList');
             if(id === 'tabMyParts') app.loadMyData('parts', 'myPartsList');
             if(id === 'tabMyServices') app.loadMyData('services', 'myServicesList');
@@ -57,21 +54,21 @@ window.ui = {
             if(id === 'tabMyInsurance') app.loadMyData('insurance_packages', 'myInsuranceList');
             if(id === 'tabUserGarage') app.loadUserGarage();
             
-            // Common Tabs
             if(id === 'tabDirectory') app.loadDirectory();
             if(id === 'tabConnect') app.loadConnectSection();
             if(id === 'tabProfile') app.loadProfile();
             if(id === 'tabWebsite') app.loadWebsiteSettings();
             if(id === 'tabBuyerBrowse') app.buyerFilter('vehicles');
-            if(id === 'tabPromote') app.loadMyAds();
-            if(id === 'tabAdmin') app.loadAdminAds();
+            if(id === 'tabPromote') app.loadPromoteTab();
+            if(id === 'tabBizMessages') app.loadBizMessages();
+            if(id === 'tabAdmin') app.loadAdminDashboard();
         }
     },
     closeModal: () => document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden')),
     
     resetDashboard: () => {
         const safeVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
-        safeVal('profPhone', ''); safeVal('profWhatsapp', ''); safeVal('profAddress', ''); safeVal('profCity', '');
+        safeVal('profPhone', ''); safeVal('profWhatsapp', ''); safeVal('profAddress', ''); safeVal('profCity', ''); safeVal('profBank', '');
         document.getElementById('profFields').disabled = false;
         document.getElementById('profileNotice').classList.remove('hidden');
         document.getElementById('editProfileBtn').classList.add('hidden');
@@ -92,7 +89,6 @@ window.ui = {
         const nav = document.getElementById('dynamicSidebar');
         let html = `<button onclick="ui.switchTab('tabProfile')" class="nav-item active"><i class="fa-solid fa-id-card"></i> Profile</button>`;
         
-        // --- SELLER ROLES ---
         if(role === 'seller') {
             html += `<button onclick="ui.switchTab('tabAddVehicle')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Vehicle</button>`;
             html += `<button onclick="ui.switchTab('tabMyVehicles')" class="nav-item"><i class="fa-solid fa-list"></i> My Vehicles</button>`;
@@ -124,18 +120,16 @@ window.ui = {
             html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
         }
         
-        // --- BUYER / COMMON ---
+        // COMMON TABS FOR ALL
         if(role === 'buyer') {
              html += `<button onclick="ui.switchTab('tabUserGarage')" class="nav-item"><i class="fa-solid fa-warehouse"></i> My Garage</button>`;
         }
         
         html += `<button onclick="ui.switchTab('tabBuyerBrowse')" class="nav-item"><i class="fa-solid fa-search"></i> Marketplace</button>`;
         html += `<button onclick="ui.switchTab('tabDirectory')" class="nav-item"><i class="fa-solid fa-address-book"></i> Directory</button>`;
+        html += `<button onclick="ui.switchTab('tabBizMessages')" class="nav-item"><i class="fa-solid fa-envelope-open-text"></i> Biz Messages</button>`;
+        html += `<button onclick="ui.switchTab('tabPromote')" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Promote</button>`;
         html += `<button onclick="ui.switchTab('tabConnect')" class="nav-item"><i class="fa-solid fa-share-nodes"></i> Connect</button>`;
-        
-        if(role !== 'buyer') {
-            html += `<button onclick="ui.switchTab('tabPromote')" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Promote</button>`;
-        }
 
         nav.innerHTML = html;
         document.getElementById('dashRole').innerText = role ? role.toUpperCase() : 'USER';
@@ -187,7 +181,7 @@ const app = {
                     document.getElementById('btnLoginNav').classList.add('hidden');
                     document.getElementById('btnLogoutNav').classList.remove('hidden');
                     
-                    if(user.email === 'admin@vehiclebuilder.com') document.getElementById('tabAdmin')?.classList.remove('hidden'); 
+                    if(user.email === 'admin@vehiclebuilder.com' || user.email === 'admin@drivehub.com') document.getElementById('tabAdmin')?.classList.remove('hidden'); 
                     
                     ui.switchTab('tabProfile'); 
                 }
@@ -206,7 +200,7 @@ const app = {
         document.getElementById('btnLoginNav').onclick = () => ui.showView('viewAuth');
         document.getElementById('btnLogoutNav').onclick = () => auth.signOut();
         document.getElementById('btnLogin').onclick = async () => { try { ui.showLoader(true); await auth.signInWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value); ui.showLoader(false); } catch(e) { ui.showLoader(false); ui.toast(e.message, 'error'); } };
-        document.getElementById('btnSignup').onclick = async () => { const role = new URLSearchParams(window.location.search).get('role') || 'seller'; try { ui.showLoader(true); const c = await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value); await db.collection('users').doc(c.user.uid).set({ email: c.user.email, role: role, createdAt: new Date() }); ui.showLoader(false); ui.toast("Account Created!"); window.location.href = window.location.pathname; } catch(e) { ui.showLoader(false); ui.toast(e.message, 'error'); } };
+        document.getElementById('btnSignup').onclick = async () => { const role = new URLSearchParams(window.location.search).get('role') || 'seller'; try { ui.showLoader(true); const c = await auth.createUserWithEmailAndPassword(document.getElementById('authEmail').value, document.getElementById('authPass').value); await db.collection('users').doc(c.user.uid).set({ email: c.user.email, role: role, createdAt: new Date(), earnings: 0, credits: 0 }); ui.showLoader(false); ui.toast("Account Created!"); window.location.href = window.location.pathname; } catch(e) { ui.showLoader(false); ui.toast(e.message, 'error'); } };
 
         // PROFILE SAVE
         document.getElementById('saveProfile').onclick = async () => {
@@ -214,6 +208,7 @@ const app = {
             let wa = document.getElementById('profWhatsapp').value;
             const city = document.getElementById('profCity').value;
             const addr = document.getElementById('profAddress').value;
+            const bank = document.getElementById('profBank').value;
             if(!phone || !wa || !addr || !city) return ui.toast("All fields required", "error");
             
             const formatPhone = (p) => { let n = p.trim(); if(n.startsWith('0')) n = '+94' + n.substring(1); else if(!n.startsWith('+')) n = '+94' + n; return n; };
@@ -224,7 +219,7 @@ const app = {
                 let photoUrl = null;
                 const file = document.getElementById('profPhoto').files[0];
                 if(file) { const blob = await compressImage(file); const ref = storage.ref(`profiles/${state.user.uid}`); await ref.put(blob); photoUrl = await ref.getDownloadURL(); }
-                const data = { phone, whatsapp: wa, address: addr, city: city };
+                const data = { phone, whatsapp: wa, address: addr, city: city, bank: bank };
                 if(photoUrl) data.photo = photoUrl;
                 await db.collection('users').doc(state.user.uid).set(data, {merge: true});
                 state.profileComplete = true; 
@@ -240,8 +235,6 @@ const app = {
         };
 
         // --- ADD FUNCTIONS ---
-
-        // 1. VEHICLE
         document.getElementById('vPhotosInput').addEventListener('change', (e) => { const files = Array.from(e.target.files); if(state.vehicleImages.length + files.length > 10) return ui.toast("Max 10 photos", "error"); state.vehicleImages = [...state.vehicleImages, ...files]; app.renderPhotoStaging(); });
         document.getElementById('formAddVehicle').onsubmit = async (e) => {
             e.preventDefault(); if(state.vehicleImages.length === 0) return ui.toast("Upload at least one photo", "error");
@@ -255,74 +248,38 @@ const app = {
             } catch(err) { ui.toast(err.message, "error"); } finally { ui.showLoader(false); }
         };
 
-        // 2. PART
-        document.getElementById('formAddPart').onsubmit = async (e) => {
-            e.preventDefault(); const file = document.getElementById('pPhotos').files[0]; if(!file) return ui.toast("Photo required", "error");
-            ui.showLoader(true);
-            try {
-                const blob = await compressImage(file); const ref = storage.ref(`parts/${state.user.uid}/${Date.now()}`); await ref.put(blob); const url = await ref.getDownloadURL();
-                const data = { uid: state.user.uid, name: document.getElementById('pName').value, brand: document.getElementById('pBrand').value, model: document.getElementById('pModel').value, condition: document.getElementById('pCondition').value, price: document.getElementById('pPrice').value, desc: document.getElementById('pDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
-                await db.collection('parts').add(data); document.getElementById('formAddPart').reset(); ui.toast("Published!"); ui.switchTab('tabMyParts');
-            } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
-        };
+        // PARTS, SERVICES, ETC.
+        ['Part','Service','Rental','Finance','Insurance'].forEach(type => {
+            const form = document.getElementById(`formAdd${type}`);
+            if(form) {
+                form.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const fileInput = document.getElementById(`${type.toLowerCase().charAt(0)}Photos`);
+                    const file = fileInput ? fileInput.files[0] : null;
+                    if(!file && type !== 'Finance') return ui.toast("Photo required", "error"); // Finance optional img logic
+                    ui.showLoader(true);
+                    try {
+                        let url = 'https://via.placeholder.com/300';
+                        if(file) { const blob = await compressImage(file); const ref = storage.ref(`${type.toLowerCase()}s/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
+                        
+                        let data = { uid: state.user.uid, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp(), image: url };
+                        // Populate specific fields based on ID conventions
+                        const inputs = form.querySelectorAll('input:not([type=file]), select, textarea');
+                        inputs.forEach(inp => {
+                            const key = inp.id.substring(1).toLowerCase(); // remove prefix
+                            if(key) data[key] = inp.value;
+                        });
 
-        // 3. SERVICE
-        document.getElementById('formAddService').onsubmit = async (e) => {
-            e.preventDefault(); const file = document.getElementById('sPhotos').files[0]; let url = 'https://via.placeholder.com/300?text=Service';
-            ui.showLoader(true);
-            try {
-                if(file) { const blob = await compressImage(file); const ref = storage.ref(`services/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
-                await db.collection('services').add({ uid: state.user.uid, name: document.getElementById('sName').value, price: document.getElementById('sPrice').value, desc: document.getElementById('sDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-                document.getElementById('formAddService').reset(); ui.toast("Published!"); ui.switchTab('tabMyServices');
-            } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
-        };
+                        // Collection map
+                        const colMap = { 'Part': 'parts', 'Service': 'services', 'Rental': 'rentals', 'Finance': 'finance_packages', 'Insurance': 'insurance_packages' };
+                        await db.collection(colMap[type]).add(data);
+                        form.reset(); ui.toast("Published!"); ui.switchTab(`tabMy${type === 'Part' ? 'Parts' : type + 's'}`.replace('Finances','Finance')); // fix plural
+                    } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+                };
+            }
+        });
 
-        // 4. RENTAL (NEW)
-        if(document.getElementById('formAddRental')) {
-            document.getElementById('formAddRental').onsubmit = async (e) => {
-                e.preventDefault(); const file = document.getElementById('rPhotos').files[0]; if(!file) return ui.toast("Photo required", "error");
-                ui.showLoader(true);
-                try {
-                    const blob = await compressImage(file); const ref = storage.ref(`rentals/${state.user.uid}/${Date.now()}`); await ref.put(blob); const url = await ref.getDownloadURL();
-                    await db.collection('rentals').add({
-                        uid: state.user.uid, brand: document.getElementById('rBrand').value, model: document.getElementById('rModel').value, daily: document.getElementById('rDaily').value, monthly: document.getElementById('rMonthly').value, driver: document.getElementById('rDriver').value, fuel: document.getElementById('rFuel').value, desc: document.getElementById('rDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    document.getElementById('formAddRental').reset(); ui.toast("Rental Published!"); ui.switchTab('tabMyRentals');
-                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
-            };
-        }
-
-        // 5. FINANCE (NEW)
-        if(document.getElementById('formAddFinance')) {
-            document.getElementById('formAddFinance').onsubmit = async (e) => {
-                e.preventDefault(); const file = document.getElementById('fPhotos').files[0]; let url = 'https://via.placeholder.com/300?text=Finance';
-                ui.showLoader(true);
-                try {
-                    if(file) { const blob = await compressImage(file); const ref = storage.ref(`finance/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
-                    await db.collection('finance_packages').add({
-                        uid: state.user.uid, title: document.getElementById('fTitle').value, rate: document.getElementById('fRate').value, max: document.getElementById('fMax').value, term: document.getElementById('fTerm').value, desc: document.getElementById('fDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    document.getElementById('formAddFinance').reset(); ui.toast("Package Published!"); ui.switchTab('tabMyFinance');
-                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
-            };
-        }
-
-        // 6. INSURANCE (NEW)
-        if(document.getElementById('formAddInsurance')) {
-            document.getElementById('formAddInsurance').onsubmit = async (e) => {
-                e.preventDefault(); const file = document.getElementById('iPhotos').files[0]; let url = 'https://via.placeholder.com/300?text=Insurance';
-                ui.showLoader(true);
-                try {
-                    if(file) { const blob = await compressImage(file); const ref = storage.ref(`insurance/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
-                    await db.collection('insurance_packages').add({
-                        uid: state.user.uid, title: document.getElementById('iTitle').value, type: document.getElementById('iType').value, premium: document.getElementById('iPremium').value, desc: document.getElementById('iDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    document.getElementById('formAddInsurance').reset(); ui.toast("Policy Published!"); ui.switchTab('tabMyInsurance');
-                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
-            };
-        }
-
-        // 7. USER GARAGE (NEW)
+        // USER GARAGE
         if(document.getElementById('formUserGarage')) {
             document.getElementById('formUserGarage').onsubmit = async (e) => {
                 e.preventDefault();
@@ -339,13 +296,12 @@ const app = {
         // EDIT VEHICLE
         document.getElementById('formEditVehicle').onsubmit = async (e) => {
             e.preventDefault(); const id = document.getElementById('editVId').value;
-            const ytLink = document.getElementById('editVYoutube').value; let ytId = ''; if(ytLink) { const match = ytLink.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); if (match && match[2].length == 11) ytId = match[2]; }
             ui.showLoader(true);
             try {
                 await db.collection('vehicles').doc(id).update({
-                    category: document.getElementById('editVCat').value, brand: document.getElementById('editVBrand').value, model: document.getElementById('editVModel').value, trim: document.getElementById('editVTrim').value, year: document.getElementById('editVYear').value, condition: document.getElementById('editVCond').value, trans: document.getElementById('editVTrans').value, fuel: document.getElementById('editVFuel').value, price: document.getElementById('editVPrice').value, mileage: document.getElementById('editVMileage').value, body: document.getElementById('editVBody').value, engine: document.getElementById('editVEngine').value, book: document.getElementById('editVBook').value, finance: document.getElementById('editVFinance').value, desc: document.getElementById('editVDesc').value, youtube: ytId
+                    category: document.getElementById('editVCat').value, brand: document.getElementById('editVBrand').value, model: document.getElementById('editVModel').value, year: document.getElementById('editVYear').value, price: document.getElementById('editVPrice').value, desc: document.getElementById('editVDesc').value
                 });
-                ui.toast("Updated Successfully"); document.getElementById('editVehicleModal').classList.add('hidden'); app.loadMyData('vehicles', 'myVehiclesList');
+                ui.toast("Updated"); document.getElementById('editVehicleModal').classList.add('hidden'); app.loadMyData('vehicles', 'myVehiclesList');
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
@@ -395,18 +351,65 @@ const app = {
             } catch(e) { ui.toast("Error sending", "error"); }
         };
 
-        // ADS
-        document.getElementById('btnSubmitAd').onclick = async () => {
-            const file = document.getElementById('adImage').files[0]; const receipt = document.getElementById('adReceipt').files[0]; const url = document.getElementById('adUrl').value;
-            if(!file || !receipt || !url) return ui.toast("All fields required", "error");
+        // PROMOTE: BUY CREDITS
+        document.getElementById('formBuyCredits').onsubmit = async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('creditReceipt').files[0];
+            if(!file) return ui.toast("Receipt required", "error");
             ui.showLoader(true);
             try {
-                const imgBlob = await compressImage(file); const recBlob = await compressImage(receipt);
-                const imgRef = storage.ref(`ads/${state.user.uid}_img`); await imgRef.put(imgBlob);
-                const recRef = storage.ref(`ads/${state.user.uid}_rec`); await recRef.put(recBlob);
-                await db.collection('ads').add({ uid: state.user.uid, image: await imgRef.getDownloadURL(), receipt: await recRef.getDownloadURL(), url: url, target: document.getElementById('adTarget').value, status: 'pending', clicks: 0, createdAt: new Date() });
-                ui.toast("Submitted!"); app.loadMyAds();
-            } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+                const blob = await compressImage(file);
+                const ref = storage.ref(`receipts/${state.user.uid}_${Date.now()}`);
+                await ref.put(blob);
+                const url = await ref.getDownloadURL();
+                
+                await db.collection('credit_requests').add({
+                    uid: state.user.uid,
+                    receipt: url,
+                    status: 'pending',
+                    amount: 1000,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                document.getElementById('formBuyCredits').reset();
+                ui.toast("Request Submitted! Admin will verify.");
+                app.loadPromoteTab();
+            } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
+        };
+
+        // PROMOTE: CREATE CAMPAIGN
+        document.getElementById('formCreateAd').onsubmit = async (e) => {
+            e.preventDefault();
+            const uDoc = await db.collection('users').doc(state.user.uid).get();
+            const credits = uDoc.data().credits || 0;
+            if(credits < 1) return ui.toast("Insufficient Credits. Please buy more.", "error");
+
+            ui.showLoader(true);
+            try {
+                let imgUrl = null;
+                const file = document.getElementById('adImage').files[0];
+                if(file) { const blob = await compressImage(file); const ref = storage.ref(`ads/${Date.now()}`); await ref.put(blob); imgUrl = await ref.getDownloadURL(); }
+
+                const data = {
+                    uid: state.user.uid,
+                    title: document.getElementById('adTitle').value,
+                    content: document.getElementById('adContent').value,
+                    link: document.getElementById('adLink').value,
+                    target: document.getElementById('adTarget').value,
+                    image: imgUrl,
+                    status: 'active',
+                    clicks: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await db.collection('ads').add(data);
+                // Deduct Credit
+                await db.collection('users').doc(state.user.uid).update({ credits: firebase.firestore.FieldValue.increment(-1) });
+                
+                document.getElementById('formCreateAd').reset();
+                ui.toast("Message Sent Successfully!");
+                app.loadPromoteTab();
+            } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
     },
 
@@ -417,7 +420,7 @@ const app = {
         const doc = await db.collection('users').doc(state.user.uid).get();
         if(doc.exists) {
             const d = doc.data();
-            document.getElementById('profPhone').value = d.phone || ''; document.getElementById('profWhatsapp').value = d.whatsapp || ''; document.getElementById('profAddress').value = d.address || ''; document.getElementById('profCity').value = d.city || '';
+            document.getElementById('profPhone').value = d.phone || ''; document.getElementById('profWhatsapp').value = d.whatsapp || ''; document.getElementById('profAddress').value = d.address || ''; document.getElementById('profCity').value = d.city || ''; document.getElementById('profBank').value = d.bank || '';
             if(state.profileComplete) {
                 document.getElementById('profFields').disabled = true; document.getElementById('profileNotice').classList.add('hidden'); document.getElementById('saveProfile').classList.add('hidden'); document.getElementById('editProfileBtn').classList.remove('hidden');
                 if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
@@ -425,69 +428,57 @@ const app = {
         }
     },
 
-    loadMyData: async (collection, listId) => {
-        const list = document.getElementById(listId); list.innerHTML = 'Loading...';
+    loadMyData: async (collection, listId, filterTerm = '') => {
+        const list = document.getElementById(listId); list.innerHTML = '<div class="spinner"></div>';
         const snap = await db.collection(collection).where('uid', '==', state.user.uid).get();
-        const items = []; snap.forEach(doc => items.push({id: doc.id, ...doc.data()}));
-        
         list.innerHTML = '';
-        if(items.length === 0) { list.innerHTML = '<p>No items found.</p>'; return; }
+        if(snap.empty) { list.innerHTML = '<p>No items found.</p>'; return; }
 
-        items.forEach(d => {
+        snap.forEach(doc => {
+            const d = doc.data();
+            if(filterTerm && !JSON.stringify(d).toLowerCase().includes(filterTerm.toLowerCase())) return;
+
             const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
-            let html = `<div class="v-card">${badge}`;
+            const img = (d.images && d.images[0]) || d.image || 'https://via.placeholder.com/300';
             
-            // Image handling based on type
-            if(collection === 'vehicles') html += `<img src="${d.images[0]}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p>`;
-            else if(collection === 'rentals') html += `<img src="${d.image}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.daily}/day</p>`;
-            else if(collection === 'finance_packages') html += `<img src="${d.image}"><div class="v-info"><h4>${d.title}</h4><p class="v-price">${d.rate}</p>`;
-            else if(collection === 'insurance_packages') html += `<img src="${d.image}"><div class="v-info"><h4>${d.title}</h4><p class="v-price">${d.type}</p>`;
-            else html += `<img src="${d.image}"><div class="v-info"><h4>${d.name || d.title}</h4><p class="v-price">Rs. ${d.price || ''}</p>`;
+            let title = d.brand ? `${d.brand} ${d.model}` : (d.title || d.name);
+            let price = d.price ? `Rs. ${d.price}` : (d.daily ? `Rs. ${d.daily}/day` : '');
+
+            let html = `<div class="v-card">${badge}<img src="${img}"><div class="v-info"><h4>${title}</h4><p class="v-price">${price}</p><div class="v-actions">`;
             
-            html += `<div class="v-actions">`;
-            if(collection === 'vehicles') html += `<button class="btn btn-primary btn-sm" onclick="app.openEditModal('${d.id}')">Edit</button>`;
+            if(collection === 'vehicles') html += `<button class="btn btn-primary btn-sm" onclick="app.openEditModal('${doc.id}')">Edit</button>`;
             
-            html += `<button class="btn btn-outline btn-sm" onclick="app.togglePublish('${collection}', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button>
-                     <button class="btn btn-danger btn-sm" onclick="app.deleteItem('${collection}', '${d.id}')">Delete</button>
+            html += `<button class="btn btn-outline btn-sm" onclick="app.togglePublish('${collection}', '${doc.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button>
+                     <button class="btn btn-danger btn-sm" onclick="app.deleteItem('${collection}', '${doc.id}')">Delete</button>
                      </div></div></div>`;
             list.innerHTML += html;
         });
     },
 
     loadUserGarage: async () => {
-        const list = document.getElementById('myGarageList'); list.innerHTML = 'Loading...';
+        const list = document.getElementById('myGarageList');
         const snap = await db.collection('user_garage').where('uid', '==', state.user.uid).get();
         list.innerHTML = '';
-        if(snap.empty) { list.innerHTML = '<p>No vehicles in garage.</p>'; return; }
         snap.forEach(doc => {
             const d = doc.data();
-            list.innerHTML += `<div class="v-card" style="padding:15px;text-align:center;">
-                <i class="fa-solid fa-car text-primary" style="font-size:3rem;margin-bottom:10px;"></i>
-                <h4>${d.brand} ${d.model} (${d.year})</h4>
-                <p class="text-secondary">${d.reg || ''}</p>
-                <button class="btn btn-danger btn-sm full-width mt-2" onclick="app.deleteItem('user_garage', '${doc.id}')">Remove</button>
-            </div>`;
+            list.innerHTML += `<div class="v-card" style="padding:15px;text-align:center;"><i class="fa-solid fa-car text-primary" style="font-size:3rem;margin-bottom:10px;"></i><h4>${d.brand} ${d.model} (${d.year})</h4><button class="btn btn-danger btn-sm full-width mt-2" onclick="app.deleteItem('user_garage', '${doc.id}')">Remove</button></div>`;
         });
     },
 
     searchVehicles: () => {
-        const term = document.getElementById('searchV').value.toLowerCase();
-        // Only works for loaded vehicle inventory in state.inventory if loaded
-        app.loadMyData('vehicles', 'myVehiclesList'); // Re-trigger load to filter on next step (simplified)
+        const term = document.getElementById('searchV').value;
+        app.loadMyData('vehicles', 'myVehiclesList', term);
     },
 
     openEditModal: async (id) => {
         const doc = await db.collection('vehicles').doc(id).get(); const d = doc.data();
         document.getElementById('editVId').value = id;
-        document.getElementById('editVCat').value = d.category; document.getElementById('editVBrand').value = d.brand; document.getElementById('editVModel').value = d.model; document.getElementById('editVTrim').value = d.trim || ''; document.getElementById('editVYear').value = d.year; document.getElementById('editVCond').value = d.condition || ''; document.getElementById('editVTrans').value = d.trans; document.getElementById('editVFuel').value = d.fuel; document.getElementById('editVPrice').value = d.price; document.getElementById('editVMileage').value = d.mileage; document.getElementById('editVBody').value = d.body || ''; document.getElementById('editVEngine').value = d.engine || ''; document.getElementById('editVBook').value = d.book || 'Original Book'; document.getElementById('editVFinance').value = d.finance || 'no'; document.getElementById('editVDesc').value = d.desc; document.getElementById('editVYoutube').value = d.youtube ? `https://youtu.be/${d.youtube}` : '';
+        document.getElementById('editVBrand').value = d.brand; document.getElementById('editVModel').value = d.model; document.getElementById('editVYear').value = d.year; document.getElementById('editVPrice').value = d.price; document.getElementById('editVDesc').value = d.desc;
         document.getElementById('editVehicleModal').classList.remove('hidden');
     },
 
     togglePublish: async (col, id, status) => { ui.showLoader(true); await db.collection(col).doc(id).update({published: !status}); app.loadMyData(col, 'my' + col.charAt(0).toUpperCase() + col.slice(1) + (col.endsWith('s')?'List':'List')); ui.showLoader(false); },
-    deleteItem: async (col, id) => { if(!confirm("Delete this item?")) return; ui.showLoader(true); await db.collection(col).doc(id).delete(); 
-        if(col === 'user_garage') app.loadUserGarage();
-        else app.loadMyData(col, 'my' + col.charAt(0).toUpperCase() + col.slice(1) + (col.endsWith('s')?'List':'List')); // Generic list reloader 
-    ui.showLoader(false); },
+    deleteItem: async (col, id) => { if(!confirm("Delete this item?")) return; ui.showLoader(true); await db.collection(col).doc(id).delete(); app.loadMyData(col, 'my' + col.charAt(0).toUpperCase() + col.slice(1) + (col.endsWith('s')?'List':'List')); ui.showLoader(false); },
     
     loadWebsiteSettings: async () => { const doc = await db.collection('sites').doc(state.user.uid).get(); if(doc.exists && doc.data().saleName) { const d = doc.data(); document.getElementById('websiteLockScreen').classList.add('hidden'); document.getElementById('websiteEditor').classList.remove('hidden'); const link = `${window.location.origin}${window.location.pathname}#/${d.slug}`; document.getElementById('mySiteLink').innerText = link; document.getElementById('mySiteLink').href = link; } },
     
@@ -495,21 +486,18 @@ const app = {
     buyerFilter: (type) => { 
         state.buyerFilterType = type;
         document.querySelectorAll('#tabBuyerBrowse .chip').forEach(c => c.classList.remove('active'));
-        // Mapping chips
         if(type==='vehicles') document.getElementById('filterVehicles').classList.add('active');
         if(type==='parts') document.getElementById('filterParts').classList.add('active');
         if(type==='services') document.getElementById('filterServices').classList.add('active');
         if(type==='rentals') document.getElementById('filterRentals').classList.add('active');
         if(type==='finance_packages') document.getElementById('filterFinance').classList.add('active');
         if(type==='insurance_packages') document.getElementById('filterInsurance').classList.add('active');
-        
         app.runBuyerSearch();
     },
 
     runBuyerSearch: async () => {
         const term = document.getElementById('buyerSearch').value.toLowerCase();
-        const grid = document.getElementById('buyerGrid');
-        grid.innerHTML = 'Loading...';
+        const grid = document.getElementById('buyerGrid'); grid.innerHTML = 'Loading...';
         
         const col = state.buyerFilterType;
         const snap = await db.collection(col).where('published', '==', true).limit(50).get();
@@ -525,18 +513,13 @@ const app = {
 
             if(match) {
                 let cardContent = '';
-                if(col === 'vehicles') cardContent = `<h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p>`;
-                else if(col === 'rentals') cardContent = `<h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.daily}/day</p>`;
-                else if(col === 'finance_packages') cardContent = `<h4>${d.title}</h4><p class="v-price">${d.rate}</p>`;
-                else if(col === 'insurance_packages') cardContent = `<h4>${d.title}</h4><p class="v-price">${d.type}</p>`;
-                else cardContent = `<h4>${d.name}</h4><p class="v-price">Rs. ${d.price}</p>`;
-
-                const img = (d.images && d.images[0]) || d.image || 'https://via.placeholder.com/300';
+                let title = d.brand ? `${d.brand} ${d.model}` : (d.title || d.name);
+                let price = d.price ? `Rs. ${d.price}` : (d.daily ? `Rs. ${d.daily}/day` : (d.rate || d.premium || ''));
                 
-                // For Vehicles, allow detail modal
+                const img = (d.images && d.images[0]) || d.image || 'https://via.placeholder.com/300';
                 const clickAction = (col === 'vehicles') ? `onclick="siteRenderer.openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')}, '')"` : '';
                 
-                html += `<div class="v-card"><img src="${img}" ${clickAction}><div class="v-info">${cardContent}<button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}')">Chat Seller</button></div></div>`;
+                html += `<div class="v-card"><img src="${img}" ${clickAction}><div class="v-info"><h4>${title}</h4><p class="v-price">${price}</p><button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}')">Chat Seller</button></div></div>`;
             }
         });
         grid.innerHTML = html || '<p>No results found.</p>';
@@ -595,9 +578,130 @@ const app = {
         });
     },
 
-    loadMyAds: async () => { const div = document.getElementById('myAdsList'); div.innerHTML = 'Loading...'; const snap = await db.collection('ads').where('uid', '==', state.user.uid).get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); const badge = a.status === 'active' ? '<span class="badge" style="background:green;color:white">Active</span>' : '<span class="badge">Pending</span>'; div.innerHTML += `<div class="card" style="padding:10px;">${badge} <strong>Target: ${a.target}</strong> <br> Clicks: ${a.clicks || 0}</div>`; }); },
-    loadAdminAds: async () => { const div = document.getElementById('adminAdList'); div.innerHTML = 'Loading Pending Ads...'; const snap = await db.collection('ads').where('status', '==', 'pending').get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); div.innerHTML += `<div class="biz-card"><img src="${a.receipt}" style="width:100%;height:150px;object-fit:cover"><div class="biz-content"><p>User: ${a.uid}</p><button class="btn btn-success btn-sm" onclick="app.approveAd('${doc.id}')">Approve</button></div></div>`; }); },
-    approveAd: async (id) => { await db.collection('ads').doc(id).update({status: 'active'}); ui.toast("Ad Approved"); app.loadAdminAds(); },
+    // PROMOTE & BIZ MESSAGES
+    loadPromoteTab: async () => {
+        const uDoc = await db.collection('users').doc(state.user.uid).get();
+        const credits = uDoc.data().credits || 0;
+        document.getElementById('userAdCredits').innerText = credits;
+        
+        // Load pending credit requests
+        const reqSnap = await db.collection('credit_requests').where('uid', '==', state.user.uid).where('status', '==', 'pending').get();
+        if(!reqSnap.empty) {
+            const req = reqSnap.docs[0].data();
+            const el = document.getElementById('creditStatus');
+            el.classList.remove('hidden');
+            el.innerHTML = `Credit Request Pending. Date: ${req.createdAt.toDate().toLocaleDateString()}`;
+        }
+
+        // Load My Ads
+        const adsSnap = await db.collection('ads').where('uid', '==', state.user.uid).orderBy('createdAt', 'desc').get();
+        const list = document.getElementById('myAdsList');
+        list.innerHTML = '';
+        if(adsSnap.empty) list.innerHTML = '<p>No active campaigns.</p>';
+        adsSnap.forEach(doc => {
+            const a = doc.data();
+            list.innerHTML += `<div class="card" style="padding:15px; border-left:4px solid var(--primary);">
+                <h4>${a.title}</h4>
+                <p>Target: ${a.target}</p>
+                <p><strong>Clicks: ${a.clicks}</strong></p>
+                <small class="text-secondary">${a.createdAt.toDate().toLocaleDateString()}</small>
+            </div>`;
+        });
+    },
+
+    loadBizMessages: async () => {
+        const uDoc = await db.collection('users').doc(state.user.uid).get();
+        document.getElementById('myPendingEarnings').innerText = uDoc.data().earnings || 0;
+
+        const list = document.getElementById('bizMessageList');
+        list.innerHTML = '<div class="spinner"></div>';
+        
+        // Simple logic: Load ALL active ads. In prod, you'd filter by 'target' (seller/buyer/all)
+        const snap = await db.collection('ads').where('status', '==', 'active').orderBy('createdAt', 'desc').limit(20).get();
+        list.innerHTML = '';
+        
+        if(snap.empty) { list.innerHTML = '<p>No new messages.</p>'; return; }
+
+        snap.forEach(doc => {
+            const a = doc.data();
+            // Don't show own ads
+            if(a.uid === state.user.uid) return;
+
+            const imgHtml = a.image ? `<img src="${a.image}" class="feed-img">` : '';
+            list.innerHTML += `<div class="feed-card">
+                <span class="ad-badge">Promoted</span>
+                <h3>${a.title}</h3>
+                <p>${a.content}</p>
+                ${imgHtml}
+                <button class="btn btn-primary full-width mt-4" onclick="app.clickBizMessage('${doc.id}', '${a.link}')">
+                    Visit Link (Earn Rs. 2)
+                </button>
+            </div>`;
+        });
+    },
+
+    clickBizMessage: async (adId, link) => {
+        window.open(link, '_blank');
+        
+        // Increment Ad Click
+        db.collection('ads').doc(adId).update({ clicks: firebase.firestore.FieldValue.increment(1) });
+        
+        // Pay User
+        db.collection('users').doc(state.user.uid).update({ earnings: firebase.firestore.FieldValue.increment(2) });
+        
+        ui.toast("Rs. 2 added to pending earnings!");
+        setTimeout(() => app.loadBizMessages(), 1000); // refresh UI
+    },
+
+    // ADMIN DASHBOARD
+    loadAdminDashboard: async () => {
+        // Credits
+        const credList = document.getElementById('adminCreditList');
+        const credSnap = await db.collection('credit_requests').where('status', '==', 'pending').get();
+        credList.innerHTML = '';
+        credSnap.forEach(doc => {
+            const d = doc.data();
+            credList.innerHTML += `<div class="card" style="padding:10px;">
+                <p>User: ${d.uid}</p>
+                <a href="${d.receipt}" target="_blank">View Receipt</a>
+                <button class="btn btn-success btn-sm mt-2" onclick="app.approveCredit('${doc.id}', '${d.uid}', ${d.amount})">Approve ${d.amount} Credits</button>
+            </div>`;
+        });
+
+        // Payouts (Users with > 500 earnings)
+        const payList = document.getElementById('adminPayoutList');
+        const paySnap = await db.collection('users').where('earnings', '>=', 100).get(); // Limit set low for testing
+        payList.innerHTML = '';
+        paySnap.forEach(doc => {
+            const u = doc.data();
+            payList.innerHTML += `<div class="card" style="padding:10px;">
+                <p>User: ${u.email}</p>
+                <p>Pending: Rs. ${u.earnings}</p>
+                <p>Bank: ${u.bank || 'Not Set'}</p>
+                <button class="btn btn-primary btn-sm mt-2" onclick="app.markPaid('${doc.id}')">Mark Paid</button>
+            </div>`;
+        });
+    },
+
+    approveCredit: async (reqId, userId, amount) => {
+        if(!confirm("Approve this payment?")) return;
+        ui.showLoader(true);
+        try {
+            await db.collection('users').doc(userId).update({ credits: firebase.firestore.FieldValue.increment(amount) });
+            await db.collection('credit_requests').doc(reqId).update({ status: 'approved' });
+            ui.toast("Credits added!");
+            app.loadAdminDashboard();
+        } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+    },
+
+    markPaid: async (userId) => {
+        if(!confirm("Confirm you have manually transferred the funds?")) return;
+        ui.showLoader(true);
+        await db.collection('users').doc(userId).update({ earnings: 0 }); // Reset earnings
+        ui.toast("User marked as paid");
+        app.loadAdminDashboard();
+        ui.showLoader(false);
+    }
 };
 
 const siteRenderer = {
@@ -609,62 +713,127 @@ const siteRenderer = {
             const uid = sitesSnap.docs[0].id; const s = sitesSnap.docs[0].data();
             const uDoc = await db.collection('users').doc(uid).get(); const u = uDoc.data();
 
-            document.getElementById('genSiteName').innerText = s.saleName; document.getElementById('genSiteCity').innerText = u.city || 'Sri Lanka'; document.getElementById('genHeroTitle').innerText = s.heroTitle || s.saleName; document.getElementById('genHeroSub').innerText = s.heroSub || ''; document.getElementById('genContactAddress').innerText = u.address; document.getElementById('genContactPhone').innerText = u.phone;
+            document.getElementById('genSiteName').innerText = s.saleName; 
+            document.getElementById('genSiteCity').innerText = u.city || 'Sri Lanka'; 
+
             if(u.whatsapp) { document.getElementById('floatWhatsapp').href = `https://wa.me/${u.whatsapp.replace('+','')}`; document.getElementById('floatWhatsapp').classList.remove('hidden'); }
 
-            const grid = document.getElementById('genGrid'); grid.innerHTML = '';
-            
-            // DYNAMIC RENDERER BASED ON ROLE
-            let collection = 'vehicles';
-            if(s.role === 'rental') collection = 'rentals';
-            if(s.role === 'finance') collection = 'finance_packages';
-            if(s.role === 'insurance') collection = 'insurance_packages';
-            if(s.role === 'parts') collection = 'parts';
-            if(s.role === 'service') collection = 'services';
+            const main = document.getElementById('genDynamicContent');
+            main.innerHTML = '';
 
-            const items = await db.collection(collection).where('uid', '==', uid).where('published', '==', true).get();
-            
-            items.forEach(doc => {
-                const d = doc.data();
-                if(s.role === 'seller') {
-                    const card = document.createElement('div'); card.className = 'vehicle-card';
-                    card.onclick = () => siteRenderer.openDetailModal(d, u.whatsapp);
-                    card.innerHTML = `<img src="${d.images[0]}" loading="lazy"><h4>${d.brand} ${d.model}</h4><p>Rs. ${d.price}</p><p class="text-sm text-secondary">${d.mileage} km | ${d.condition || 'Used'}</p>`;
-                    grid.appendChild(card);
+            // DYNAMIC RENDERER: Use sections from Page Builder if available
+            if(s.sections && s.sections.length > 0) {
+                for(const sec of s.sections) {
+                    if(!sec.visible) continue;
+                    
+                    if(sec.type === 'hero') {
+                        main.innerHTML += `<section class="hero-card">
+                            <h1>${sec.content.title}</h1>
+                            <p>${sec.content.subtitle}</p>
+                            <a href="#inventory" class="btn-cta">${sec.content.cta}</a>
+                        </section>`;
+                    }
+                    else if(sec.type === 'about') {
+                        main.innerHTML += `<section id="about" class="about-section">
+                            <h3>${sec.content.heading}</h3>
+                            <p>${sec.content.text}</p>
+                        </section>`;
+                    }
+                    else if(sec.type === 'vehicles' || sec.type === 'rentals') {
+                        // For inventory, we inject a container and let JS fetch the real data
+                        const invId = `inv_${sec.id}`;
+                        main.innerHTML += `<section id="vehicles">
+                            <h3>${sec.content.title || 'Inventory'}</h3>
+                            <div class="search-inline"><input id="genSearch" placeholder="Search..."><button onclick="siteRenderer.filterGenGrid()">Search</button></div>
+                            <div id="${invId}" class="vehicles-grid">Loading Inventory...</div>
+                        </section>`;
+                        // Async load inventory
+                        siteRenderer.loadInventoryGrid(uid, s.role, invId);
+                    }
+                    else if(sec.type === 'contact') {
+                        main.innerHTML += `<section id="contact" class="contact-section">
+                            <h3>Contact Us</h3>
+                            <p><i class="fa-solid fa-phone"></i> ${sec.content.phone || u.phone}</p>
+                            <p><i class="fa-solid fa-envelope"></i> ${sec.content.email || u.email}</p>
+                            <p><i class="fa-solid fa-location-dot"></i> ${sec.content.address || u.address}</p>
+                        </section>`;
+                    }
                 }
-                else if(s.role === 'rental') {
-                    document.getElementById('genInventoryTitle').innerText = "Our Fleet";
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.brand} ${d.model}</h4><p>Rs. ${d.daily} / day</p><p class="text-muted">${d.driver === 'driver' ? 'With Driver' : 'Self Drive Available'}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Booking for ${d.brand} ${d.model}')">Book Now</button></div>`;
-                }
-                else if(s.role === 'finance') {
-                    document.getElementById('genInventoryTitle').innerText = "Our Packages";
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.title}</h4><p class="text-lg">${d.rate}</p><p class="text-muted">${d.max}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Inquiry for ${d.title}')">Apply</button></div>`;
-                }
-                else if(s.role === 'insurance') {
-                    document.getElementById('genInventoryTitle').innerText = "Our Policies";
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.title}</h4><p>${d.type}</p><p class="text-muted">Prem: ${d.premium || 'N/A'}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Quote for ${d.title}')">Get Quote</button></div>`;
-                }
-                else if(s.role === 'parts') {
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.name}</h4><p>Rs. ${d.price}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Buy ${d.name}')">Buy Now</button></div>`;
-                }
-                else if(s.role === 'service') {
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.name}</h4><p>Rs. ${d.price}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Book ${d.name}')">Book Now</button></div>`;
-                }
-            });
+            } else {
+                // FALLBACK: Default Layout if no Page Builder data
+                main.innerHTML = `<section class="hero-card"><h1>${s.saleName}</h1><p>Welcome to our official page.</p></section>
+                <div id="fallbackInv" class="vehicles-grid"></div>`;
+                siteRenderer.loadInventoryGrid(uid, s.role, 'fallbackInv');
+            }
 
         } catch(e) { document.body.innerHTML = `<h1>${e.message}</h1>`; }
         ui.showLoader(false);
     },
-    openDetailModal: (d, waNumber) => {
-        const modal = document.getElementById('siteVehicleModal'); const content = document.getElementById('siteModalContent');
-        let slides = d.images.map((img, i) => `<img src="${img}" class="slide-img ${i===0?'active':''}" onclick="siteRenderer.openLightbox('${img}')">`).join('');
-        let youtubeEmbed = d.youtube ? `<div class="mt-4"><iframe width="100%" height="300" src="https://www.youtube.com/embed/${d.youtube}" frameborder="0" allowfullscreen></iframe></div>` : '';
-        content.innerHTML = `<div class="slider-container">${slides}<button class="slider-btn prev-btn" onclick="siteRenderer.moveSlide(-1)">&#10094;</button><button class="slider-btn next-btn" onclick="siteRenderer.moveSlide(1)">&#10095;</button></div><div class="modal-info"><h2>${d.brand} ${d.model} (${d.year})</h2><p class="text-primary font-bold text-lg">Rs. ${d.price}</p><div class="grid-2 mt-4"><p><strong>Mileage:</strong> ${d.mileage} km</p><p><strong>Fuel:</strong> ${d.fuel}</p></div><div class="mt-4 p-4 bg-light rounded" style="color:black;">${d.desc}</div>${youtubeEmbed}<a href="https://wa.me/${waNumber.replace('+','')}?text=Hi, I am interested in ${d.brand} ${d.model}" target="_blank" class="btn btn-success full-width mt-4"><i class="fa-brands fa-whatsapp"></i> Chat Seller</a></div>`;
-        modal.classList.remove('hidden'); siteRenderer.currentSlide = 0; siteRenderer.totalSlides = d.images.length;
+
+    loadInventoryGrid: async (uid, role, containerId) => {
+        let collection = 'vehicles';
+        if(role === 'rental') collection = 'rentals';
+        if(role === 'finance') collection = 'finance_packages';
+        if(role === 'insurance') collection = 'insurance_packages';
+        if(role === 'parts') collection = 'parts';
+        if(role === 'service') collection = 'services';
+
+        const items = await db.collection(collection).where('uid', '==', uid).where('published', '==', true).get();
+        const grid = document.getElementById(containerId);
+        grid.innerHTML = '';
+        
+        if(items.empty) { grid.innerHTML = '<p>No items listed yet.</p>'; return; }
+
+        items.forEach(doc => {
+            const d = doc.data();
+            const img = (d.images && d.images[0]) || d.image || 'https://via.placeholder.com/300';
+            
+            let html = `<div class="vehicle-card" onclick="siteRenderer.openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')})">
+                <img src="${img}">
+                <div class="v-details">
+                    <h4>${d.brand || d.title || d.name} ${d.model || ''}</h4>`;
+            
+            if(d.price) html += `<p class="price">Rs. ${d.price}</p>`;
+            else if(d.daily) html += `<p class="price">Rs. ${d.daily}/day</p>`;
+            
+            html += `<p class="meta">${d.year ? d.year : ''} ${d.fuel ? ' | '+d.fuel : ''}</p>
+                </div>
+            </div>`;
+            
+            grid.innerHTML += html;
+        });
     },
-    moveSlide: (dir) => { const imgs = document.querySelectorAll('.slide-img'); imgs[siteRenderer.currentSlide].style.display = 'none'; siteRenderer.currentSlide = (siteRenderer.currentSlide + dir + siteRenderer.totalSlides) % siteRenderer.totalSlides; imgs[siteRenderer.currentSlide].style.display = 'block'; },
+
+    openDetailModal: (d) => {
+        const modal = document.getElementById('siteVehicleModal'); const content = document.getElementById('siteModalContent');
+        
+        let slides = '';
+        if(d.images && d.images.length > 0) {
+            slides = d.images.map((img, i) => `<img src="${img}" class="slide-img ${i===0?'active':''}" onclick="siteRenderer.openLightbox('${img}')">`).join('');
+            if(d.images.length > 1) slides += `<button class="slider-btn prev-btn" onclick="siteRenderer.moveSlide(-1)">&#10094;</button><button class="slider-btn next-btn" onclick="siteRenderer.moveSlide(1)">&#10095;</button>`;
+        } else {
+            slides = `<img src="${d.image}" class="slide-img active" style="width:100%">`;
+        }
+
+        content.innerHTML = `<div class="slider-container">${slides}</div>
+        <div class="modal-info">
+            <h2>${d.brand || d.title} ${d.model || ''}</h2>
+            <p class="text-primary font-bold text-lg">${d.price ? 'Rs. '+d.price : (d.daily ? 'Rs. '+d.daily+'/day' : '')}</p>
+            <div class="mt-4 p-4 bg-light rounded" style="color:black; white-space: pre-wrap;">${d.desc || 'No description provided.'}</div>
+            <a href="javascript:void(0)" class="btn btn-success full-width mt-4" onclick="alert('Contact number in About section')"><i class="fa-brands fa-whatsapp"></i> Contact Seller</a>
+        </div>`;
+        modal.classList.remove('hidden'); siteRenderer.currentSlide = 0; siteRenderer.totalSlides = (d.images || []).length;
+    },
+    
+    moveSlide: (dir) => { 
+        if(siteRenderer.totalSlides <= 1) return;
+        const imgs = document.querySelectorAll('.slide-img'); 
+        imgs[siteRenderer.currentSlide].style.display = 'none'; 
+        siteRenderer.currentSlide = (siteRenderer.currentSlide + dir + siteRenderer.totalSlides) % siteRenderer.totalSlides; 
+        imgs[siteRenderer.currentSlide].style.display = 'block'; 
+    },
     openLightbox: (src) => { document.getElementById('lightboxImg').src = src; document.getElementById('lightboxModal').classList.remove('hidden'); },
-    filterGenGrid: () => { const q = document.getElementById('genSearch').value.toLowerCase(); document.querySelectorAll('#genGrid .vehicle-card').forEach(c => c.style.display = c.innerText.toLowerCase().includes(q) ? '' : 'none'); }
+    filterGenGrid: () => { const q = document.getElementById('genSearch').value.toLowerCase(); document.querySelectorAll('.vehicle-card').forEach(c => c.style.display = c.innerText.toLowerCase().includes(q) ? 'flex' : 'none'); }
 };
 
 document.addEventListener('DOMContentLoaded', app.init);
