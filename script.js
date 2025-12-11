@@ -181,7 +181,7 @@ const app = {
                     document.getElementById('btnLoginNav').classList.add('hidden');
                     document.getElementById('btnLogoutNav').classList.remove('hidden');
                     
-                    if(user.email === 'admin@vehiclebuilder.com' || user.email === 'admin@drivehub.com') document.getElementById('tabAdmin')?.classList.remove('hidden'); 
+                    if(user.email === 'colombagesahan@gmail.com' || user.email === 'colombagesahan@gmail.com') document.getElementById('tabAdmin')?.classList.remove('hidden'); 
                     
                     ui.switchTab('tabProfile'); 
                 }
