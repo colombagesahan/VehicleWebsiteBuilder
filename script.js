@@ -256,7 +256,7 @@ const app = {
                     e.preventDefault();
                     const fileInput = document.getElementById(`${type.toLowerCase().charAt(0)}Photos`);
                     const file = fileInput ? fileInput.files[0] : null;
-                    if(!file && type !== 'Finance') return ui.toast("Photo required", "error"); // Finance optional img logic
+                    if(!file && type !== 'Finance') return ui.toast("Photo required", "error"); 
                     ui.showLoader(true);
                     try {
                         let url = 'https://via.placeholder.com/300';
@@ -270,7 +270,6 @@ const app = {
                             if(key) data[key] = inp.value;
                         });
 
-                        // Collection map
                         const colMap = { 'Part': 'parts', 'Service': 'services', 'Rental': 'rentals', 'Finance': 'finance_packages', 'Insurance': 'insurance_packages' };
                         await db.collection(colMap[type]).add(data);
                         form.reset(); ui.toast("Published!"); ui.switchTab(`tabMy${type === 'Part' ? 'Parts' : type + 's'}`.replace('Finances','Finance')); // fix plural
@@ -519,7 +518,7 @@ const app = {
                 const img = (d.images && d.images[0]) || d.image || 'https://via.placeholder.com/300';
                 const clickAction = (col === 'vehicles') ? `onclick="siteRenderer.openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')}, '')"` : '';
                 
-                html += `<div class="v-card"><img src="${img}" ${clickAction}><div class="v-info"><h4>${title}</h4><p class="v-price">${price}</p><button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}')">Chat Seller</button></div></div>`;
+                html += `<div class="v-card"><img src="${img}" ${clickAction}><div class="v-info"><h4>${title}</h4><p class="v-price">${price}</p><button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}', 'Seller')">Chat Seller</button></div></div>`;
             }
         });
         grid.innerHTML = html || '<p>No results found.</p>';
@@ -545,7 +544,9 @@ const app = {
         filtered.forEach(s => { 
             const logo = s.logo || 'https://via.placeholder.com/80?text=Logo'; 
             const link = `${window.location.origin}${window.location.pathname}#/${s.slug}`; 
-            grid.innerHTML += `<div class="biz-card"><div class="biz-banner"></div><div class="biz-content"><img src="${logo}" class="biz-logo"><h3>${s.saleName}</h3><div class="biz-meta"><span><i class="fa-solid fa-location-dot"></i> ${s.city||'Sri Lanka'}</span><span class="badge">${s.role}</span></div><div class="biz-actions"><a href="${link}" target="_blank" class="btn btn-primary btn-sm full-width">Visit Page</a><button class="btn btn-outline btn-sm full-width" onclick="app.openBuyerChat('${s.id}')">Chat</button></div></div></div>`; 
+            // FIXED: Passing Business Name to chat
+            const safeName = s.saleName.replace(/'/g, "\\'");
+            grid.innerHTML += `<div class="biz-card"><div class="biz-banner"></div><div class="biz-content"><img src="${logo}" class="biz-logo"><h3>${s.saleName}</h3><div class="biz-meta"><span><i class="fa-solid fa-location-dot"></i> ${s.city||'Sri Lanka'}</span><span class="badge">${s.role}</span></div><div class="biz-actions"><a href="${link}" target="_blank" class="btn btn-primary btn-sm full-width">Visit Page</a><button class="btn btn-outline btn-sm full-width" onclick="app.openBuyerChat('${s.id}', '${safeName}')">Chat</button></div></div></div>`; 
         }); 
     },
 
@@ -553,7 +554,27 @@ const app = {
     loadConnectSection: async () => { const doc = await db.collection('users').doc(state.user.uid).get(); if(!doc.data().socialName) { document.getElementById('socialLockScreen').classList.remove('hidden'); document.getElementById('socialFeedArea').classList.add('hidden'); } else { document.getElementById('socialLockScreen').classList.add('hidden'); document.getElementById('socialFeedArea').classList.remove('hidden'); app.loadFeed(); } },
     loadFeed: async () => { const div = document.getElementById('feedStream'); div.innerHTML = '<p class="text-center">Loading updates...</p>'; const snap = await db.collection('posts').orderBy('createdAt', 'desc').limit(20).get(); div.innerHTML = ''; snap.forEach(doc => { const p = doc.data(); const date = p.createdAt ? new Date(p.createdAt.toDate()).toLocaleDateString() : ''; const imgHtml = p.image ? `<img src="${p.image}" class="feed-img">` : ''; div.innerHTML += `<div class="feed-card"><div class="feed-header"><img src="${p.avatar}" class="feed-avatar"><div><strong>${p.author}</strong><br><small class="text-secondary">${date}</small></div></div><p>${p.text}</p>${imgHtml}</div>`; }); },
     showFeed: () => { document.getElementById('feedStream').classList.remove('hidden'); document.getElementById('peopleStream').classList.add('hidden'); document.getElementById('chatListStream').classList.add('hidden'); document.getElementById('postCreator').classList.remove('hidden'); },
-    showPeople: async () => { document.getElementById('feedStream').classList.add('hidden'); document.getElementById('chatListStream').classList.add('hidden'); document.getElementById('postCreator').classList.add('hidden'); const grid = document.getElementById('peopleStream'); grid.classList.remove('hidden'); grid.innerHTML = 'Loading...'; const snap = await db.collection('users').where('socialName', '!=', null).limit(20).get(); grid.innerHTML = ''; snap.forEach(doc => { const u = doc.data(); if(u.role === 'buyer' || doc.id === state.user.uid) return; grid.innerHTML += `<div class="biz-card" style="padding:10px;text-align:center;"><img src="${u.socialPhoto}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 10px;border:2px solid #2563eb;"><h4>${u.socialName}</h4><span class="online-dot" style="margin-bottom:10px;"></span> Online<button class="btn btn-success btn-sm full-width" onclick="app.openBuyerChat('${doc.id}')">Message</button></div>`; }); },
+    
+    // FIXED: showPeople now correctly passes the name to openBuyerChat
+    showPeople: async () => { 
+        document.getElementById('feedStream').classList.add('hidden'); 
+        document.getElementById('chatListStream').classList.add('hidden'); 
+        document.getElementById('postCreator').classList.add('hidden'); 
+        const grid = document.getElementById('peopleStream'); 
+        grid.classList.remove('hidden'); 
+        grid.innerHTML = 'Loading...'; 
+        const snap = await db.collection('users').where('socialName', '!=', null).limit(20).get(); 
+        grid.innerHTML = ''; 
+        snap.forEach(doc => { 
+            const u = doc.data(); 
+            // We filter out the current user, but if logic fails, the chat function also protects
+            if(doc.id === state.user.uid) return;
+            
+            const safeName = (u.socialName || 'User').replace(/'/g, "\\'");
+            grid.innerHTML += `<div class="biz-card" style="padding:10px;text-align:center;"><img src="${u.socialPhoto}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 10px;border:2px solid #2563eb;"><h4>${u.socialName}</h4><span class="online-dot" style="margin-bottom:10px;"></span> Online<button class="btn btn-success btn-sm full-width" onclick="app.openBuyerChat('${doc.id}', '${safeName}')">Message</button></div>`; 
+        }); 
+    },
+    
     showChats: async () => {
         document.getElementById('feedStream').classList.add('hidden'); document.getElementById('peopleStream').classList.add('hidden'); document.getElementById('postCreator').classList.add('hidden');
         const list = document.getElementById('chatListStream'); list.classList.remove('hidden'); list.innerHTML = 'Loading chats...';
@@ -561,13 +582,34 @@ const app = {
         list.innerHTML = ''; if(snap.empty) { list.innerHTML = '<p>No conversations yet.</p>'; return; }
         snap.forEach(doc => { const c = doc.data(); list.innerHTML += `<div class="feed-card" style="cursor:pointer" onclick="app.openChatModal('${doc.id}', 'Chat')"><strong>Chat</strong> <br><small>${c.lastMessage || 'Start of conversation'}</small></div>`; });
     },
-    openBuyerChat: async (targetUid) => {
-        if(targetUid === state.user.uid) return ui.toast("Cannot chat with yourself", "error");
-        const participants = [state.user.uid, targetUid].sort(); const threadId = participants.join('_');
-        const doc = await db.collection('chats').doc(threadId).get();
-        if(!doc.exists) { await db.collection('chats').doc(threadId).set({ participants: participants, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp(), lastMessage: '' }); }
-        app.openChatModal(threadId, "User");
+    
+    // FIXED: openBuyerChat now accepts a Name, shows a Loader, and Handles Errors
+    openBuyerChat: async (targetUid, targetName = 'User') => {
+        if(targetUid === state.user.uid) return ui.toast("You cannot message yourself.", "error");
+
+        ui.showLoader(true, "Opening Chat..."); // Visual feedback
+
+        try {
+            const participants = [state.user.uid, targetUid].sort();
+            const threadId = participants.join('_');
+            const doc = await db.collection('chats').doc(threadId).get();
+
+            if(!doc.exists) {
+                await db.collection('chats').doc(threadId).set({ 
+                    participants: participants, 
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                    lastMessage: '' 
+                });
+            }
+            app.openChatModal(threadId, targetName);
+        } catch (e) {
+            ui.toast("Error opening chat: " + e.message, "error");
+        } finally {
+            ui.showLoader(false);
+        }
     },
+    
     openChatModal: (threadId, name) => {
         document.getElementById('chatModal').classList.remove('hidden'); document.getElementById('chatUserName').innerText = name; document.getElementById('chatThreadId').value = threadId; document.getElementById('chatHistory').innerHTML = '<p>Loading...</p>';
         if(app.chatUnsubscribe) app.chatUnsubscribe();
