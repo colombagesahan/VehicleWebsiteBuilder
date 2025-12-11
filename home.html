@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VehicleBuilder Ecosystem | The All-in-One Automotive Hub</title>
+    <title>DriveHub Ecosystem | The All-in-One Automotive Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -24,7 +24,7 @@
 
         /* HERO SECTION */
         .hero {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
             color: white;
             padding: 4rem 1rem 8rem;
             text-align: center;
@@ -32,7 +32,6 @@
             overflow: hidden;
         }
         
-        /* Decorative circles */
         .hero::before, .hero::after {
             content: ''; position: absolute; border-radius: 50%; opacity: 0.1;
         }
@@ -137,27 +136,21 @@
         }
 
         /* SPECIFIC CARD STYLES */
-        
-        /* Sellers & Rentals (Blue) */
         .style-blue .icon-box { background: #eff6ff; color: #2563eb; }
         .style-blue:hover .arrow-link { color: #1d4ed8; }
 
-        /* Parts & Repair (Orange/Dark) */
         .style-orange .icon-box { background: #fff7ed; color: #ea580c; }
         .style-orange:hover { border-color: #ea580c; }
         .style-orange:hover .arrow-link { color: #ea580c; }
 
-        /* Finance (Green) */
         .style-green .icon-box { background: #f0fdf4; color: #16a34a; }
         .style-green:hover { border-color: #16a34a; }
         .style-green:hover .arrow-link { color: #16a34a; }
 
-        /* Insurance (Purple) */
         .style-purple .icon-box { background: #faf5ff; color: #9333ea; }
         .style-purple:hover { border-color: #9333ea; }
         .style-purple:hover .arrow-link { color: #9333ea; }
 
-        /* BUYER CARD (Featured) */
         .buyer-card {
             background: #0f172a;
             color: white;
@@ -169,7 +162,6 @@
         .buyer-card .icon-box { background: rgba(255,255,255,0.1); color: #38bdf8; }
         .buyer-card .arrow-link { color: #38bdf8; }
 
-        /* FOOTER */
         .simple-footer {
             text-align: center;
             padding: 3rem 1rem;
@@ -189,17 +181,15 @@
 <body>
 
     <section class="hero">
-        <div class="nav-brand">Vehicle<span>Builder</span></div>
+        <div class="nav-brand">Drive<span>Hub</span></div>
         <h1>The Digital Automotive Ecosystem</h1>
         <p>Whether you sell cars, rent them, fix them, or finance them — we give you the tools to build your business online.</p>
     </section>
 
     <div class="container">
         
-        <!-- ROW 1: CORE SALES -->
         <span class="section-label">Sales & Inventory</span>
         <div class="grid-cards">
-            <!-- Seller -->
             <a href="index.html?role=seller" class="role-card style-blue">
                 <div class="icon-box"><i class="fa-solid fa-car"></i></div>
                 <h3>Vehicle Sellers</h3>
@@ -207,7 +197,6 @@
                 <div class="arrow-link">Start Selling <i class="fa-solid fa-arrow-right"></i></div>
             </a>
             
-            <!-- Rentals (NEW) -->
             <a href="index.html?role=rental" class="role-card style-blue">
                 <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
                 <h3>Rentals & Hiring</h3>
@@ -215,7 +204,6 @@
                 <div class="arrow-link">Manage Fleet <i class="fa-solid fa-arrow-right"></i></div>
             </a>
             
-            <!-- Parts -->
             <a href="index.html?role=parts" class="role-card style-orange">
                 <div class="icon-box"><i class="fa-solid fa-gears"></i></div>
                 <h3>Spare Parts</h3>
@@ -224,10 +212,8 @@
             </a>
         </div>
 
-        <!-- ROW 2: SERVICES & FINANCIAL -->
         <span class="section-label">Services & Financial</span>
         <div class="grid-cards">
-            <!-- Service -->
             <a href="index.html?role=service" class="role-card style-orange">
                 <div class="icon-box"><i class="fa-solid fa-wrench"></i></div>
                 <h3>Repair & Service</h3>
@@ -235,7 +221,6 @@
                 <div class="arrow-link">List Services <i class="fa-solid fa-arrow-right"></i></div>
             </a>
 
-            <!-- Finance (Split) -->
             <a href="index.html?role=finance" class="role-card style-green">
                 <div class="icon-box"><i class="fa-solid fa-coins"></i></div>
                 <h3>Finance Companies</h3>
@@ -243,7 +228,6 @@
                 <div class="arrow-link">Offer Finance <i class="fa-solid fa-arrow-right"></i></div>
             </a>
 
-            <!-- Insurance (New) -->
             <a href="index.html?role=insurance" class="role-card style-purple">
                 <div class="icon-box"><i class="fa-solid fa-shield-halved"></i></div>
                 <h3>Insurance Brokers</h3>
@@ -252,14 +236,12 @@
             </a>
         </div>
 
-        <!-- ROW 3: BUYER -->
         <span class="section-label">For Everyone</span>
         <div class="grid-cards">
-            <!-- Buyer -->
             <a href="index.html?role=buyer" class="role-card buyer-card">
                 <div class="icon-box"><i class="fa-solid fa-user-astronaut"></i></div>
                 <h3>User / Buyer</h3>
-                <p>The ultimate hub. Maintain your "Digital Garage", browse the marketplace, and chat with all service providers in one place.</p>
+                <p>The ultimate hub. Maintain your "Digital Garage", browse the marketplace, earn by reading Biz Messages.</p>
                 <div class="arrow-link">Join Free <i class="fa-solid fa-arrow-right"></i></div>
             </a>
         </div>
@@ -267,7 +249,7 @@
     </div>
 
     <footer class="simple-footer">
-        <p>&copy; 2025 VehicleBuilder Platform. Enabling the Automotive Industry.</p>
+        <p>&copy; 2025 DriveHub Platform. Enabling the Automotive Industry.</p>
     </footer>
 
 </body>
