@@ -86,7 +86,8 @@
             </div>
             <div id="chatHistory" class="chat-history"></div>
             <form id="chatForm" class="chat-input-area">
-                <input type="hidden" id="chatTargetUid">
+                <!-- Using ID to store the current thread ID -->
+                <input type="hidden" id="chatThreadId">
                 <input type="text" id="chatMessage" placeholder="Type a message..." required>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
@@ -183,23 +184,6 @@
                                         <input type="text" id="profAddress" placeholder="Full Address" required>
                                     </div>
                                 </div>
-
-                                <!-- BANK DETAILS (required to receive payouts) -->
-                                <div class="grid-2">
-                                    <div class="form-group">
-                                        <label>Bank Name (Required for Payouts)</label>
-                                        <input type="text" id="profBankName" placeholder="Commercial Bank" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Account Number (Required)</label>
-                                        <input type="text" id="profBankAcc" placeholder="8750053306" required>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label>Account Holder Name (Required)</label>
-                                    <input type="text" id="profBankHolder" placeholder="COLOMBAGE SD" required>
-                                </div>
-
                             </fieldset>
                             <div class="btn-group">
                                 <button id="saveProfile" class="btn btn-primary">Save Profile</button>
@@ -255,14 +239,17 @@
                         <h2>Add Auto Part</h2>
                         <form id="formAddPart" class="card">
                             <div class="grid-2">
-                                <input type="text" id="pName" placeholder="Part Name" required>
-                                <input type="text" id="pBrand" placeholder="Brand">
-                                <input type="text" id="pModel" placeholder="Fits Model">
+                                <input type="text" id="pName" placeholder="Part Name (e.g. Headlight)" required>
+                                <input type="text" id="pBrand" placeholder="Brand (e.g. Toyota)" required>
+                                <input type="text" id="pModel" placeholder="Fits Model (e.g. Corolla 141)">
                                 <select id="pCondition"><option>Brand New</option><option>Reconditioned</option><option>Used</option></select>
                                 <input type="number" id="pPrice" placeholder="Price (Rs)" required>
                             </div>
                             <textarea id="pDesc" placeholder="Description"></textarea>
-                            <input type="file" id="pPhotos" multiple>
+                            <div class="form-group mt-4">
+                                <label>Photo</label>
+                                <input type="file" id="pPhotos" accept="image/*">
+                            </div>
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Part</button>
                         </form>
                     </div>
@@ -276,11 +263,14 @@
                         <h2>Add Service / Package</h2>
                         <form id="formAddService" class="card">
                             <div class="grid-2">
-                                <input type="text" id="sName" placeholder="Service Name" required>
-                                <input type="number" id="sPrice" placeholder="Starting Price (Optional)">
+                                <input type="text" id="sName" placeholder="Service Name (e.g. Full Wash)" required>
+                                <input type="number" id="sPrice" placeholder="Starting Price (Rs) - Optional">
                             </div>
-                            <textarea id="sDesc" placeholder="Details..." required></textarea>
-                            <input type="file" id="sPhotos" multiple>
+                            <textarea id="sDesc" placeholder="Details about this service..." required></textarea>
+                            <div class="form-group mt-4">
+                                <label>Service Image</label>
+                                <input type="file" id="sPhotos" accept="image/*">
+                            </div>
                             <button type="submit" class="btn btn-primary full-width mt-4">Publish Service</button>
                         </form>
                     </div>
@@ -293,7 +283,7 @@
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Page Builder</h2>
                         
-                        <!-- Lock Screen (Same as before) -->
+                        <!-- Lock Screen -->
                         <div id="websiteLockScreen" class="lock-overlay">
                             <h3>Setup Your Business Page</h3>
                             <p>Update your Profile "City" first to create your unique URL.</p>
@@ -307,6 +297,8 @@
                                 <strong>Your Live Page URL:</strong><br>
                                 <a href="#" id="mySiteLink" target="_blank" class="font-bold text-lg">...</a>
                             </div>
+                            <!-- Hidden inputs for data transfer if needed -->
+                            <input type="hidden" id="webName">
 
                             <div class="card text-center" style="padding: 4rem 2rem;">
                                 <i class="fa-solid fa-paintbrush text-accent" style="font-size: 4rem; margin-bottom: 20px;"></i>
@@ -325,23 +317,12 @@
                     <div id="tabBuyerBrowse" class="dash-tab">
                         <h2>Marketplace</h2>
                         <div class="tabs-header">
-                            <button class="chip active" onclick="app.buyerFilter('vehicles')">Vehicles</button>
-                            <button class="chip" onclick="app.buyerFilter('parts')">Parts</button>
-                            <button class="chip" onclick="app.buyerFilter('services')">Services</button>
+                            <button id="filterVehicles" class="chip active" onclick="app.buyerFilter('vehicles')">Vehicles</button>
+                            <button id="filterParts" class="chip" onclick="app.buyerFilter('parts')">Parts</button>
+                            <button id="filterServices" class="chip" onclick="app.buyerFilter('services')">Services</button>
                         </div>
-                        <input type="text" id="buyerSearch" placeholder="Search..." class="full-width mt-2 mb-2">
+                        <input type="text" id="buyerSearch" placeholder="Search..." class="full-width mt-2 mb-2" onkeyup="app.runBuyerSearch()">
                         <div id="buyerGrid" class="vehicle-grid"></div>
-                    </div>
-
-                    <!-- NEW: G. BIZ MESSAGES (for Buyers) -->
-                    <div id="tabBizMessages" class="dash-tab">
-                        <h2>Biz Messages</h2>
-                        <p class="text-secondary">Available business messages — click <strong>Claim Rs 2</strong> to earn. You must have bank details saved in your profile. Payouts processed manually within 30 days.</p>
-                        <div id="bizMessagesList" class="vehicle-grid"></div>
-                        <div id="myEarnings" class="card" style="margin-top:16px;">
-                            <h3>My Earnings</h3>
-                            <div id="earningsContent">Loading...</div>
-                        </div>
                     </div>
 
                     <!-- G. DIRECTORY -->
@@ -355,8 +336,8 @@
                             <button class="chip" onclick="app.connectFilter('finance')">Finance</button>
                         </div>
                         <div class="grid-2 mb-2">
-                            <input type="text" id="connectSearch" placeholder="Search Name...">
-                            <input type="text" id="connectCity" placeholder="Filter City...">
+                            <input type="text" id="connectSearch" placeholder="Search Name..." onkeyup="app.filterConnect()">
+                            <input type="text" id="connectCity" placeholder="Filter City..." onkeyup="app.filterConnect()">
                         </div>
                         <div id="sellersGrid" class="connect-grid"></div>
                     </div>
@@ -378,6 +359,7 @@
                             <div class="tabs-header">
                                 <button class="chip active" onclick="app.showFeed()">Feed</button>
                                 <button class="chip" onclick="app.showPeople()">People</button>
+                                <button class="chip" onclick="app.showChats()">My Chats</button>
                             </div>
                             <div id="postCreator" class="card">
                                 <form id="formPostFeed">
@@ -388,6 +370,7 @@
                             </div>
                             <div id="feedStream" class="feed-grid"></div>
                             <div id="peopleStream" class="hidden connect-grid"></div>
+                            <div id="chatListStream" class="hidden"></div>
                         </div>
                     </div>
 
@@ -409,30 +392,13 @@
                                 <button id="btnSubmitAd" class="btn btn-success full-width mt-4">Submit</button>
                             </div>
                         </div>
-
-                        <!-- NEW: Buy Biz Messages -->
-                        <div class="card" style="margin-top:16px;">
-                            <h3>Buy Biz Messages (Rs.5 per message)</h3>
-                            <p class="text-secondary">Each purchased message allows one buyer to claim Rs.2. You pay Rs.5 per message by bank transfer and upload your receipt here. Our admin will review and activate your purchase.</p>
-                            <div class="grid-2">
-                                <div class="form-group"><label>Message Text</label><input type="text" id="bizMessageText" placeholder="Short message to send to buyers"></div>
-                                <div class="form-group"><label>Quantity (number of messages)</label><input type="number" id="bizMessageQty" min="1" value="1"></div>
-                            </div>
-                            <div class="form-group"><label>Upload Bank Receipt (jpg/png/pdf)</label><input type="file" id="bizReceipt" accept="image/*,.pdf"></div>
-                            <div class="form-group"><label>Note: Bank details for payment — Commercial Bank (Homagama) 8750053306 (COLOMBAGE SD)</label></div>
-                            <button id="btnBuyBizMessages" class="btn btn-primary full-width">Submit Purchase</button>
-                            <div id="myBizPurchases" style="margin-top:12px;"></div>
-                        </div>
-
                         <div class="card"><h3>My Ads</h3><div id="myAdsList"></div></div>
                     </div>
 
                     <!-- ADMIN -->
-                    <div id="tabAdmin" class="dash-tab">
+                    <div id="tabAdmin" class="dash-tab hidden">
                         <h2>Admin</h2>
                         <div id="adminAdList" class="connect-grid"></div>
-                        <div id="adminBizPurchases" style="margin-top:12px"></div>
-                        <div id="adminClaims" style="margin-top:12px"></div>
                     </div>
 
                 </main>
@@ -462,7 +428,7 @@
                 </div>
             </section>
             <section id="vehicles" class="vehicles">
-                <div class="flex-head"><h2>Inventory</h2></div>
+                <div class="flex-head"><h2 id="genInventoryTitle">Inventory</h2></div>
                 <div id="genGrid" class="vehicles-grid"></div>
             </section>
             <section id="about" class="about">
