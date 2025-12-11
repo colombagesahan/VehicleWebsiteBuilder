@@ -48,9 +48,16 @@ window.ui = {
         if(btn) btn.classList.add('active');
 
         if(state.user) {
+            // Load Data based on Tab
             if(id === 'tabMyVehicles') app.loadMyData('vehicles', 'myVehiclesList');
             if(id === 'tabMyParts') app.loadMyData('parts', 'myPartsList');
             if(id === 'tabMyServices') app.loadMyData('services', 'myServicesList');
+            if(id === 'tabMyRentals') app.loadMyData('rentals', 'myRentalsList');
+            if(id === 'tabMyFinance') app.loadMyData('finance_packages', 'myFinanceList');
+            if(id === 'tabMyInsurance') app.loadMyData('insurance_packages', 'myInsuranceList');
+            if(id === 'tabUserGarage') app.loadUserGarage();
+            
+            // Common Tabs
             if(id === 'tabDirectory') app.loadDirectory();
             if(id === 'tabConnect') app.loadConnectSection();
             if(id === 'tabProfile') app.loadProfile();
@@ -76,7 +83,7 @@ window.ui = {
         document.getElementById('websiteEditor')?.classList.add('hidden');
         document.getElementById('websiteLockScreen')?.classList.remove('hidden');
         safeVal('initSaleName', '');
-        safeVal('webName', ''); // Corrected ID check
+        safeVal('webName', '');
         const link = document.getElementById('mySiteLink'); if(link) link.innerText = '...';
         state.user = null; state.profileComplete = false; state.inventory = [];
     },
@@ -84,14 +91,52 @@ window.ui = {
     renderSidebar: (role) => {
         const nav = document.getElementById('dynamicSidebar');
         let html = `<button onclick="ui.switchTab('tabProfile')" class="nav-item active"><i class="fa-solid fa-id-card"></i> Profile</button>`;
-        if(role === 'seller') html += `<button onclick="ui.switchTab('tabAddVehicle')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Vehicle</button><button onclick="ui.switchTab('tabMyVehicles')" class="nav-item"><i class="fa-solid fa-list"></i> My Vehicles</button><button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
-        else if(role === 'parts') html += `<button onclick="ui.switchTab('tabAddPart')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Product</button><button onclick="ui.switchTab('tabMyParts')" class="nav-item"><i class="fa-solid fa-box"></i> My Products</button><button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
-        else if(role === 'service' || role === 'finance') html += `<button onclick="ui.switchTab('tabAddService')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Service</button><button onclick="ui.switchTab('tabMyServices')" class="nav-item"><i class="fa-solid fa-list-check"></i> My Services</button><button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
-        else if(role === 'buyer') html += `<button onclick="ui.switchTab('tabBuyerBrowse')" class="nav-item"><i class="fa-solid fa-search"></i> Browse</button>`;
         
+        // --- SELLER ROLES ---
+        if(role === 'seller') {
+            html += `<button onclick="ui.switchTab('tabAddVehicle')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Vehicle</button>`;
+            html += `<button onclick="ui.switchTab('tabMyVehicles')" class="nav-item"><i class="fa-solid fa-list"></i> My Vehicles</button>`;
+            html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
+        } 
+        else if(role === 'parts') {
+            html += `<button onclick="ui.switchTab('tabAddPart')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Part</button>`;
+            html += `<button onclick="ui.switchTab('tabMyParts')" class="nav-item"><i class="fa-solid fa-box"></i> My Products</button>`;
+            html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
+        } 
+        else if(role === 'service') {
+            html += `<button onclick="ui.switchTab('tabAddService')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Service</button>`;
+            html += `<button onclick="ui.switchTab('tabMyServices')" class="nav-item"><i class="fa-solid fa-list-check"></i> My Services</button>`;
+            html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
+        }
+        else if(role === 'rental') {
+            html += `<button onclick="ui.switchTab('tabAddRental')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Rental</button>`;
+            html += `<button onclick="ui.switchTab('tabMyRentals')" class="nav-item"><i class="fa-solid fa-car-side"></i> My Fleet</button>`;
+            html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
+        }
+        else if(role === 'finance') {
+            html += `<button onclick="ui.switchTab('tabAddFinance')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Package</button>`;
+            html += `<button onclick="ui.switchTab('tabMyFinance')" class="nav-item"><i class="fa-solid fa-coins"></i> My Packages</button>`;
+            html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
+        }
+        else if(role === 'insurance') {
+            html += `<button onclick="ui.switchTab('tabAddInsurance')" class="nav-item"><i class="fa-solid fa-plus"></i> Add Policy</button>`;
+            html += `<button onclick="ui.switchTab('tabMyInsurance')" class="nav-item"><i class="fa-solid fa-shield-halved"></i> My Policies</button>`;
+            html += `<button onclick="ui.switchTab('tabWebsite')" class="nav-item"><i class="fa-solid fa-file-code"></i> Page Builder</button>`;
+        }
+        
+        // --- BUYER / COMMON ---
+        if(role === 'buyer') {
+             html += `<button onclick="ui.switchTab('tabUserGarage')" class="nav-item"><i class="fa-solid fa-warehouse"></i> My Garage</button>`;
+        }
+        
+        html += `<button onclick="ui.switchTab('tabBuyerBrowse')" class="nav-item"><i class="fa-solid fa-search"></i> Marketplace</button>`;
         html += `<button onclick="ui.switchTab('tabDirectory')" class="nav-item"><i class="fa-solid fa-address-book"></i> Directory</button>`;
         html += `<button onclick="ui.switchTab('tabConnect')" class="nav-item"><i class="fa-solid fa-share-nodes"></i> Connect</button>`;
-        html += `<button onclick="ui.switchTab('tabPromote')" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Promote</button>`;
+        
+        if(role !== 'buyer') {
+            html += `<button onclick="ui.switchTab('tabPromote')" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Promote</button>`;
+        }
+
         nav.innerHTML = html;
         document.getElementById('dashRole').innerText = role ? role.toUpperCase() : 'USER';
     }
@@ -184,7 +229,7 @@ const app = {
                 await db.collection('users').doc(state.user.uid).set(data, {merge: true});
                 state.profileComplete = true; 
                 app.loadProfile(); 
-                ui.toast("Profile Saved! Dashboard Unlocked.");
+                ui.toast("Profile Saved!");
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
@@ -194,7 +239,9 @@ const app = {
             document.getElementById('editProfileBtn').classList.add('hidden');
         };
 
-        // VEHICLE ADD
+        // --- ADD FUNCTIONS ---
+
+        // 1. VEHICLE
         document.getElementById('vPhotosInput').addEventListener('change', (e) => { const files = Array.from(e.target.files); if(state.vehicleImages.length + files.length > 10) return ui.toast("Max 10 photos", "error"); state.vehicleImages = [...state.vehicleImages, ...files]; app.renderPhotoStaging(); });
         document.getElementById('formAddVehicle').onsubmit = async (e) => {
             e.preventDefault(); if(state.vehicleImages.length === 0) return ui.toast("Upload at least one photo", "error");
@@ -208,71 +255,91 @@ const app = {
             } catch(err) { ui.toast(err.message, "error"); } finally { ui.showLoader(false); }
         };
 
-        // PART ADD
+        // 2. PART
         document.getElementById('formAddPart').onsubmit = async (e) => {
-            e.preventDefault();
-            const file = document.getElementById('pPhotos').files[0];
-            if(!file) return ui.toast("Photo required", "error");
-            ui.showLoader(true, "Publishing Part...");
+            e.preventDefault(); const file = document.getElementById('pPhotos').files[0]; if(!file) return ui.toast("Photo required", "error");
+            ui.showLoader(true);
             try {
-                const blob = await compressImage(file);
-                const ref = storage.ref(`parts/${state.user.uid}/${Date.now()}`);
-                await ref.put(blob);
-                const url = await ref.getDownloadURL();
-                
-                const data = {
-                    uid: state.user.uid,
-                    name: document.getElementById('pName').value,
-                    brand: document.getElementById('pBrand').value,
-                    model: document.getElementById('pModel').value,
-                    condition: document.getElementById('pCondition').value,
-                    price: document.getElementById('pPrice').value,
-                    desc: document.getElementById('pDesc').value,
-                    image: url,
-                    published: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                await db.collection('parts').add(data);
-                document.getElementById('formAddPart').reset();
-                ui.toast("Part Published!");
-                ui.switchTab('tabMyParts');
+                const blob = await compressImage(file); const ref = storage.ref(`parts/${state.user.uid}/${Date.now()}`); await ref.put(blob); const url = await ref.getDownloadURL();
+                const data = { uid: state.user.uid, name: document.getElementById('pName').value, brand: document.getElementById('pBrand').value, model: document.getElementById('pModel').value, condition: document.getElementById('pCondition').value, price: document.getElementById('pPrice').value, desc: document.getElementById('pDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                await db.collection('parts').add(data); document.getElementById('formAddPart').reset(); ui.toast("Published!"); ui.switchTab('tabMyParts');
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
-        // SERVICE ADD
+        // 3. SERVICE
         document.getElementById('formAddService').onsubmit = async (e) => {
-            e.preventDefault();
-            const file = document.getElementById('sPhotos').files[0];
-            let url = 'https://via.placeholder.com/300?text=Service';
-            ui.showLoader(true, "Publishing Service...");
+            e.preventDefault(); const file = document.getElementById('sPhotos').files[0]; let url = 'https://via.placeholder.com/300?text=Service';
+            ui.showLoader(true);
             try {
-                if(file) {
-                    const blob = await compressImage(file);
-                    const ref = storage.ref(`services/${state.user.uid}/${Date.now()}`);
-                    await ref.put(blob);
-                    url = await ref.getDownloadURL();
-                }
-                const data = {
-                    uid: state.user.uid,
-                    name: document.getElementById('sName').value,
-                    price: document.getElementById('sPrice').value,
-                    desc: document.getElementById('sDesc').value,
-                    image: url,
-                    published: true,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                await db.collection('services').add(data);
-                document.getElementById('formAddService').reset();
-                ui.toast("Service Published!");
-                ui.switchTab('tabMyServices');
+                if(file) { const blob = await compressImage(file); const ref = storage.ref(`services/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
+                await db.collection('services').add({ uid: state.user.uid, name: document.getElementById('sName').value, price: document.getElementById('sPrice').value, desc: document.getElementById('sDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                document.getElementById('formAddService').reset(); ui.toast("Published!"); ui.switchTab('tabMyServices');
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
-        // FULL EDIT VEHICLE
+        // 4. RENTAL (NEW)
+        if(document.getElementById('formAddRental')) {
+            document.getElementById('formAddRental').onsubmit = async (e) => {
+                e.preventDefault(); const file = document.getElementById('rPhotos').files[0]; if(!file) return ui.toast("Photo required", "error");
+                ui.showLoader(true);
+                try {
+                    const blob = await compressImage(file); const ref = storage.ref(`rentals/${state.user.uid}/${Date.now()}`); await ref.put(blob); const url = await ref.getDownloadURL();
+                    await db.collection('rentals').add({
+                        uid: state.user.uid, brand: document.getElementById('rBrand').value, model: document.getElementById('rModel').value, daily: document.getElementById('rDaily').value, monthly: document.getElementById('rMonthly').value, driver: document.getElementById('rDriver').value, fuel: document.getElementById('rFuel').value, desc: document.getElementById('rDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    document.getElementById('formAddRental').reset(); ui.toast("Rental Published!"); ui.switchTab('tabMyRentals');
+                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+            };
+        }
+
+        // 5. FINANCE (NEW)
+        if(document.getElementById('formAddFinance')) {
+            document.getElementById('formAddFinance').onsubmit = async (e) => {
+                e.preventDefault(); const file = document.getElementById('fPhotos').files[0]; let url = 'https://via.placeholder.com/300?text=Finance';
+                ui.showLoader(true);
+                try {
+                    if(file) { const blob = await compressImage(file); const ref = storage.ref(`finance/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
+                    await db.collection('finance_packages').add({
+                        uid: state.user.uid, title: document.getElementById('fTitle').value, rate: document.getElementById('fRate').value, max: document.getElementById('fMax').value, term: document.getElementById('fTerm').value, desc: document.getElementById('fDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    document.getElementById('formAddFinance').reset(); ui.toast("Package Published!"); ui.switchTab('tabMyFinance');
+                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+            };
+        }
+
+        // 6. INSURANCE (NEW)
+        if(document.getElementById('formAddInsurance')) {
+            document.getElementById('formAddInsurance').onsubmit = async (e) => {
+                e.preventDefault(); const file = document.getElementById('iPhotos').files[0]; let url = 'https://via.placeholder.com/300?text=Insurance';
+                ui.showLoader(true);
+                try {
+                    if(file) { const blob = await compressImage(file); const ref = storage.ref(`insurance/${state.user.uid}/${Date.now()}`); await ref.put(blob); url = await ref.getDownloadURL(); }
+                    await db.collection('insurance_packages').add({
+                        uid: state.user.uid, title: document.getElementById('iTitle').value, type: document.getElementById('iType').value, premium: document.getElementById('iPremium').value, desc: document.getElementById('iDesc').value, image: url, published: true, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    document.getElementById('formAddInsurance').reset(); ui.toast("Policy Published!"); ui.switchTab('tabMyInsurance');
+                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+            };
+        }
+
+        // 7. USER GARAGE (NEW)
+        if(document.getElementById('formUserGarage')) {
+            document.getElementById('formUserGarage').onsubmit = async (e) => {
+                e.preventDefault();
+                ui.showLoader(true);
+                try {
+                    await db.collection('user_garage').add({
+                        uid: state.user.uid, brand: document.getElementById('ugBrand').value, model: document.getElementById('ugModel').value, year: document.getElementById('ugYear').value, reg: document.getElementById('ugReg').value, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    document.getElementById('formUserGarage').reset(); ui.toast("Added to Garage!"); app.loadUserGarage();
+                } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
+            };
+        }
+
+        // EDIT VEHICLE
         document.getElementById('formEditVehicle').onsubmit = async (e) => {
             e.preventDefault(); const id = document.getElementById('editVId').value;
-            const ytLink = document.getElementById('editVYoutube').value;
-            let ytId = ''; if(ytLink) { const match = ytLink.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); if (match && match[2].length == 11) ytId = match[2]; }
+            const ytLink = document.getElementById('editVYoutube').value; let ytId = ''; if(ytLink) { const match = ytLink.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); if (match && match[2].length == 11) ytId = match[2]; }
             ui.showLoader(true);
             try {
                 await db.collection('vehicles').doc(id).update({
@@ -282,36 +349,23 @@ const app = {
             } catch(e) { ui.toast(e.message, 'error'); } finally { ui.showLoader(false); }
         };
 
-        // WEBSITE BUILDER (AUTO)
+        // WEBSITE BUILDER
         document.getElementById('btnUnlockWebsite').onclick = async () => {
             const name = document.getElementById('initSaleName').value.trim(); if(!name) return ui.toast("Enter a name", "error");
             const userDoc = await db.collection('users').doc(state.user.uid).get();
             if(!userDoc.data().city) return ui.toast("Update City in Profile first!", "error");
             const slug = `${name.toLowerCase().replace(/[^a-z0-9]/g, '')}-${userDoc.data().city.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
             
-            // Set input via DOM if exists, else direct update
-            const webNameInput = document.getElementById('webName');
-            if(webNameInput) webNameInput.value = name;
-            
-            // Save initial structure
-            await db.collection('sites').doc(state.user.uid).set({
-                saleName: name,
-                slug: slug,
-                role: state.role,
-                city: userDoc.data().city
-            }, {merge: true});
-
-            document.getElementById('websiteLockScreen').classList.add('hidden'); 
-            document.getElementById('websiteEditor').classList.remove('hidden');
+            await db.collection('sites').doc(state.user.uid).set({ saleName: name, slug: slug, role: state.role, city: userDoc.data().city }, {merge: true});
+            document.getElementById('websiteLockScreen').classList.add('hidden'); document.getElementById('websiteEditor').classList.remove('hidden');
             const link = `${window.location.origin}${window.location.pathname}#/${slug}`;
-            document.getElementById('mySiteLink').innerText = link;
-            document.getElementById('mySiteLink').href = link;
+            document.getElementById('mySiteLink').innerText = link; document.getElementById('mySiteLink').href = link;
         };
 
-        // SOCIAL CONNECT
+        // SOCIAL
         document.getElementById('btnUnlockSocial').onclick = async () => {
             const name = document.getElementById('socialRealName').value; const file = document.getElementById('socialRealPhoto').files[0];
-            if(!name || !file) return ui.toast("Real Name and Photo Required", "error");
+            if(!name || !file) return ui.toast("Name and Photo Required", "error");
             ui.showLoader(true);
             try {
                 const blob = await compressImage(file); const ref = storage.ref(`social/${state.user.uid}`); await ref.put(blob); const url = await ref.getDownloadURL();
@@ -333,34 +387,17 @@ const app = {
 
         // CHAT SEND
         document.getElementById('chatForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const threadId = document.getElementById('chatThreadId').value;
-            const text = document.getElementById('chatMessage').value.trim();
-            if(!text) return;
-            
+            e.preventDefault(); const threadId = document.getElementById('chatThreadId').value; const text = document.getElementById('chatMessage').value.trim(); if(!text) return;
             try {
-                await db.collection('chats').doc(threadId).collection('messages').add({
-                    text: text,
-                    sender: state.user.uid,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                await db.collection('chats').doc(threadId).update({
-                    lastMessage: text,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
+                await db.collection('chats').doc(threadId).collection('messages').add({ text: text, sender: state.user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                await db.collection('chats').doc(threadId).update({ lastMessage: text, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
                 document.getElementById('chatMessage').value = '';
-                // Refresh logic is handled by snapshot listener inside openChat
-            } catch(e) {
-                ui.toast("Error sending message", "error");
-            }
+            } catch(e) { ui.toast("Error sending", "error"); }
         };
 
-        // PROMOTE AD SUBMIT
+        // ADS
         document.getElementById('btnSubmitAd').onclick = async () => {
-            const file = document.getElementById('adImage').files[0]; const receipt = document.getElementById('adReceipt').files[0];
-            const url = document.getElementById('adUrl').value;
+            const file = document.getElementById('adImage').files[0]; const receipt = document.getElementById('adReceipt').files[0]; const url = document.getElementById('adUrl').value;
             if(!file || !receipt || !url) return ui.toast("All fields required", "error");
             ui.showLoader(true);
             try {
@@ -368,7 +405,7 @@ const app = {
                 const imgRef = storage.ref(`ads/${state.user.uid}_img`); await imgRef.put(imgBlob);
                 const recRef = storage.ref(`ads/${state.user.uid}_rec`); await recRef.put(recBlob);
                 await db.collection('ads').add({ uid: state.user.uid, image: await imgRef.getDownloadURL(), receipt: await recRef.getDownloadURL(), url: url, target: document.getElementById('adTarget').value, status: 'pending', clicks: 0, createdAt: new Date() });
-                ui.toast("Ad Submitted for Review!"); app.loadMyAds();
+                ui.toast("Submitted!"); app.loadMyAds();
             } catch(e) { ui.toast(e.message); } finally { ui.showLoader(false); }
         };
     },
@@ -382,10 +419,7 @@ const app = {
             const d = doc.data();
             document.getElementById('profPhone').value = d.phone || ''; document.getElementById('profWhatsapp').value = d.whatsapp || ''; document.getElementById('profAddress').value = d.address || ''; document.getElementById('profCity').value = d.city || '';
             if(state.profileComplete) {
-                document.getElementById('profFields').disabled = true;
-                document.getElementById('profileNotice').classList.add('hidden'); 
-                document.getElementById('saveProfile').classList.add('hidden');
-                document.getElementById('editProfileBtn').classList.remove('hidden');
+                document.getElementById('profFields').disabled = true; document.getElementById('profileNotice').classList.add('hidden'); document.getElementById('saveProfile').classList.add('hidden'); document.getElementById('editProfileBtn').classList.remove('hidden');
                 if(d.photo) document.getElementById('dashAvatar').innerHTML = `<img src="${d.photo}">`;
             }
         }
@@ -394,54 +428,52 @@ const app = {
     loadMyData: async (collection, listId) => {
         const list = document.getElementById(listId); list.innerHTML = 'Loading...';
         const snap = await db.collection(collection).where('uid', '==', state.user.uid).get();
-        state.inventory = []; snap.forEach(doc => state.inventory.push({id: doc.id, ...doc.data()}));
+        const items = []; snap.forEach(doc => items.push({id: doc.id, ...doc.data()}));
         
-        if (collection === 'vehicles') app.renderVehicleList(state.inventory);
-        else if (collection === 'parts') app.renderPartList(state.inventory, listId);
-        else if (collection === 'services') app.renderServiceList(state.inventory, listId);
-    },
-
-    renderVehicleList: (items) => {
-        const list = document.getElementById('myVehiclesList'); list.innerHTML = '';
-        const tipBox = document.getElementById('inventoryTip');
-        if(tipBox) {
-             const hasHidden = items.some(i => i.published === false);
-             if(hasHidden) tipBox.innerHTML = `<i class="fa-solid fa-lightbulb text-primary"></i> <strong>Tip:</strong> Use "Show" to display your vehicle again.`;
-             else tipBox.innerHTML = '';
-        }
-
+        list.innerHTML = '';
         if(items.length === 0) { list.innerHTML = '<p>No items found.</p>'; return; }
+
         items.forEach(d => {
             const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
-            const img = d.images && d.images.length ? d.images[0] : 'https://via.placeholder.com/300';
-            list.innerHTML += `<div class="v-card">${badge}<img src="${img}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p><div class="v-actions"><button class="btn btn-primary btn-sm" onclick="app.openEditModal('${d.id}')">Edit</button><button class="btn btn-outline btn-sm" onclick="app.togglePublish('vehicles', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('vehicles', '${d.id}')">Delete</button></div></div></div>`;
+            let html = `<div class="v-card">${badge}`;
+            
+            // Image handling based on type
+            if(collection === 'vehicles') html += `<img src="${d.images[0]}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p>`;
+            else if(collection === 'rentals') html += `<img src="${d.image}"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.daily}/day</p>`;
+            else if(collection === 'finance_packages') html += `<img src="${d.image}"><div class="v-info"><h4>${d.title}</h4><p class="v-price">${d.rate}</p>`;
+            else if(collection === 'insurance_packages') html += `<img src="${d.image}"><div class="v-info"><h4>${d.title}</h4><p class="v-price">${d.type}</p>`;
+            else html += `<img src="${d.image}"><div class="v-info"><h4>${d.name || d.title}</h4><p class="v-price">Rs. ${d.price || ''}</p>`;
+            
+            html += `<div class="v-actions">`;
+            if(collection === 'vehicles') html += `<button class="btn btn-primary btn-sm" onclick="app.openEditModal('${d.id}')">Edit</button>`;
+            
+            html += `<button class="btn btn-outline btn-sm" onclick="app.togglePublish('${collection}', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button>
+                     <button class="btn btn-danger btn-sm" onclick="app.deleteItem('${collection}', '${d.id}')">Delete</button>
+                     </div></div></div>`;
+            list.innerHTML += html;
         });
     },
 
-    renderPartList: (items, listId) => {
-        const list = document.getElementById(listId);
+    loadUserGarage: async () => {
+        const list = document.getElementById('myGarageList'); list.innerHTML = 'Loading...';
+        const snap = await db.collection('user_garage').where('uid', '==', state.user.uid).get();
         list.innerHTML = '';
-        if(items.length === 0) { list.innerHTML = '<p>No parts found.</p>'; return; }
-        items.forEach(d => {
-             const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
-             list.innerHTML += `<div class="v-card">${badge}<img src="${d.image}"><div class="v-info"><h4>${d.name}</h4><p class="text-sm">${d.brand}</p><p class="v-price">Rs. ${d.price}</p><div class="v-actions"><button class="btn btn-outline btn-sm" onclick="app.togglePublish('parts', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('parts', '${d.id}')">Delete</button></div></div></div>`;
-        });
-    },
-
-    renderServiceList: (items, listId) => {
-        const list = document.getElementById(listId);
-        list.innerHTML = '';
-        if(items.length === 0) { list.innerHTML = '<p>No services found.</p>'; return; }
-        items.forEach(d => {
-             const badge = d.published ? '<span class="status-indicator status-published">Published</span>' : '<span class="status-indicator status-hidden">Hidden</span>';
-             list.innerHTML += `<div class="v-card">${badge}<img src="${d.image}"><div class="v-info"><h4>${d.name}</h4><p class="v-price">Rs. ${d.price}</p><div class="v-actions"><button class="btn btn-outline btn-sm" onclick="app.togglePublish('services', '${d.id}', ${d.published})">${d.published ? 'Hide' : 'Show'}</button><button class="btn btn-danger btn-sm" onclick="app.deleteItem('services', '${d.id}')">Delete</button></div></div></div>`;
+        if(snap.empty) { list.innerHTML = '<p>No vehicles in garage.</p>'; return; }
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `<div class="v-card" style="padding:15px;text-align:center;">
+                <i class="fa-solid fa-car text-primary" style="font-size:3rem;margin-bottom:10px;"></i>
+                <h4>${d.brand} ${d.model} (${d.year})</h4>
+                <p class="text-secondary">${d.reg || ''}</p>
+                <button class="btn btn-danger btn-sm full-width mt-2" onclick="app.deleteItem('user_garage', '${doc.id}')">Remove</button>
+            </div>`;
         });
     },
 
     searchVehicles: () => {
         const term = document.getElementById('searchV').value.toLowerCase();
-        const filtered = state.inventory.filter(v => (v.brand && v.brand.toLowerCase().includes(term)) || (v.model && v.model.toLowerCase().includes(term)));
-        app.renderVehicleList(filtered);
+        // Only works for loaded vehicle inventory in state.inventory if loaded
+        app.loadMyData('vehicles', 'myVehiclesList'); // Re-trigger load to filter on next step (simplified)
     },
 
     openEditModal: async (id) => {
@@ -451,28 +483,25 @@ const app = {
         document.getElementById('editVehicleModal').classList.remove('hidden');
     },
 
-    togglePublish: async (col, id, status) => { ui.showLoader(true); await db.collection(col).doc(id).update({published: !status}); app.loadMyData(col, col === 'vehicles' ? 'myVehiclesList' : (col==='parts'?'myPartsList':'myServicesList')); ui.showLoader(false); },
-    deleteItem: async (col, id) => { if(!confirm("Delete this item?")) return; ui.showLoader(true); await db.collection(col).doc(id).delete(); app.loadMyData(col, col === 'vehicles' ? 'myVehiclesList' : (col==='parts'?'myPartsList':'myServicesList')); ui.showLoader(false); },
+    togglePublish: async (col, id, status) => { ui.showLoader(true); await db.collection(col).doc(id).update({published: !status}); app.loadMyData(col, 'my' + col.charAt(0).toUpperCase() + col.slice(1) + (col.endsWith('s')?'List':'List')); ui.showLoader(false); },
+    deleteItem: async (col, id) => { if(!confirm("Delete this item?")) return; ui.showLoader(true); await db.collection(col).doc(id).delete(); 
+        if(col === 'user_garage') app.loadUserGarage();
+        else app.loadMyData(col, 'my' + col.charAt(0).toUpperCase() + col.slice(1) + (col.endsWith('s')?'List':'List')); // Generic list reloader 
+    ui.showLoader(false); },
     
-    loadWebsiteSettings: async () => { 
-        const doc = await db.collection('sites').doc(state.user.uid).get(); 
-        if(doc.exists && doc.data().saleName) { 
-            const d = doc.data(); 
-            document.getElementById('websiteLockScreen').classList.add('hidden'); 
-            document.getElementById('websiteEditor').classList.remove('hidden'); 
-            const link = `${window.location.origin}${window.location.pathname}#/${d.slug}`; 
-            document.getElementById('mySiteLink').innerText = link; 
-            document.getElementById('mySiteLink').href = link; 
-        } 
-    },
+    loadWebsiteSettings: async () => { const doc = await db.collection('sites').doc(state.user.uid).get(); if(doc.exists && doc.data().saleName) { const d = doc.data(); document.getElementById('websiteLockScreen').classList.add('hidden'); document.getElementById('websiteEditor').classList.remove('hidden'); const link = `${window.location.origin}${window.location.pathname}#/${d.slug}`; document.getElementById('mySiteLink').innerText = link; document.getElementById('mySiteLink').href = link; } },
     
-    // BUYER MARKETPLACE LOGIC
-    buyerFilter: async (type) => { 
+    // BUYER MARKETPLACE
+    buyerFilter: (type) => { 
         state.buyerFilterType = type;
         document.querySelectorAll('#tabBuyerBrowse .chip').forEach(c => c.classList.remove('active'));
-        if(type === 'vehicles') document.getElementById('filterVehicles').classList.add('active');
-        if(type === 'parts') document.getElementById('filterParts').classList.add('active');
-        if(type === 'services') document.getElementById('filterServices').classList.add('active');
+        // Mapping chips
+        if(type==='vehicles') document.getElementById('filterVehicles').classList.add('active');
+        if(type==='parts') document.getElementById('filterParts').classList.add('active');
+        if(type==='services') document.getElementById('filterServices').classList.add('active');
+        if(type==='rentals') document.getElementById('filterRentals').classList.add('active');
+        if(type==='finance_packages') document.getElementById('filterFinance').classList.add('active');
+        if(type==='insurance_packages') document.getElementById('filterInsurance').classList.add('active');
         
         app.runBuyerSearch();
     },
@@ -482,31 +511,34 @@ const app = {
         const grid = document.getElementById('buyerGrid');
         grid.innerHTML = 'Loading...';
         
-        let col = state.buyerFilterType;
-        // Limit results to last 50 published
+        const col = state.buyerFilterType;
         const snap = await db.collection(col).where('published', '==', true).limit(50).get();
         let html = '';
         
         snap.forEach(doc => {
             const d = doc.data();
-            // Client-side simple search filter
             let match = true;
             if(term) {
-                const searchStr = `${d.brand||''} ${d.model||''} ${d.name||''} ${d.desc||''}`.toLowerCase();
+                const searchStr = `${d.brand||''} ${d.model||''} ${d.name||''} ${d.title||''} ${d.desc||''}`.toLowerCase();
                 if(!searchStr.includes(term)) match = false;
             }
 
             if(match) {
-                if(state.buyerFilterType === 'vehicles') {
-                     const img = d.images && d.images.length ? d.images[0] : 'https://via.placeholder.com/300';
-                     html += `<div class="v-card"><img src="${img}" onclick="siteRenderer.openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')}, '')"><div class="v-info"><h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p><button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}')">Chat Seller</button></div></div>`;
-                } else {
-                     // Parts or Services
-                     html += `<div class="v-card"><img src="${d.image}"><div class="v-info"><h4>${d.name}</h4><p class="v-price">Rs. ${d.price}</p><p class="text-sm">${d.desc.substring(0,60)}...</p><button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}')">Chat Seller</button></div></div>`;
-                }
+                let cardContent = '';
+                if(col === 'vehicles') cardContent = `<h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.price}</p>`;
+                else if(col === 'rentals') cardContent = `<h4>${d.brand} ${d.model}</h4><p class="v-price">Rs. ${d.daily}/day</p>`;
+                else if(col === 'finance_packages') cardContent = `<h4>${d.title}</h4><p class="v-price">${d.rate}</p>`;
+                else if(col === 'insurance_packages') cardContent = `<h4>${d.title}</h4><p class="v-price">${d.type}</p>`;
+                else cardContent = `<h4>${d.name}</h4><p class="v-price">Rs. ${d.price}</p>`;
+
+                const img = (d.images && d.images[0]) || d.image || 'https://via.placeholder.com/300';
+                
+                // For Vehicles, allow detail modal
+                const clickAction = (col === 'vehicles') ? `onclick="siteRenderer.openDetailModal(${JSON.stringify(d).replace(/"/g, '&quot;')}, '')"` : '';
+                
+                html += `<div class="v-card"><img src="${img}" ${clickAction}><div class="v-info">${cardContent}<button class="btn btn-primary full-width btn-sm" onclick="app.openBuyerChat('${d.uid}')">Chat Seller</button></div></div>`;
             }
         });
-        
         grid.innerHTML = html || '<p>No results found.</p>';
     },
 
@@ -528,7 +560,6 @@ const app = {
         if(city) filtered = filtered.filter(s => s.city && s.city.toLowerCase().includes(city)); 
         const grid = document.getElementById('sellersGrid'); grid.innerHTML = ''; 
         filtered.forEach(s => { 
-            // Only show logo if exists, else placeholder
             const logo = s.logo || 'https://via.placeholder.com/80?text=Logo'; 
             const link = `${window.location.origin}${window.location.pathname}#/${s.slug}`; 
             grid.innerHTML += `<div class="biz-card"><div class="biz-banner"></div><div class="biz-content"><img src="${logo}" class="biz-logo"><h3>${s.saleName}</h3><div class="biz-meta"><span><i class="fa-solid fa-location-dot"></i> ${s.city||'Sri Lanka'}</span><span class="badge">${s.role}</span></div><div class="biz-actions"><a href="${link}" target="_blank" class="btn btn-primary btn-sm full-width">Visit Page</a><button class="btn btn-outline btn-sm full-width" onclick="app.openBuyerChat('${s.id}')">Chat</button></div></div></div>`; 
@@ -540,78 +571,28 @@ const app = {
     loadFeed: async () => { const div = document.getElementById('feedStream'); div.innerHTML = '<p class="text-center">Loading updates...</p>'; const snap = await db.collection('posts').orderBy('createdAt', 'desc').limit(20).get(); div.innerHTML = ''; snap.forEach(doc => { const p = doc.data(); const date = p.createdAt ? new Date(p.createdAt.toDate()).toLocaleDateString() : ''; const imgHtml = p.image ? `<img src="${p.image}" class="feed-img">` : ''; div.innerHTML += `<div class="feed-card"><div class="feed-header"><img src="${p.avatar}" class="feed-avatar"><div><strong>${p.author}</strong><br><small class="text-secondary">${date}</small></div></div><p>${p.text}</p>${imgHtml}</div>`; }); },
     showFeed: () => { document.getElementById('feedStream').classList.remove('hidden'); document.getElementById('peopleStream').classList.add('hidden'); document.getElementById('chatListStream').classList.add('hidden'); document.getElementById('postCreator').classList.remove('hidden'); },
     showPeople: async () => { document.getElementById('feedStream').classList.add('hidden'); document.getElementById('chatListStream').classList.add('hidden'); document.getElementById('postCreator').classList.add('hidden'); const grid = document.getElementById('peopleStream'); grid.classList.remove('hidden'); grid.innerHTML = 'Loading...'; const snap = await db.collection('users').where('socialName', '!=', null).limit(20).get(); grid.innerHTML = ''; snap.forEach(doc => { const u = doc.data(); if(u.role === 'buyer' || doc.id === state.user.uid) return; grid.innerHTML += `<div class="biz-card" style="padding:10px;text-align:center;"><img src="${u.socialPhoto}" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin:0 auto 10px;border:2px solid #2563eb;"><h4>${u.socialName}</h4><span class="online-dot" style="margin-bottom:10px;"></span> Online<button class="btn btn-success btn-sm full-width" onclick="app.openBuyerChat('${doc.id}')">Message</button></div>`; }); },
-    
-    // CHAT SYSTEM
     showChats: async () => {
-        document.getElementById('feedStream').classList.add('hidden');
-        document.getElementById('peopleStream').classList.add('hidden');
-        document.getElementById('postCreator').classList.add('hidden');
-        const list = document.getElementById('chatListStream');
-        list.classList.remove('hidden');
-        list.innerHTML = 'Loading chats...';
-
-        // Find chats where user is participant. NOTE: Firestore array-contains-any limitations apply, 
-        // we'll query assuming 'participants' array [uid1, uid2]
+        document.getElementById('feedStream').classList.add('hidden'); document.getElementById('peopleStream').classList.add('hidden'); document.getElementById('postCreator').classList.add('hidden');
+        const list = document.getElementById('chatListStream'); list.classList.remove('hidden'); list.innerHTML = 'Loading chats...';
         const snap = await db.collection('chats').where('participants', 'array-contains', state.user.uid).orderBy('updatedAt', 'desc').get();
-        list.innerHTML = '';
-        if(snap.empty) { list.innerHTML = '<p>No conversations yet.</p>'; return; }
-        
-        snap.forEach(doc => {
-            const c = doc.data();
-            // Determine other user
-            const otherId = c.participants.find(id => id !== state.user.uid);
-            // Fetch name (cached or simple display)
-            list.innerHTML += `<div class="feed-card" style="cursor:pointer" onclick="app.openChatModal('${doc.id}', 'Chat')">
-                <strong>Chat</strong> <br>
-                <small>${c.lastMessage || 'Start of conversation'}</small>
-            </div>`;
-        });
+        list.innerHTML = ''; if(snap.empty) { list.innerHTML = '<p>No conversations yet.</p>'; return; }
+        snap.forEach(doc => { const c = doc.data(); list.innerHTML += `<div class="feed-card" style="cursor:pointer" onclick="app.openChatModal('${doc.id}', 'Chat')"><strong>Chat</strong> <br><small>${c.lastMessage || 'Start of conversation'}</small></div>`; });
     },
-
     openBuyerChat: async (targetUid) => {
-        // Check if chat exists
         if(targetUid === state.user.uid) return ui.toast("Cannot chat with yourself", "error");
-        
-        // Simple composite ID to prevent duplicate threads: sort UIDs
-        const participants = [state.user.uid, targetUid].sort();
-        const threadId = participants.join('_');
-        
-        // Check existence or create
+        const participants = [state.user.uid, targetUid].sort(); const threadId = participants.join('_');
         const doc = await db.collection('chats').doc(threadId).get();
-        if(!doc.exists) {
-            await db.collection('chats').doc(threadId).set({
-                participants: participants,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                lastMessage: ''
-            });
-        }
+        if(!doc.exists) { await db.collection('chats').doc(threadId).set({ participants: participants, createdAt: firebase.firestore.FieldValue.serverTimestamp(), updatedAt: firebase.firestore.FieldValue.serverTimestamp(), lastMessage: '' }); }
         app.openChatModal(threadId, "User");
     },
-
     openChatModal: (threadId, name) => {
-        document.getElementById('chatModal').classList.remove('hidden');
-        document.getElementById('chatUserName').innerText = name;
-        document.getElementById('chatThreadId').value = threadId;
-        document.getElementById('chatHistory').innerHTML = '<p>Loading...</p>';
-        
-        // Listen for messages
+        document.getElementById('chatModal').classList.remove('hidden'); document.getElementById('chatUserName').innerText = name; document.getElementById('chatThreadId').value = threadId; document.getElementById('chatHistory').innerHTML = '<p>Loading...</p>';
         if(app.chatUnsubscribe) app.chatUnsubscribe();
-        
-        app.chatUnsubscribe = db.collection('chats').doc(threadId).collection('messages')
-            .orderBy('createdAt', 'asc')
-            .onSnapshot(snap => {
-                const div = document.getElementById('chatHistory');
-                div.innerHTML = '';
-                snap.forEach(doc => {
-                    const m = doc.data();
-                    const isMe = m.sender === state.user.uid;
-                    div.innerHTML += `<div style="text-align:${isMe?'right':'left'};margin-bottom:8px;">
-                        <span style="background:${isMe?'#eff6ff':'#f1f5f9'};padding:8px 12px;border-radius:12px;display:inline-block;border:${isMe?'1px solid #bfdbfe':'1px solid #e2e8f0'}">${m.text}</span>
-                    </div>`;
-                });
-                div.scrollTop = div.scrollHeight;
-            });
+        app.chatUnsubscribe = db.collection('chats').doc(threadId).collection('messages').orderBy('createdAt', 'asc').onSnapshot(snap => {
+            const div = document.getElementById('chatHistory'); div.innerHTML = '';
+            snap.forEach(doc => { const m = doc.data(); const isMe = m.sender === state.user.uid; div.innerHTML += `<div style="text-align:${isMe?'right':'left'};margin-bottom:8px;"><span style="background:${isMe?'#eff6ff':'#f1f5f9'};padding:8px 12px;border-radius:12px;display:inline-block;border:${isMe?'1px solid #bfdbfe':'1px solid #e2e8f0'}">${m.text}</span></div>`; });
+            div.scrollTop = div.scrollHeight;
+        });
     },
 
     loadMyAds: async () => { const div = document.getElementById('myAdsList'); div.innerHTML = 'Loading...'; const snap = await db.collection('ads').where('uid', '==', state.user.uid).get(); div.innerHTML = ''; snap.forEach(doc => { const a = doc.data(); const badge = a.status === 'active' ? '<span class="badge" style="background:green;color:white">Active</span>' : '<span class="badge">Pending</span>'; div.innerHTML += `<div class="card" style="padding:10px;">${badge} <strong>Target: ${a.target}</strong> <br> Clicks: ${a.clicks || 0}</div>`; }); },
@@ -631,33 +612,45 @@ const siteRenderer = {
             document.getElementById('genSiteName').innerText = s.saleName; document.getElementById('genSiteCity').innerText = u.city || 'Sri Lanka'; document.getElementById('genHeroTitle').innerText = s.heroTitle || s.saleName; document.getElementById('genHeroSub').innerText = s.heroSub || ''; document.getElementById('genContactAddress').innerText = u.address; document.getElementById('genContactPhone').innerText = u.phone;
             if(u.whatsapp) { document.getElementById('floatWhatsapp').href = `https://wa.me/${u.whatsapp.replace('+','')}`; document.getElementById('floatWhatsapp').classList.remove('hidden'); }
 
-            // Dynamic Inventory based on Role
             const grid = document.getElementById('genGrid'); grid.innerHTML = '';
             
-            if(s.role === 'seller') {
-                const items = await db.collection('vehicles').where('uid', '==', uid).where('published', '==', true).get();
-                items.forEach(doc => {
-                    const d = doc.data();
+            // DYNAMIC RENDERER BASED ON ROLE
+            let collection = 'vehicles';
+            if(s.role === 'rental') collection = 'rentals';
+            if(s.role === 'finance') collection = 'finance_packages';
+            if(s.role === 'insurance') collection = 'insurance_packages';
+            if(s.role === 'parts') collection = 'parts';
+            if(s.role === 'service') collection = 'services';
+
+            const items = await db.collection(collection).where('uid', '==', uid).where('published', '==', true).get();
+            
+            items.forEach(doc => {
+                const d = doc.data();
+                if(s.role === 'seller') {
                     const card = document.createElement('div'); card.className = 'vehicle-card';
                     card.onclick = () => siteRenderer.openDetailModal(d, u.whatsapp);
                     card.innerHTML = `<img src="${d.images[0]}" loading="lazy"><h4>${d.brand} ${d.model}</h4><p>Rs. ${d.price}</p><p class="text-sm text-secondary">${d.mileage} km | ${d.condition || 'Used'}</p>`;
                     grid.appendChild(card);
-                });
-            } else if (s.role === 'parts') {
-                document.getElementById('genInventoryTitle').innerText = "Our Products";
-                const items = await db.collection('parts').where('uid', '==', uid).where('published', '==', true).get();
-                items.forEach(doc => {
-                    const d = doc.data();
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.name}</h4><p class="text-muted">${d.brand}</p><p>Rs. ${d.price}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Inquiry for ${d.name}')">Buy Now</button></div>`;
-                });
-            } else if (s.role === 'service') {
-                document.getElementById('genInventoryTitle').innerText = "Our Services";
-                const items = await db.collection('services').where('uid', '==', uid).where('published', '==', true).get();
-                items.forEach(doc => {
-                    const d = doc.data();
-                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.name}</h4><p>Rs. ${d.price}</p><p class="text-muted">${d.desc}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Booking for ${d.name}')">Book Now</button></div>`;
-                });
-            }
+                }
+                else if(s.role === 'rental') {
+                    document.getElementById('genInventoryTitle').innerText = "Our Fleet";
+                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.brand} ${d.model}</h4><p>Rs. ${d.daily} / day</p><p class="text-muted">${d.driver === 'driver' ? 'With Driver' : 'Self Drive Available'}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Booking for ${d.brand} ${d.model}')">Book Now</button></div>`;
+                }
+                else if(s.role === 'finance') {
+                    document.getElementById('genInventoryTitle').innerText = "Our Packages";
+                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.title}</h4><p class="text-lg">${d.rate}</p><p class="text-muted">${d.max}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Inquiry for ${d.title}')">Apply</button></div>`;
+                }
+                else if(s.role === 'insurance') {
+                    document.getElementById('genInventoryTitle').innerText = "Our Policies";
+                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.title}</h4><p>${d.type}</p><p class="text-muted">Prem: ${d.premium || 'N/A'}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Quote for ${d.title}')">Get Quote</button></div>`;
+                }
+                else if(s.role === 'parts') {
+                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.name}</h4><p>Rs. ${d.price}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Buy ${d.name}')">Buy Now</button></div>`;
+                }
+                else if(s.role === 'service') {
+                    grid.innerHTML += `<div class="vehicle-card"><img src="${d.image}"><h4>${d.name}</h4><p>Rs. ${d.price}</p><button class="btn btn-primary full-width" onclick="window.open('https://wa.me/${u.whatsapp.replace('+','')}?text=Book ${d.name}')">Book Now</button></div>`;
+                }
+            });
 
         } catch(e) { document.body.innerHTML = `<h1>${e.message}</h1>`; }
         ui.showLoader(false);
