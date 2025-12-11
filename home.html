@@ -3,73 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VehicleWebsiteBuilder - Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>VehicleBuilder Ecosystem | The All-in-One Automotive Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
     <style>
-        .hub-body { background: #f8fafc; font-family: 'Inter', sans-serif; }
-        .hub-hero { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 6rem 1rem; text-align: center; }
-        .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; max-width: 1200px; margin: -60px auto 50px; padding: 0 20px; }
-        .role-card { background: white; padding: 2.5rem; border-radius: 12px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: transform 0.3s; border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
-        .role-card:hover { transform: translateY(-10px); border-color: #2563eb; }
-        .role-icon { font-size: 3rem; color: #2563eb; margin-bottom: 1.5rem; background: #eff6ff; width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-left: auto; margin-right: auto; }
-        .role-btn { display: inline-block; width: 100%; padding: 14px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px; font-weight: 700; margin-top: 15px; }
-        .role-btn:hover { background: #1e40af; }
-        .card-buyer { border-top: 5px solid #10b981; }
-        .card-buyer .role-icon { color: #10b981; background: #d1fae5; }
-        .card-buyer .role-btn { background: #10b981; }
-        .card-buyer .role-btn:hover { background: #059669; }
+        :root {
+            --primary: #2563eb;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --accent: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background-color: #f8fafc; 
+            color: #334155; 
+            overflow-x: hidden;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+            padding: 4rem 1rem 8rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Decorative circles */
+        .hero::before, .hero::after {
+            content: ''; position: absolute; border-radius: 50%; opacity: 0.1;
+        }
+        .hero::before { width: 400px; height: 400px; background: white; top: -100px; left: -100px; }
+        .hero::after { width: 300px; height: 300px; background: var(--accent); bottom: -50px; right: -50px; }
+
+        .nav-brand {
+            font-size: 1.8rem; font-weight: 800; margin-bottom: 3rem; display: block; letter-spacing: -1px;
+        }
+        .nav-brand span { color: #60a5fa; }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #ffffff, #93c5fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+            color: #dbeafe;
+        }
+
+        /* GRID LAYOUT */
+        .container {
+            max-width: 1200px;
+            margin: -6rem auto 4rem;
+            padding: 0 1.5rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-label {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #94a3b8;
+            display: block;
+            margin-top: 2rem;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .role-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .role-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: var(--primary);
+        }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s;
+        }
+        
+        .role-card:hover .icon-box { transform: scale(1.1) rotate(5deg); }
+
+        .role-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--dark); }
+        .role-card p { font-size: 0.95rem; color: #64748b; line-height: 1.5; flex: 1; }
+        
+        .arrow-link {
+            margin-top: 1.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+        }
+
+        /* SPECIFIC CARD STYLES */
+        
+        /* Sellers & Rentals (Blue) */
+        .style-blue .icon-box { background: #eff6ff; color: #2563eb; }
+        .style-blue:hover .arrow-link { color: #1d4ed8; }
+
+        /* Parts & Repair (Orange/Dark) */
+        .style-orange .icon-box { background: #fff7ed; color: #ea580c; }
+        .style-orange:hover { border-color: #ea580c; }
+        .style-orange:hover .arrow-link { color: #ea580c; }
+
+        /* Finance (Green) */
+        .style-green .icon-box { background: #f0fdf4; color: #16a34a; }
+        .style-green:hover { border-color: #16a34a; }
+        .style-green:hover .arrow-link { color: #16a34a; }
+
+        /* Insurance (Purple) */
+        .style-purple .icon-box { background: #faf5ff; color: #9333ea; }
+        .style-purple:hover { border-color: #9333ea; }
+        .style-purple:hover .arrow-link { color: #9333ea; }
+
+        /* BUYER CARD (Featured) */
+        .buyer-card {
+            background: #0f172a;
+            color: white;
+            border: 1px solid #1e293b;
+        }
+        .buyer-card:hover { border-color: #38bdf8; transform: translateY(-8px); }
+        .buyer-card h3 { color: white; }
+        .buyer-card p { color: #94a3b8; }
+        .buyer-card .icon-box { background: rgba(255,255,255,0.1); color: #38bdf8; }
+        .buyer-card .arrow-link { color: #38bdf8; }
+
+        /* FOOTER */
+        .simple-footer {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 600px) {
+            .hero { padding-bottom: 5rem; }
+            .container { margin-top: -3rem; }
+            .hero h1 { font-size: 2rem; }
+        }
     </style>
 </head>
-<body class="hub-body">
+<body>
 
-    <div class="hub-hero">
-        <h1>VehicleWebsiteBuilder Ecosystem</h1>
-        <p>Build your Page. Connect socially. Grow your Business.</p>
+    <section class="hero">
+        <div class="nav-brand">Vehicle<span>Builder</span></div>
+        <h1>The Digital Automotive Ecosystem</h1>
+        <p>Whether you sell cars, rent them, fix them, or finance them — we give you the tools to build your business online.</p>
+    </section>
+
+    <div class="container">
+        
+        <!-- ROW 1: CORE SALES -->
+        <span class="section-label">Sales & Inventory</span>
+        <div class="grid-cards">
+            <!-- Seller -->
+            <a href="index.html?role=seller" class="role-card style-blue">
+                <div class="icon-box"><i class="fa-solid fa-car"></i></div>
+                <h3>Vehicle Sellers</h3>
+                <p>Create a professional digital showroom. Manage inventory, get leads, and share your stock on social media.</p>
+                <div class="arrow-link">Start Selling <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+            
+            <!-- Rentals (NEW) -->
+            <a href="index.html?role=rental" class="role-card style-blue">
+                <div class="icon-box"><i class="fa-solid fa-calendar-days"></i></div>
+                <h3>Rentals & Hiring</h3>
+                <p>Manage your fleet availability. Set daily/monthly rates for self-drive or wedding hires.</p>
+                <div class="arrow-link">Manage Fleet <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+            
+            <!-- Parts -->
+            <a href="index.html?role=parts" class="role-card style-orange">
+                <div class="icon-box"><i class="fa-solid fa-gears"></i></div>
+                <h3>Spare Parts</h3>
+                <p>Sell auto parts and accessories. Categorize by brand and model compatibility.</p>
+                <div class="arrow-link">Sell Parts <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+        </div>
+
+        <!-- ROW 2: SERVICES & FINANCIAL -->
+        <span class="section-label">Services & Financial</span>
+        <div class="grid-cards">
+            <!-- Service -->
+            <a href="index.html?role=service" class="role-card style-orange">
+                <div class="icon-box"><i class="fa-solid fa-wrench"></i></div>
+                <h3>Repair & Service</h3>
+                <p>Mechanics, detailing, and service stations. List your packages and accept bookings.</p>
+                <div class="arrow-link">List Services <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Finance (Split) -->
+            <a href="index.html?role=finance" class="role-card style-green">
+                <div class="icon-box"><i class="fa-solid fa-coins"></i></div>
+                <h3>Finance Companies</h3>
+                <p>List leasing and loan packages. Connect directly with buyers needing financial aid.</p>
+                <div class="arrow-link">Offer Finance <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+
+            <!-- Insurance (New) -->
+            <a href="index.html?role=insurance" class="role-card style-purple">
+                <div class="icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Insurance Brokers</h3>
+                <p>Provide vehicle insurance quotes. Showcase full and third-party policy benefits.</p>
+                <div class="arrow-link">Offer Insurance <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+        </div>
+
+        <!-- ROW 3: BUYER -->
+        <span class="section-label">For Everyone</span>
+        <div class="grid-cards">
+            <!-- Buyer -->
+            <a href="index.html?role=buyer" class="role-card buyer-card">
+                <div class="icon-box"><i class="fa-solid fa-user-astronaut"></i></div>
+                <h3>User / Buyer</h3>
+                <p>The ultimate hub. Maintain your "Digital Garage", browse the marketplace, and chat with all service providers in one place.</p>
+                <div class="arrow-link">Join Free <i class="fa-solid fa-arrow-right"></i></div>
+            </a>
+        </div>
+
     </div>
 
-    <div class="hub-grid">
-        <!-- 1. Vehicle Sellers -->
-        <div class="role-card">
-            <div class="role-icon"><i class="fa-solid fa-car"></i></div>
-            <h3>Vehicle Sellers</h3>
-            <p>Create your professional car sale page. Manage inventory and reach thousands.</p>
-            <a href="index.html?role=seller" class="role-btn">Start Selling Vehicles</a>
-        </div>
-
-        <!-- 2. Parts Sellers -->
-        <div class="role-card">
-            <div class="role-icon"><i class="fa-solid fa-gears"></i></div>
-            <h3>Parts Sellers</h3>
-            <p>List auto parts and accessories. Build your digital spare parts store.</p>
-            <a href="index.html?role=parts" class="role-btn">Start Selling Parts</a>
-        </div>
-
-        <!-- 3. Service Providers -->
-        <div class="role-card">
-            <div class="role-icon"><i class="fa-solid fa-wrench"></i></div>
-            <h3>Service Providers</h3>
-            <p>Mechanics, Service Stations & Detailing. Showcase your services.</p>
-            <a href="index.html?role=service" class="role-btn">Create Service Profile</a>
-        </div>
-
-        <!-- 4. Finance / Insurance -->
-        <div class="role-card">
-            <div class="role-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
-            <h3>Finance & Insurance</h3>
-            <p>Offer leasing and insurance packages directly to vehicle buyers.</p>
-            <a href="index.html?role=finance" class="role-btn">Create Finance Profile</a>
-        </div>
-
-        <!-- 5. Buyers -->
-        <div class="role-card card-buyer">
-            <div class="role-icon"><i class="fa-solid fa-user-check"></i></div>
-            <h3>Buyers</h3>
-            <p>Find vehicles, parts, and services. Connect with sellers instantly.</p>
-            <a href="index.html?role=buyer" class="role-btn">Join as Buyer</a>
-        </div>
-    </div>
+    <footer class="simple-footer">
+        <p>&copy; 2025 VehicleBuilder Platform. Enabling the Automotive Industry.</p>
+    </footer>
 
 </body>
 </html>
