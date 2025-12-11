@@ -272,37 +272,34 @@
                         <div id="myServicesList" class="vehicle-grid"></div>
                     </div>
 
-                    <!-- E. COMMON: PAGE BUILDER -->
+                   <!-- E. COMMON: PAGE BUILDER (LAUNCHER) -->
                     <div id="tabWebsite" class="dash-tab">
                         <h2>Page Builder</h2>
+                        
+                        <!-- Lock Screen (Same as before) -->
                         <div id="websiteLockScreen" class="lock-overlay">
                             <h3>Setup Your Business Page</h3>
                             <p>Update your Profile "City" first to create your unique URL.</p>
                             <input type="text" id="initSaleName" placeholder="Business Name (e.g. Sahan Motors)">
                             <button id="btnUnlockWebsite" class="btn btn-primary">Create Page</button>
                         </div>
+
+                        <!-- Editor Launcher -->
                         <div id="websiteEditor" class="hidden">
                             <div class="info-banner mb-2">
-                                <strong>Your Unique Page Link:</strong><br>
+                                <strong>Your Live Page URL:</strong><br>
                                 <a href="#" id="mySiteLink" target="_blank" class="font-bold text-lg">...</a>
                             </div>
-                            <div class="card">
-                                <h3>Branding</h3>
-                                <input type="text" id="webName" placeholder="Business Name">
-                                <div class="grid-2">
-                                    <div class="form-group"><label>Logo</label><input type="file" id="webLogo"></div>
-                                    <div class="form-group"><label>Favicon</label><input type="file" id="webFavicon"></div>
-                                </div>
-                                <select id="webNavStyle"><option value="1">Style 1: Centered</option><option value="2">Style 2: Left</option></select>
-                                <h3>Content</h3>
-                                <input type="text" id="webHeroTitle" placeholder="Hero Title">
-                                <input type="text" id="webHeroSub" placeholder="Hero Subtitle">
-                                <textarea id="webAbout" placeholder="About Us content..."></textarea>
-                                <textarea id="webWhy" placeholder="Why Choose Us..."></textarea>
-                                <h3>Media</h3>
-                                <input type="file" id="webGallery" multiple>
-                                <input type="text" id="webFb" placeholder="Facebook Page Link">
-                                <button id="saveWebsite" class="btn btn-success mt-4">Publish & Update</button>
+
+                            <div class="card text-center" style="padding: 4rem 2rem;">
+                                <i class="fa-solid fa-paintbrush text-accent" style="font-size: 4rem; margin-bottom: 20px;"></i>
+                                <h3>Design Your Masterpiece</h3>
+                                <p class="text-secondary" style="max-width: 500px; margin: 0 auto 30px;">
+                                    Use our advanced Visual Editor to customize themes, colors, upload banners, and arrange your content in real-time.
+                                </p>
+                                <a href="pagebuilder.html" class="btn btn-primary btn-lg">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Open Visual Editor
+                                </a>
                             </div>
                         </div>
                     </div>
