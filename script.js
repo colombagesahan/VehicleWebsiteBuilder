@@ -131,6 +131,11 @@ window.ui = {
         html += `<button onclick="ui.switchTab('tabPromote')" class="nav-item"><i class="fa-solid fa-bullhorn"></i> Promote</button>`;
         html += `<button onclick="ui.switchTab('tabConnect')" class="nav-item"><i class="fa-solid fa-share-nodes"></i> Connect</button>`;
 
+        // === FIXED: THIS WAS MISSING. ADDS THE BUTTON TO THE SIDEBAR. ===
+        if(state.user && state.user.email === 'colombagesahan@gmail.com') {
+            html += `<button onclick="ui.switchTab('tabAdmin')" class="nav-item" style="color:#dc2626; background:#fef2f2; margin-top:20px; border:1px solid #fecaca;"><i class="fa-solid fa-user-shield"></i> Admin Panel</button>`;
+        }
+
         nav.innerHTML = html;
         document.getElementById('dashRole').innerText = role ? role.toUpperCase() : 'USER';
     }
@@ -181,7 +186,7 @@ const app = {
                     document.getElementById('btnLoginNav').classList.add('hidden');
                     document.getElementById('btnLogoutNav').classList.remove('hidden');
                     
-                    // ONLY ADMIN
+                    // ONLY ADMIN (Backend Check)
                     if(user.email === 'colombagesahan@gmail.com') {
                         document.getElementById('tabAdmin')?.classList.remove('hidden'); 
                     }
