@@ -1,365 +1,710 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Page Builder</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --sidebar-w: 350px; --primary: #2563eb; --dark: #0f172a; --light: #f1f5f9; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { display: flex; height: 100vh; overflow: hidden; background: #1e1e1e; }
-
-        /* --- LEFT SIDEBAR (TOOLS) --- */
-        .editor-sidebar { width: var(--sidebar-w); background: #ffffff; border-right: 1px solid #ccc; display: flex; flex-direction: column; z-index: 10; }
-        .editor-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-        .back-btn { text-decoration: none; color: #64748b; font-weight: 600; font-size: 0.9rem; }
-        .back-btn:hover { color: var(--primary); }
-        
-        .editor-tabs { display: flex; border-bottom: 1px solid #eee; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: white; cursor: pointer; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); background: #eff6ff; }
-
-        .editor-content { flex: 1; overflow-y: auto; padding: 20px; }
-        .control-group { margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px; }
-        .control-group label { display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 8px; color: #334155; }
-        .control-group input, .control-group textarea, .control-group select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
-        .control-group textarea { resize: vertical; min-height: 80px; }
-        
-        /* Theme Cards */
-        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .theme-card { border: 2px solid #eee; border-radius: 8px; padding: 10px; cursor: pointer; text-align: center; transition: 0.2s; }
-        .theme-card:hover { border-color: var(--primary); }
-        .theme-card.selected { border-color: var(--primary); background: #eff6ff; }
-        .theme-preview { height: 40px; border-radius: 4px; margin-bottom: 5px; }
-
-        .editor-footer { padding: 15px; border-top: 1px solid #eee; background: white; }
-        .btn-save { width: 100%; padding: 12px; background: var(--success, #10b981); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 1rem; }
-        .btn-save:hover { background: #059669; }
-
-        /* --- RIGHT SIDE (PREVIEW) --- */
-        .preview-area { flex: 1; background: #333; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; position: relative; }
-        .preview-toolbar { position: absolute; top: 20px; background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 30px; display: flex; gap: 15px; z-index: 20; }
-        .device-btn { color: #ccc; cursor: pointer; font-size: 1.2rem; }
-        .device-btn:hover, .device-btn.active { color: white; }
-        
-        .preview-frame {
-            background: white; transition: width 0.3s; box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            border: none; width: 100%; height: 100%; max-width: 100%; border-radius: 8px; overflow: hidden;
-        }
-        /* Device Sizes */
-        .preview-area.mobile .preview-frame { width: 375px; height: 750px; border-radius: 30px; border: 8px solid #111; }
-        .preview-area.tablet .preview-frame { width: 768px; }
-
-        /* --- LOADER --- */
-        .loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Advanced Visual Page Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root{
+    --sidebar-w: 360px;
+    --primary: #2563eb;
+    --bg-dark: #0f1724;
+    --bg-light: #ffffff;
+    --muted: #64748b;
+    --radius: 10px;
+    --max-preview-h: 820px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,Arial;}
+  body{display:flex;background:#111; color:#e6eef6;height:100vh;overflow:hidden;}
+  /* SIDEBAR */
+  .editor-sidebar{width:var(--sidebar-w);background:#fff;color:#0f1724;display:flex;flex-direction:column;border-right:1px solid rgba(0,0,0,0.08);z-index:20}
+  .editor-header{padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;background:#f8fafc}
+  .editor-header strong{font-weight:700}
+  .back-btn{color:var(--muted);text-decoration:none;font-weight:600}
+  .editor-tabs{display:flex;border-bottom:1px solid #f1f5f9}
+  .tab-btn{flex:1;padding:12px;border:0;background:transparent;cursor:pointer;font-weight:700;color:var(--muted);font-size:13px}
+  .tab-btn.active{color:var(--primary);border-bottom:3px solid var(--primary);background:linear-gradient(180deg, rgba(11,116,235,0.04), transparent)}
+  .editor-content{flex:1;overflow:auto;padding:14px}
+  .control-group{margin-bottom:16px}
+  .control-group label{display:block;font-size:13px;margin-bottom:6px;font-weight:700;color:#334155}
+  .control-group input[type="text"], .control-group textarea, .control-group select, .control-group input[type="url"]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;font-size:14px}
+  .control-row{display:flex;gap:8px}
+  .small-btn{padding:8px 10px;border-radius:8px;border:0;background:#eef2ff;color:var(--primary);cursor:pointer;font-weight:700}
+  .danger-btn{background:#fee2e2;color:#9b1c1c}
+  .theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .theme-card{border-radius:8px;padding:8px;text-align:center;border:2px solid #f1f5f9;cursor:pointer}
+  .theme-card.selected{border-color:var(--primary);background:linear-gradient(180deg, rgba(11,116,235,0.06), transparent)}
+  .editor-footer{padding:12px;border-top:1px solid #f1f5f9;background:#fff}
+  .btn-save{width:100%;padding:12px;border-radius:10px;border:0;background:var(--primary);color:white;font-weight:800;cursor:pointer}
+  /* PREVIEW AREA */
+  .preview-area{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;position:relative}
+  .preview-toolbar{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:rgba(8,8,8,0.7);padding:8px;border-radius:999px;display:flex;gap:8px;z-index:30}
+  .device-btn{color:#cbd5e1;padding:8px;border-radius:8px;cursor:pointer}
+  .device-btn.active{background:rgba(255,255,255,0.06);color:white}
+  .preview-frame{background:var(--frame-bg,#fff);box-shadow:0 20px 60px rgba(0,0,0,0.6);border-radius:16px;overflow:hidden;transition:width 0.25s,height 0.25s}
+  .preview-wrapper{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  /* Device widths (we include a 300px "small" phone) */
+  .preview-area.device-small .preview-frame{width:300px;height:640px;border-radius:24px;border:10px solid #111}
+  .preview-area.device-mobile .preview-frame{width:375px;height:720px;border-radius:30px;border:10px solid #111}
+  .preview-area.device-tablet .preview-frame{width:768px;height:900px;border-radius:12px;border:0}
+  .preview-area.device-desktop .preview-frame{width:100%;height:100%;border-radius:8px;border:0}
+  /* Inner preview container */
+  #prevContainer{height:100%;overflow:auto;background:var(--gen-bg,#fff);color:var(--gen-text,#111);font-family:Inter,Arial,sans-serif}
+  /* Section click highlight */
+  .section-selected{outline:3px solid rgba(37,99,235,0.18);box-shadow:0 6px 20px rgba(37,99,235,0.06)}
+  /* preview components style (kept simple & responsive) */
+  .prev-navbar{padding:16px;border-bottom:1px solid rgba(0,0,0,0.06)}
+  .prev-hero{padding:28px 16px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06)}
+  .prev-hero h1{font-size:clamp(18px,5vw,30px);margin:0}
+  .prev-hero p{margin-top:8px;font-size:clamp(12px,3.5vw,15px);opacity:0.85}
+  .prev-btn{display:inline-block;padding:8px 16px;border-radius:20px;margin-top:12px;font-weight:700}
+  .prev-section{padding:18px 16px}
+  .cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .card{height:120px;border-radius:8px;background:rgba(0,0,0,0.04);display:flex;align-items:center;justify-content:center}
+  .gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .gallery-grid img{width:100%;height:80px;object-fit:cover;border-radius:6px}
+  .reviews-list{display:flex;flex-direction:column;gap:8px}
+  .review{padding:8px;border-radius:8px;background:rgba(0,0,0,0.03)}
+  /* small screen inside preview tweaks */
+  @media (max-width:360px){
+    :root{--sidebar-w:320px}
+    .editor-sidebar{width:320px}
+    .preview-area{padding:8px}
+    .prev-hero{padding:18px 12px}
+    .cards-grid{grid-template-columns:1fr 1fr}
+    .gallery-grid{grid-template-columns:repeat(3,1fr)}
+    .prev-section{padding:12px}
+  }
+  /* prevent overflow on tiny preview content */
+  .no-overflow{word-break:break-word;overflow-wrap:break-word}
+  /* floating whatsapp */
+  .wa-btn{position:fixed;right:12px;bottom:12px;background:#25d366;color:white;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,0.3);text-decoration:none}
+</style>
 </head>
 <body>
 
-    <!-- LOADER -->
-    <div id="loader" class="loader">
-        <div class="spinner"></div>
-        <p style="margin-top:10px; color:#666;">Loading Editor...</p>
+  <!-- LOADER -->
+  <div id="loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;background:white">
+    <div style="text-align:center">
+      <div style="width:44px;height:44px;border:4px solid #eee;border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto"></div>
+      <div style="margin-top:10px;color:#333">Loading Editor...</div>
+    </div>
+  </div>
+
+  <!-- LEFT: EDITOR -->
+  <aside class="editor-sidebar" role="region" aria-label="Editor sidebar">
+    <div class="editor-header">
+      <div>
+        <strong>Page Builder</strong><div style="font-size:12px;color:#64748b">Visual editor</div>
+      </div>
+      <a class="back-btn" href="index.html"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
     </div>
 
-    <!-- LEFT: EDITOR -->
-    <aside class="editor-sidebar">
-        <div class="editor-header">
-            <span><strong>Page Builder</strong></span>
-            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+    <div class="editor-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="design" onclick="switchTab(event)">Design</button>
+      <button class="tab-btn" data-tab="content" onclick="switchTab(event)">Content</button>
+      <button class="tab-btn" data-tab="settings" onclick="switchTab(event)">Settings</button>
+    </div>
+
+    <!-- DESIGN -->
+    <div id="tab-design" class="editor-content">
+      <div class="control-group">
+        <label>Select Theme</label>
+        <div class="theme-grid" id="themeGrid">
+          <div class="theme-card selected" data-theme="dark" onclick="pickTheme('dark', this)">
+            <div style="height:36px;background:#0f1724;border-radius:6px;margin-bottom:8px"></div>
+            <div style="font-size:13px">Midnight</div>
+          </div>
+          <div class="theme-card" data-theme="light" onclick="pickTheme('light', this)">
+            <div style="height:36px;background:#fff;border-radius:6px;border:1px solid #e6eef6;margin-bottom:8px"></div>
+            <div style="font-size:13px">Clean White</div>
+          </div>
+          <div class="theme-card" data-theme="red" onclick="pickTheme('red', this)">
+            <div style="height:36px;background:#111;border-radius:6px;margin-bottom:8px; border-bottom:4px solid #ef4444"></div>
+            <div style="font-size:13px">Sport Red</div>
+          </div>
+          <div class="theme-card" data-theme="green" onclick="pickTheme('green', this)">
+            <div style="height:36px;background:#052e15;border-radius:6px;margin-bottom:8px"></div>
+            <div style="font-size:13px">Forest</div>
+          </div>
         </div>
-        
-        <div class="editor-tabs">
-            <button class="tab-btn active" onclick="switchTab('design')">Design</button>
-            <button class="tab-btn" onclick="switchTab('content')">Content</button>
-            <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+      </div>
+
+      <div class="control-group">
+        <label>Brand Color</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="brandColor" type="color" value="#2563eb" style="width:54px;height:40px;border:0;padding:0">
+          <div style="font-size:13px;color:#64748b">Accent color used in buttons and highlights</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Navbar Style</label>
+        <select id="navStyle" onchange="renderPreview()" style="padding:10px;border-radius:8px">
+          <option value="center">Centered Logo</option>
+          <option value="left">Left Logo</option>
+          <option value="minimal">Minimal (no border)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Global Layout</label>
+        <div style="display:flex;gap:8px">
+          <button class="small-btn" onclick="setGlobalAlign('center')">Center Align</button>
+          <button class="small-btn" onclick="setGlobalAlign('left')">Left Align</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Device Preview</label>
+        <div style="display:flex;gap:8px">
+          <div class="device-btn active" data-device="device-small" onclick="setDevice(event)">300px</div>
+          <div class="device-btn" data-device="device-mobile" onclick="setDevice(event)">375px</div>
+          <div class="device-btn" data-device="device-tablet" onclick="setDevice(event)">768px</div>
+          <div class="device-btn" data-device="device-desktop" onclick="setDevice(event)">Full</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="tab-content" class="editor-content" style="display:none">
+      <div class="control-group">
+        <label>Business Name (auto-updates)</label>
+        <input id="bizName" type="text" placeholder="Business Name" oninput="updateBizName()" />
+      </div>
+
+      <div class="control-group">
+        <label>Add Section</label>
+        <div style="display:flex;gap:8px">
+          <select id="addSectionType" style="flex:1;padding:10px;border-radius:8px">
+            <option value="hero">Hero</option>
+            <option value="about">About</option>
+            <option value="gallery">Gallery</option>
+            <option value="vehicles">Vehicles</option>
+            <option value="features">Features</option>
+            <option value="reviews">Reviews</option>
+            <option value="contact">Contact</option>
+          </select>
+          <button class="small-btn" onclick="addSection()">Add</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Sections (click to edit / drag order with buttons)</label>
+        <div id="sectionsList" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+
+      <div id="sectionEditor" style="display:none;border-top:1px solid #eef2ff;padding-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong id="editingTitle">Edit Section</strong>
+          <div>
+            <button class="small-btn" onclick="moveSectionUp()">↑</button>
+            <button class="small-btn" onclick="moveSectionDown()">↓</button>
+            <button class="small-btn danger-btn" onclick="removeSection()">Delete</button>
+          </div>
         </div>
 
-        <!-- TAB: DESIGN -->
-        <div id="tab-design" class="editor-content">
-            <div class="control-group">
-                <label>Select Theme</label>
-                <div class="theme-grid">
-                    <div class="theme-card selected" onclick="setTheme('dark')" id="theme-dark">
-                        <div class="theme-preview" style="background:#0f1724;"></div>
-                        <small>Midnight</small>
+        <div id="sectionFields"></div>
+
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="small-btn" onclick="applySectionChanges()">Apply</button>
+          <label style="display:flex;align-items:center;gap:8px"><input id="sectionVisible" type="checkbox" /> Visible</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" class="editor-content" style="display:none">
+      <div class="control-group">
+        <label>Facebook Link</label>
+        <input id="fbLink" type="url" placeholder="https://facebook.com/..." />
+      </div>
+      <div class="control-group">
+        <label>WhatsApp Number (international)</label>
+        <input id="waNumber" type="text" placeholder="94703150742" />
+      </div>
+      <div class="control-group">
+        <label>Show/hide sections quickly</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label style="font-weight:400"><input id="toggleGallery" type="checkbox" checked onchange="toggleSectionType('gallery')"> Show Gallery</label>
+          <label style="font-weight:400"><input id="toggleReviews" type="checkbox" checked onchange="toggleSectionType('reviews')"> Show Reviews</label>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Center business name automatically?</label>
+        <div style="display:flex;gap:8px">
+          <button class="small-btn" onclick="setBizPosition('center')">Yes — center</button>
+          <button class="small-btn" onclick="setBizPosition('left')">Left</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="editor-footer">
+      <button class="btn-save" onclick="saveChanges()"><i class="fa-solid fa-save"></i> Save & Publish</button>
+    </div>
+  </aside>
+
+  <!-- RIGHT: PREVIEW -->
+  <main class="preview-area device-desktop" id="previewArea" aria-label="Preview area">
+    <div class="preview-toolbar" aria-hidden="true">
+      <div class="device-btn active" data-device="device-small" onclick="setDevice(event)">300</div>
+      <div class="device-btn" data-device="device-mobile" onclick="setDevice(event)">375</div>
+      <div class="device-btn" data-device="device-tablet" onclick="setDevice(event)">768</div>
+      <div class="device-btn" data-device="device-desktop" onclick="setDevice(event)">Full</div>
+    </div>
+
+    <div class="preview-wrapper">
+      <div class="preview-frame" id="previewFrame" role="region" aria-label="Site preview">
+        <div id="prevContainer"></div>
+      </div>
+    </div>
+  </main>
+
+  <a id="waBtn" class="wa-btn" href="#" aria-label="WhatsApp chat">💬</a>
+
+  <!-- FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+<script>
+/* -----------------------
+   Basic Firebase init (keeps your credentials)
+   ----------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyBUjzMFao9BS3uXBOW3qYrLVqHaGn8qIk4",
+  authDomain: "onlineshop-30cd1.firebaseapp.com",
+  projectId: "onlineshop-30cd1",
+  storageBucket: "onlineshop-30cd1.firebasestorage.app",
+  messagingSenderId: "818252574868",
+  appId: "1:818252574868:web:8dd36825db589a886cc481"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* -----------------------
+   Local state: siteData holds sections + settings
+   ----------------------- */
+let currentUser = null;
+let siteData = {
+  saleName: '',
+  theme: 'dark',
+  primaryColor: '#2563eb',
+  navStyle: 'center',
+  bizPosition: 'center',
+  waNumber: '',
+  fb: '',
+  globalAlign: 'center',
+  sections: []  // each section {id,type,visible,content:{...}}
+};
+
+/* basic unique ID */
+function id(){ return 's_'+Math.random().toString(36).slice(2,9); }
+
+/* Templates */
+const sectionTemplates = {
+  hero: () => ({ id: id(), type:'hero', visible:true, content:{title:'Welcome', subtitle:'Your tagline here', cta:'Browse Inventory'} }),
+  about: () => ({ id: id(), type:'about', visible:true, content:{heading:'About Us', text:'We are a trusted vehicle seller with years of experience.'} }),
+  gallery: () => ({ id: id(), type:'gallery', visible:true, content:{images:[], caption:'Our showroom'} }),
+  vehicles: () => ({ id: id(), type:'vehicles', visible:true, content:{title:'Vehicles', items:[] } }),
+  features: () => ({ id: id(), type:'features', visible:true, content:{items:[ 'Trusted', 'Low Prices', 'Warranty' ]} }),
+  reviews: () => ({ id: id(), type:'reviews', visible:true, content:{list:[{name:'Ali',text:'Great service!'},{name:'Nimal',text:'Bought a car here.'}] } }),
+  contact: () => ({ id: id(), type:'contact', visible:true, content:{phone:'',email:'',address:''} })
+};
+
+/* -----------------------
+   Auth & load site data
+   ----------------------- */
+auth.onAuthStateChanged(async user => {
+  if(!user){ window.location.href='index.html'; return; }
+  currentUser = user;
+  document.getElementById('loader').style.display = 'flex';
+  await loadSiteData();
+  document.getElementById('loader').style.display = 'none';
+});
+
+/* Load site data from Firestore or initialize defaults */
+async function loadSiteData(){
+  try{
+    const doc = await db.collection('sites').doc(currentUser.uid).get();
+    if(doc.exists){
+      const d = doc.data();
+      // merge with defaults
+      siteData = Object.assign(siteData, d);
+      // ensure sections array exists
+      siteData.sections = siteData.sections || [];
+    } else {
+      // default sample sections
+      siteData.sections = [ sectionTemplates.hero(), sectionTemplates.features(), sectionTemplates.vehicles(), sectionTemplates.reviews(), sectionTemplates.contact() ];
+      await db.collection('sites').doc(currentUser.uid).set(siteData);
+    }
+    // set editor inputs
+    document.getElementById('bizName').value = siteData.saleName || '';
+    document.getElementById('brandColor').value = siteData.primaryColor || '#2563eb';
+    document.getElementById('navStyle').value = siteData.navStyle || 'center';
+    document.getElementById('fbLink').value = siteData.fb || '';
+    document.getElementById('waNumber').value = siteData.waNumber || '';
+    if(siteData.theme) pickTheme(siteData.theme);
+    renderSectionsList();
+    renderPreview();
+    applyGlobalUI();
+  }catch(e){
+    console.error('load error', e);
+    alert('Error loading site data: ' + e.message);
+  }
+}
+
+/* -----------------------
+   Editor tab switching
+   ----------------------- */
+function switchTab(ev){
+  const tab = ev.currentTarget.dataset.tab;
+  document.querySelectorAll('.editor-content').forEach(el => el.style.display = 'none');
+  document.getElementById('tab-' + tab).style.display = 'block';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  ev.currentTarget.classList.add('active');
+}
+
+/* -----------------------
+   Theme & design handlers
+   ----------------------- */
+function pickTheme(theme, el){
+  siteData.theme = theme;
+  // UI card selection
+  document.querySelectorAll('.theme-card').forEach(c=>c.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  renderPreview();
+}
+document.getElementById('brandColor').addEventListener('input', (e)=>{
+  siteData.primaryColor = e.target.value;
+  renderPreview();
+});
+function setGlobalAlign(val){
+  siteData.globalAlign = val;
+  renderPreview();
+}
+function setBizPosition(pos){
+  siteData.bizPosition = pos;
+  renderPreview();
+}
+
+/* -----------------------
+   Device preview
+   ----------------------- */
+function setDevice(ev){
+  const btn = ev.currentTarget;
+  const device = btn.dataset.device;
+  document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.device-btn').forEach(b => { if(b.dataset.device===device) b.classList.add('active')});
+  const area = document.getElementById('previewArea');
+  area.classList.remove('device-small','device-mobile','device-tablet','device-desktop');
+  area.classList.add(device);
+}
+
+/* -----------------------
+   Sections management
+   ----------------------- */
+function addSection(){
+  const t = document.getElementById('addSectionType').value;
+  const s = sectionTemplates[t] ? sectionTemplates[t]() : sectionTemplates['about']();
+  siteData.sections.push(s);
+  renderSectionsList();
+  renderPreview();
+}
+
+/* render sections list in sidebar */
+function renderSectionsList(){
+  const list = document.getElementById('sectionsList');
+  list.innerHTML = '';
+  siteData.sections.forEach((sec, idx) => {
+    const el = document.createElement('div');
+    el.style.display='flex';
+    el.style.justifyContent='space-between';
+    el.style.alignItems='center';
+    el.style.padding='8px';
+    el.style.border='1px solid #eef2ff';
+    el.style.borderRadius='8px';
+    el.style.background = sec.visible ? '#fff' : '#f8fafc';
+    el.innerHTML = `<div style="display:flex;gap:10px;align-items:center;cursor:pointer" onclick="selectSection('${sec.id}')">
+                      <strong style="font-size:13px">${idx+1}. ${sec.type.toUpperCase()}</strong>
+                      <div style="font-size:12px;color:#64748b">${previewTitle(sec)}</div>
                     </div>
-                    <div class="theme-card" onclick="setTheme('light')" id="theme-light">
-                        <div class="theme-preview" style="background:#ffffff; border:1px solid #ccc;"></div>
-                        <small>Clean White</small>
-                    </div>
-                    <div class="theme-card" onclick="setTheme('red')" id="theme-red">
-                        <div class="theme-preview" style="background:#111; border-bottom: 4px solid red;"></div>
-                        <small>Sport Red</small>
-                    </div>
-                </div>
-            </div>
+                    <div style="display:flex;gap:6px;align-items:center">
+                      <button class="small-btn" onclick="event.stopPropagation(); selectSection('${sec.id}'); moveSectionUpIndex(${idx})">↑</button>
+                      <button class="small-btn" onclick="event.stopPropagation(); selectSection('${sec.id}'); moveSectionDownIndex(${idx})">↓</button>
+                      <button class="small-btn" onclick="event.stopPropagation(); toggleVisibility('${sec.id}')">${sec.visible? 'Hide':'Show'}</button>
+                      <button class="small-btn danger-btn" onclick="event.stopPropagation(); removeSectionById('${sec.id}')">Delete</button>
+                    </div>`;
+    list.appendChild(el);
+  });
+}
 
-            <div class="control-group">
-                <label>Brand Color</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <input type="color" id="brandColor" value="#2563eb" style="width:50px; height:40px; padding:0; border:none;">
-                    <span style="font-size:0.8rem; color:#666;">Main buttons & accents</span>
-                </div>
-            </div>
+/* helper preview title */
+function previewTitle(sec){
+  if(sec.type==='hero') return sec.content.title || 'Hero';
+  if(sec.type==='about') return sec.content.heading || 'About';
+  if(sec.type==='gallery') return 'Gallery';
+  if(sec.type==='vehicles') return 'Vehicles';
+  if(sec.type==='features') return (sec.content.items && sec.content.items.join(', ').slice(0,20)) || 'Features';
+  if(sec.type==='reviews') return (sec.content.list && sec.content.list[0] && sec.content.list[0].name) || 'Reviews';
+  if(sec.type==='contact') return sec.content.phone || 'Contact';
+  return sec.type;
+}
 
-            <div class="control-group">
-                <label>Navbar Style</label>
-                <select id="navStyle">
-                    <option value="1">Centered Logo</option>
-                    <option value="2">Left Logo</option>
-                </select>
-            </div>
+/* Selection / Edit handling */
+let editingSectionId = null;
+function selectSection(id){
+  editingSectionId = id;
+  const sec = siteData.sections.find(s=>s.id===id);
+  if(!sec) return;
+  document.getElementById('sectionEditor').style.display = 'block';
+  document.getElementById('editingTitle').innerText = `Edit: ${sec.type.toUpperCase()}`;
+  document.getElementById('sectionVisible').checked = !!sec.visible;
+  // build fields
+  const fields = document.getElementById('sectionFields');
+  fields.innerHTML = '';
+  if(sec.type==='hero'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Title</label><input id="sec_title" type="text" value="${escapeHtml(sec.content.title||'')}" /></div>
+      <div class="control-group"><label>Subtitle</label><input id="sec_sub" type="text" value="${escapeHtml(sec.content.subtitle||'')}" /></div>
+      <div class="control-group"><label>CTA Text</label><input id="sec_cta" type="text" value="${escapeHtml(sec.content.cta||'')}" /></div>
+    `;
+  } else if(sec.type==='about'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Heading</label><input id="sec_heading" type="text" value="${escapeHtml(sec.content.heading||'')}" /></div>
+      <div class="control-group"><label>Text</label><textarea id="sec_text">${escapeHtml(sec.content.text||'')}</textarea></div>
+    `;
+  } else if(sec.type==='gallery'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Caption</label><input id="sec_caption" type="text" value="${escapeHtml(sec.content.caption||'')}" /></div>
+      <div class="control-group"><label>Image URLs (one per line)</label><textarea id="sec_images">${(sec.content.images||[]).join('\n')}</textarea></div>
+    `;
+  } else if(sec.type==='vehicles'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Section Title</label><input id="sec_vtitle" type="text" value="${escapeHtml(sec.content.title||'Vehicles')}" /></div>
+      <div class="control-group"><label>Items (one per line, format: Title | short desc)</label><textarea id="sec_vitems">${(sec.content.items||[]).map(i=> (i.title? i.title+' | '+(i.desc||'') : (i.title||'') ) ).join('\n')}</textarea></div>
+    `;
+  } else if(sec.type==='features'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Items (one per line)</label><textarea id="sec_features">${(sec.content.items||[]).join('\n')}</textarea></div>
+    `;
+  } else if(sec.type==='reviews'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Reviews (one per line, format: Name | Comment)</label><textarea id="sec_reviews">${(sec.content.list||[]).map(r=> r.name+' | '+r.text).join('\n')}</textarea></div>
+    `;
+  } else if(sec.type==='contact'){
+    fields.innerHTML = `
+      <div class="control-group"><label>Phone</label><input id="sec_phone" type="text" value="${escapeHtml(sec.content.phone||'')}" /></div>
+      <div class="control-group"><label>Email</label><input id="sec_email" type="text" value="${escapeHtml(sec.content.email||'')}" /></div>
+      <div class="control-group"><label>Address</label><textarea id="sec_address">${escapeHtml(sec.content.address||'')}</textarea></div>
+    `;
+  }
+}
+
+/* apply field changes */
+function applySectionChanges(){
+  if(!editingSectionId) return;
+  const sec = siteData.sections.find(s=>s.id===editingSectionId);
+  if(!sec) return;
+  sec.visible = document.getElementById('sectionVisible').checked;
+  if(sec.type==='hero'){
+    sec.content.title = document.getElementById('sec_title').value;
+    sec.content.subtitle = document.getElementById('sec_sub').value;
+    sec.content.cta = document.getElementById('sec_cta').value;
+  } else if(sec.type==='about'){
+    sec.content.heading = document.getElementById('sec_heading').value;
+    sec.content.text = document.getElementById('sec_text').value;
+  } else if(sec.type==='gallery'){
+    sec.content.caption = document.getElementById('sec_caption').value;
+    sec.content.images = document.getElementById('sec_images').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  } else if(sec.type==='vehicles'){
+    sec.content.title = document.getElementById('sec_vtitle').value;
+    sec.content.items = document.getElementById('sec_vitems').value.split('\n').map(line=>{
+      const [title,desc=''] = line.split('|').map(t=>t.trim());
+      return { title: title||'', desc: desc||'' };
+    }).filter(Boolean);
+  } else if(sec.type==='features'){
+    sec.content.items = document.getElementById('sec_features').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  } else if(sec.type==='reviews'){
+    sec.content.list = document.getElementById('sec_reviews').value.split('\n').map(line=>{
+      const [name,text=''] = line.split('|').map(t=>t.trim());
+      return {name:name||'Anonymous', text:text||''};
+    }).filter(Boolean);
+  } else if(sec.type==='contact'){
+    sec.content.phone = document.getElementById('sec_phone').value;
+    sec.content.email = document.getElementById('sec_email').value;
+    sec.content.address = document.getElementById('sec_address').value;
+  }
+  renderSectionsList();
+  renderPreview();
+  alert('Section updated');
+}
+
+/* move / remove helpers */
+function moveSectionUpIndex(idx){ if(idx<=0) return; [siteData.sections[idx-1], siteData.sections[idx]] = [siteData.sections[idx], siteData.sections[idx-1]]; renderSectionsList(); renderPreview();}
+function moveSectionDownIndex(idx){ if(idx>=siteData.sections.length-1) return; [siteData.sections[idx], siteData.sections[idx+1]] = [siteData.sections[idx+1], siteData.sections[idx]]; renderSectionsList(); renderPreview();}
+function moveSectionUp(){ const idx = siteData.sections.findIndex(s=>s.id===editingSectionId); if(idx>0) moveSectionUpIndex(idx); }
+function moveSectionDown(){ const idx = siteData.sections.findIndex(s=>s.id===editingSectionId); if(idx>=0 && idx<siteData.sections.length-1) moveSectionDownIndex(idx); }
+function removeSectionById(id){ siteData.sections = siteData.sections.filter(s=>s.id!==id); renderSectionsList(); renderPreview(); document.getElementById('sectionEditor').style.display='none'; editingSectionId=null; }
+function removeSection(){ removeSectionById(editingSectionId); }
+function toggleVisibility(id){ const s = siteData.sections.find(x=>x.id===id); if(s){ s.visible = !s.visible; renderSectionsList(); renderPreview(); } }
+function toggleSectionType(type){ siteData.sections.forEach(s=>{ if(s.type===type) s.visible = document.getElementById('toggle' + capitalize(type)).checked; }); renderPreview(); }
+
+/* Misc editor actions */
+function updateBizName(){ siteData.saleName = document.getElementById('bizName').value; renderPreview(); }
+function setGlobal(key,val){ siteData[key]=val; renderPreview(); }
+function applyGlobalUI(){ document.getElementById('brandColor').value = siteData.primaryColor || '#2563eb'; }
+
+/* -----------------------
+   Render preview (builds full HTML inside prevContainer)
+   ----------------------- */
+function renderPreview(){
+  const container = document.getElementById('prevContainer');
+  const theme = siteData.theme || 'dark';
+  const color = siteData.primaryColor || '#2563eb';
+  const navStyle = document.getElementById('navStyle').value || siteData.navStyle || 'center';
+  const bizName = siteData.saleName || 'Business Name';
+  const globalAlign = siteData.globalAlign || 'center';
+  // css vars
+  let bg = '#ffffff', text='#0f1724', card='#f8fafc';
+  if(theme==='dark'){ bg = '#0f1724'; text = '#e6eef6'; card = 'rgba(255,255,255,0.03)'; }
+  if(theme==='red'){ bg = '#000'; text='#fff'; card='#111'; }
+  if(theme==='green'){ bg = '#072012'; text='#eafff1'; card='rgba(255,255,255,0.02)'; }
+  // build html
+  let html = `<div style="--gen-primary:${color};--gen-bg:${bg};--gen-text:${text};--gen-card:${card};min-height:100%;background:var(--gen-bg);color:var(--gen-text)">
+    <div class="prev-navbar" style="display:flex;align-items:center;justify-content:${siteData.bizPosition==='center'?'center':'space-between'};text-align:center">
+      <div style="font-weight:800;font-size:clamp(16px,4vw,20px);">${escapeHtml(bizName)}</div>
+      ${siteData.bizPosition==='center' ? '' : '<div style="opacity:0.8;font-size:20px">☰</div>'}
+    </div>
+  `;
+  // Build each section
+  siteData.sections.forEach(sec =>{
+    if(sec.visible===false) return;
+    const selClass = (editingSectionId===sec.id) ? 'section-selected' : '';
+    if(sec.type==='hero'){
+      html += `<section class="prev-hero ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h1 class="no-overflow" style="text-align:${globalAlign}">${escapeHtml(sec.content.title||'Welcome')}</h1>
+        <p style="text-align:${globalAlign}">${escapeHtml(sec.content.subtitle||'Tagline')}</p>
+        <div style="text-align:${globalAlign}"><span class="prev-btn" style="background:var(--gen-primary);color:#fff">${escapeHtml(sec.content.cta||'Browse')}</span></div>
+      </section>`;
+    } else if(sec.type==='features'){
+      html += `<section class="prev-section ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h3 style="text-align:${globalAlign}">Why choose us</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:${globalAlign==='center'?'center':'flex-start'};margin-top:10px">` +
+        (sec.content.items||[]).map(it=>`<div style="padding:8px 12px;border-radius:999px;background:var(--gen-card);font-weight:700">${escapeHtml(it)}</div>`).join('') +
+        `</div></section>`;
+    } else if(sec.type==='vehicles'){
+      html += `<section class="prev-section ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h3 style="text-align:${globalAlign}">${escapeHtml(sec.content.title||'Vehicles')}</h3>
+        <div class="cards-grid" style="margin-top:12px">` +
+        ((sec.content.items||[]).slice(0,6).map(it=>`<div class="card"><div style="text-align:center;padding:6px"><strong>${escapeHtml(it.title||'')}</strong><div style="font-size:12px;opacity:0.8">${escapeHtml(it.desc||'')}</div></div></div>`).join('') || '<div style="grid-column:span 2;color:#94a3b8;padding:10px">No vehicles added yet</div>') +
+        `</div></section>`;
+    } else if(sec.type==='gallery'){
+      const imgs = (sec.content.images||[]);
+      html += `<section class="prev-section ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h3 style="text-align:${globalAlign}">${escapeHtml(sec.content.caption||'Gallery')}</h3>
+        <div class="gallery-grid" style="margin-top:8px">` + (imgs.length? imgs.map(u=>`<img src="${escapeAttr(u)}" alt="gallery image">`).join('') : '<div style="grid-column:span 3;color:#94a3b8;padding:8px">No images — add URLs in editor</div>') + `</div>
+      </section>`;
+    } else if(sec.type==='reviews'){
+      html += `<section class="prev-section ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h3 style="text-align:${globalAlign}">Reviews</h3>
+        <div class="reviews-list" style="margin-top:8px">` + (sec.content.list||[]).map(r=>`<div class="review"><strong>${escapeHtml(r.name)}</strong><div style="font-size:13px">${escapeHtml(r.text)}</div></div>`).join('') + `</div>
+      </section>`;
+    } else if(sec.type==='about'){
+      html += `<section class="prev-section ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h3 style="text-align:${globalAlign}">${escapeHtml(sec.content.heading||'About Us')}</h3>
+        <p style="margin-top:8px;font-size:0.95rem">${escapeHtml(sec.content.text||'About info...')}</p>
+      </section>`;
+    } else if(sec.type==='contact'){
+      html += `<section class="prev-section ${selClass}" data-id="${sec.id}" onclick="previewSelectSection('${sec.id}')">
+        <h3 style="text-align:${globalAlign}">Contact</h3>
+        <div style="margin-top:8px;font-size:14px">
+          <div>Phone: ${escapeHtml(sec.content.phone||'')}</div>
+          <div>Email: ${escapeHtml(sec.content.email||'')}</div>
+          <div>Address: ${escapeHtml(sec.content.address||'')}</div>
         </div>
+      </section>`;
+    }
+  });
+  html += `</div>`;
+  // set html
+  container.innerHTML = html;
+  // set whatsapp link
+  const wa = siteData.waNumber || document.getElementById('waNumber').value || '';
+  const waBtn = document.getElementById('waBtn');
+  if(wa && wa.trim()){ waBtn.href = 'https://wa.me/' + wa.replace(/\D/g,''); waBtn.style.display='flex'; } else { waBtn.style.display='none' }
+}
 
-        <!-- TAB: CONTENT -->
-        <div id="tab-content" class="editor-content" style="display:none;">
-            <div class="control-group">
-                <label>Hero Title</label>
-                <input type="text" id="heroTitle" placeholder="Welcome to..." oninput="updatePreview()">
-            </div>
-            <div class="control-group">
-                <label>Hero Subtitle</label>
-                <input type="text" id="heroSub" placeholder="Tagline..." oninput="updatePreview()">
-            </div>
-            <div class="control-group">
-                <label>About Us</label>
-                <textarea id="aboutText" placeholder="We are..." oninput="updatePreview()"></textarea>
-            </div>
-            <div class="control-group">
-                <label>Why Choose Us (List)</label>
-                <textarea id="whyText" placeholder="Best Price..." oninput="updatePreview()"></textarea>
-            </div>
-        </div>
+/* When clicking preview to select section */
+function previewSelectSection(id){
+  // highlight & open editor for that section
+  selectSection(id);
+  // switch to content tab UI
+  document.querySelector('.tab-btn[data-tab="content"]').click();
+  // find that section in list and scroll
+  setTimeout(()=>{ const el = Array.from(document.querySelectorAll('#sectionsList > div')).find(d=> d.innerHTML.includes(id) ); }, 150);
+}
 
-        <!-- TAB: SETTINGS -->
-        <div id="tab-settings" class="editor-content" style="display:none;">
-            <div class="control-group">
-                <label>Business Name</label>
-                <input type="text" id="bizName" oninput="updatePreview()">
-            </div>
-            <div class="control-group">
-                <label>Facebook Link</label>
-                <input type="text" id="fbLink">
-            </div>
-            <div class="control-group">
-                <label>Section Visibility</label>
-                <label style="font-weight:400;"><input type="checkbox" id="showReviews" checked> Show Reviews</label>
-                <label style="font-weight:400;"><input type="checkbox" id="showGallery" checked> Show Gallery</label>
-            </div>
-        </div>
+/* -----------------------
+   Save to Firestore
+   ----------------------- */
+async function saveChanges(){
+  const btn = document.querySelector('.btn-save');
+  btn.disabled = true; btn.innerText = 'Saving...';
+  // update siteData with some editor controls values
+  siteData.primaryColor = document.getElementById('brandColor').value;
+  siteData.navStyle = document.getElementById('navStyle').value;
+  siteData.fb = document.getElementById('fbLink').value;
+  siteData.waNumber = document.getElementById('waNumber').value;
+  try{
+    await db.collection('sites').doc(currentUser.uid).set(siteData, {merge:true});
+    alert('Saved successfully');
+  }catch(e){
+    alert('Save error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerText = 'Save & Publish';
+  }
+}
 
-        <div class="editor-footer">
-            <button class="btn-save" onclick="saveChanges()"><i class="fa-solid fa-save"></i> Save & Publish</button>
-        </div>
-    </aside>
+/* -----------------------
+   Helpers
+   ----------------------- */
+function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[s]); }
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 
-    <!-- RIGHT: PREVIEW -->
-    <main class="preview-area" id="previewArea">
-        <div class="preview-toolbar">
-            <i class="fa-solid fa-mobile-screen device-btn" onclick="setDevice('mobile')"></i>
-            <i class="fa-solid fa-tablet-screen-button device-btn" onclick="setDevice('tablet')"></i>
-            <i class="fa-solid fa-desktop device-btn active" onclick="setDevice('desktop')"></i>
-        </div>
-        
-        <!-- The Preview Container -->
-        <div id="previewFrame" class="preview-frame">
-            <!-- This content will be dynamically updated by JS -->
-            <div id="prevContainer" style="height:100%; overflow-y:auto;">
-                <!-- DYNAMIC CONTENT LOADED HERE -->
-            </div>
-        </div>
-    </main>
+/* small utilities for section operations */
+function toggleSectionType(type){
+  const checked = document.getElementById('toggle' + capitalize(type)).checked;
+  siteData.sections.forEach(s=>{ if(s.type===type) s.visible = checked; });
+  renderPreview();
+}
 
-    <!-- FIREBASE SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+/* remove when saving externally */
+function removeAllSections(){ siteData.sections = []; renderSectionsList(); renderPreview(); }
 
-    <script>
-        // --- 1. FIREBASE INIT ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBUjzMFao9BS3uXBOW3qYrLVqHaGn8qIk4", 
-            authDomain: "onlineshop-30cd1.firebaseapp.com",
-            projectId: "onlineshop-30cd1",
-            storageBucket: "onlineshop-30cd1.firebasestorage.app",
-            messagingSenderId: "818252574868",
-            appId: "1:818252574868:web:8dd36825db589a886cc481"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+/* attach some global handlers to keep editor in sync */
+document.getElementById('navStyle').addEventListener('change', ()=>{ siteData.navStyle = document.getElementById('navStyle').value; renderPreview(); });
+document.getElementById('fbLink').addEventListener('input', ()=> siteData.fb = document.getElementById('fbLink').value );
+document.getElementById('waNumber').addEventListener('input', ()=> siteData.waNumber = document.getElementById('waNumber').value );
 
-        // --- 2. STATE ---
-        let currentUser = null;
-        let siteData = {};
+/* Quick initial UI apply */
+applyGlobalUI();
+renderSectionsList();
+renderPreview();
 
-        // --- 3. INIT LOGIC ---
-        auth.onAuthStateChanged(async user => {
-            if (user) {
-                currentUser = user;
-                await loadSiteData();
-                document.getElementById('loader').style.display = 'none';
-            } else {
-                window.location.href = 'index.html';
-            }
-        });
+/* small spin animation keyframes */
+const style = document.createElement('style'); style.innerHTML = '@keyframes spin{100%{transform:rotate(360deg)}}'; document.head.appendChild(style);
 
-        async function loadSiteData() {
-            const doc = await db.collection('sites').doc(currentUser.uid).get();
-            if (doc.exists) {
-                siteData = doc.data();
-                // Fill Inputs
-                document.getElementById('bizName').value = siteData.saleName || '';
-                document.getElementById('heroTitle').value = siteData.heroTitle || '';
-                document.getElementById('heroSub').value = siteData.heroSub || '';
-                document.getElementById('aboutText').value = siteData.about || '';
-                document.getElementById('whyText').value = siteData.why || '';
-                document.getElementById('fbLink').value = siteData.fb || '';
-                document.getElementById('navStyle').value = siteData.navStyle || '1';
-                document.getElementById('brandColor').value = siteData.primaryColor || '#2563eb';
-                
-                // Set Theme UI
-                setThemeUI(siteData.theme || 'dark');
-                
-                renderPreview(); // Initial Render
-            }
-        }
+/* Hide loader if auth not used during dev */
+setTimeout(()=>{ const loader = document.getElementById('loader'); if(loader) loader.style.display='none'; }, 1500);
 
-        // --- 4. EDITOR LOGIC ---
-        function switchTab(tab) {
-            document.querySelectorAll('.editor-content').forEach(el => el.style.display = 'none');
-            document.getElementById(`tab-${tab}`).style.display = 'block';
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-        }
-
-        function setDevice(device) {
-            const area = document.getElementById('previewArea');
-            const btns = document.querySelectorAll('.device-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            area.classList.remove('mobile', 'tablet');
-            if(device !== 'desktop') area.classList.add(device);
-        }
-
-        function setTheme(theme) {
-            siteData.theme = theme;
-            setThemeUI(theme);
-            renderPreview();
-        }
-
-        function setThemeUI(theme) {
-            document.querySelectorAll('.theme-card').forEach(el => el.classList.remove('selected'));
-            document.getElementById(`theme-${theme}`).classList.add('selected');
-        }
-
-        // --- 5. RENDER PREVIEW (The "Crazy" Part) ---
-        function updatePreview() {
-            // Pull values from inputs into temp object for instant feedback
-            siteData.saleName = document.getElementById('bizName').value;
-            siteData.heroTitle = document.getElementById('heroTitle').value;
-            siteData.heroSub = document.getElementById('heroSub').value;
-            siteData.about = document.getElementById('aboutText').value;
-            // Re-render
-            renderPreview(); 
-        }
-
-        document.getElementById('brandColor').addEventListener('input', (e) => {
-            document.getElementById('prevContainer').style.setProperty('--gen-primary', e.target.value);
-        });
-
-        document.getElementById('navStyle').addEventListener('change', renderPreview);
-
-        function renderPreview() {
-            const container = document.getElementById('prevContainer');
-            const theme = siteData.theme || 'dark';
-            const color = document.getElementById('brandColor').value;
-            const navStyle = document.getElementById('navStyle').value;
-
-            // CSS Variables for Preview
-            let cssVars = `
-                --gen-primary: ${color}; 
-                --gen-bg: ${theme === 'light' ? '#ffffff' : '#0f1724'};
-                --gen-text: ${theme === 'light' ? '#1e293b' : '#e6eef6'};
-                --gen-card: ${theme === 'light' ? '#f8fafc' : 'rgba(255,255,255,0.05)'};
-            `;
-            
-            if(theme === 'red') {
-                 cssVars = `--gen-primary: #dc2626; --gen-bg: #000000; --gen-text: #ffffff; --gen-card: #111;`;
-            }
-
-            const navHTML = navStyle === '1' 
-                ? `<div style="text-align:center; padding:15px; border-bottom:1px solid rgba(128,128,128,0.2);">
-                     <h2 style="margin:0; color:var(--gen-text)">${siteData.saleName || 'Business Name'}</h2>
-                   </div>`
-                : `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid rgba(128,128,128,0.2); align-items:center;">
-                     <h2 style="margin:0; color:var(--gen-text)">${siteData.saleName || 'Business Name'}</h2>
-                     <span style="font-size:1.5rem;">☰</span>
-                   </div>`;
-
-            // HTML Structure
-            container.innerHTML = `
-                <style>
-                    #prevContainer { ${cssVars} font-family: 'Inter', sans-serif; background: var(--gen-bg); color: var(--gen-text); }
-                    .prev-hero { padding: 40px 20px; text-align: center; background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3)); border-bottom: 1px solid var(--gen-card); }
-                    .prev-btn { background: var(--gen-primary); color: white; padding: 10px 20px; border: none; border-radius: 20px; font-weight: bold; margin-top:10px; display:inline-block; }
-                    .prev-section { padding: 30px 20px; }
-                    .prev-card { background: var(--gen-card); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(128,128,128,0.1); }
-                </style>
-                
-                ${navHTML}
-
-                <div class="prev-hero">
-                    <h1 style="font-size: 2.5rem; margin-bottom:10px;">${siteData.heroTitle || 'Welcome'}</h1>
-                    <p style="opacity:0.8;">${siteData.heroSub || 'Tagline here'}</p>
-                    <div class="prev-btn">Browse Inventory</div>
-                </div>
-
-                <div class="prev-section">
-                    <h3 style="text-align:center; margin-bottom:20px;">Latest Arrivals</h3>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                         <div class="prev-card" style="height:150px;"></div>
-                         <div class="prev-card" style="height:150px;"></div>
-                    </div>
-                </div>
-
-                <div class="prev-section" style="background: rgba(128,128,128,0.05);">
-                    <h3>About Us</h3>
-                    <p style="font-size:0.9rem; line-height:1.5;">${siteData.about || 'About content...'}</p>
-                </div>
-            `;
-        }
-
-        // --- 6. SAVE ---
-        async function saveChanges() {
-            const btn = document.querySelector('.btn-save');
-            btn.innerText = 'Saving...';
-            try {
-                await db.collection('sites').doc(currentUser.uid).update({
-                    saleName: document.getElementById('bizName').value,
-                    heroTitle: document.getElementById('heroTitle').value,
-                    heroSub: document.getElementById('heroSub').value,
-                    about: document.getElementById('aboutText').value,
-                    why: document.getElementById('whyText').value,
-                    fb: document.getElementById('fbLink').value,
-                    theme: siteData.theme,
-                    primaryColor: document.getElementById('brandColor').value,
-                    navStyle: document.getElementById('navStyle').value
-                });
-                alert('Website Updated Successfully!');
-                btn.innerText = 'Save & Publish';
-            } catch (e) {
-                alert('Error saving: ' + e.message);
-                btn.innerText = 'Save & Publish';
-            }
-        }
-    </script>
+</script>
 </body>
 </html>
