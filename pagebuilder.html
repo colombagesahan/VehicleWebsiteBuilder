@@ -4,123 +4,282 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>DriveHub Visual Page Builder</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-  :root{
-    --sidebar-w: 360px;
+  :root {
     --primary: #2563eb;
-    --bg-dark: #0f1724;
-    --bg-light: #ffffff;
-    --muted: #64748b;
-    --radius: 10px;
+    --primary-dark: #1e40af;
+    --bg-editor: #ffffff;
+    --bg-app: #f1f5f9;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --sidebar-w: 380px;
   }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;font-family:'Inter',sans-serif;}
-  body{display:flex;background:#111; color:#e6eef6;height:100vh;overflow:hidden;}
-  /* SIDEBAR */
-  .editor-sidebar{width:var(--sidebar-w);background:#fff;color:#0f1724;display:flex;flex-direction:column;border-right:1px solid rgba(0,0,0,0.08);z-index:20}
-  .editor-header{padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;background:#f8fafc}
-  .back-btn{color:var(--muted);text-decoration:none;font-weight:600}
-  .editor-tabs{display:flex;border-bottom:1px solid #f1f5f9}
-  .tab-btn{flex:1;padding:12px;border:0;background:transparent;cursor:pointer;font-weight:700;color:var(--muted);font-size:13px}
-  .tab-btn.active{color:var(--primary);border-bottom:3px solid var(--primary);background:#eff6ff}
-  .editor-content{flex:1;overflow:auto;padding:14px}
-  .control-group{margin-bottom:16px}
-  .control-group label{display:block;font-size:13px;margin-bottom:6px;font-weight:700;color:#334155}
-  .control-group input[type="text"], .control-group textarea, .control-group select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6eef6;font-size:14px}
-  .small-btn{padding:8px 10px;border-radius:8px;border:0;background:#eef2ff;color:var(--primary);cursor:pointer;font-weight:700}
-  .danger-btn{background:#fee2e2;color:#9b1c1c}
-  .theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .theme-card{border-radius:8px;padding:8px;text-align:center;border:2px solid #f1f5f9;cursor:pointer}
-  .theme-card.selected{border-color:var(--primary);background:#eff6ff}
-  .editor-footer{padding:12px;border-top:1px solid #f1f5f9;background:#fff}
-  .btn-save{width:100%;padding:12px;border-radius:10px;border:0;background:var(--primary);color:white;font-weight:800;cursor:pointer}
-  
-  /* PREVIEW AREA */
-  .preview-area{flex:1;display:flex;align-items:center;justify-content:center;padding:18px;position:relative;background:#0f172a;}
-  .preview-frame{width:100%;height:100%;background:white;border-radius:8px;overflow:hidden;border:0;}
-  #prevContainer{height:100%;overflow:auto;font-family:'Inter',sans-serif;}
-  
-  /* PREVIEW STYLES */
-  .prev-navbar{padding:20px;display:flex;justify-content:space-between;align-items:center;}
-  .prev-hero{padding:60px 20px;text-align:center;}
-  .prev-hero h1{font-size:2.5rem;margin-bottom:10px;}
-  .prev-section{padding:40px 20px;}
-  .section-selected{outline:2px solid var(--primary);position:relative;}
-  
-  /* Dark Theme Preview Specifics */
+
+  * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+ 
+  body, html { height: 100%; margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main); overflow: hidden; }
+
+  /* --- LAYOUT --- */
+  .app-container { display: flex; height: 100vh; width: 100vw; }
+
+  /* SIDEBAR (EDITOR) */
+  .editor-pane {
+    width: var(--sidebar-w);
+    background: var(--bg-editor);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 20;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .editor-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+  }
+ 
+  .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+  .back-link { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; font-weight: 600; padding: 6px 10px; border-radius: 6px; transition: 0.2s; }
+  .back-link:hover { background: #f1f5f9; color: var(--text-main); }
+
+  .editor-scroll { flex: 1; overflow-y: auto; padding: 15px; }
+
+  /* TABS */
+  .editor-tabs { display: flex; background: #f8fafc; padding: 4px; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); }
+  .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 6px; transition: 0.2s; }
+  .tab-btn.active { background: #fff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  /* FORMS */
+  .control-group { margin-bottom: 18px; }
+  .control-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; color: #334155; }
+  input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: 0.2s; background: #fff; font-family: inherit; }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+ 
+  .btn-group { display: flex; gap: 8px; }
+  .btn { padding: 8px 14px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-light { background: #f1f5f9; color: #334155; border: 1px solid var(--border); }
+  .btn-danger { background: #fee2e2; color: #dc2626; }
+ 
+  .full-width { width: 100%; }
+
+  /* SECTIONS LIST */
+  .section-item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .section-item:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  .section-info { display: flex; align-items: center; gap: 10px; }
+  .sec-icon { width: 32px; height: 32px; background: #eff6ff; color: var(--primary); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+ 
+  /* EDITOR BOX */
+  #sectionEditor { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-top: 20px; animation: slideIn 0.2s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  .editor-footer { padding: 15px; border-top: 1px solid var(--border); background: #fff; }
+
+  /* PREVIEW PANE */
+  .preview-pane { flex: 1; display: flex; flex-direction: column; background: #cbd5e1; position: relative; overflow: hidden; }
+ 
+  .toolbar {
+    height: 50px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 10px;
+  }
+  .device-btn { width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); transition: 0.2s; }
+  .device-btn:hover, .device-btn.active { background: #eff6ff; color: var(--primary); }
+
+  .preview-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
+ 
+  .preview-frame {
+    background: #0f172a; /* Dark theme base */
+    width: 100%; height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+    overflow: hidden;
+    transition: width 0.3s ease, height 0.3s ease;
+    border: 4px solid #334155;
+  }
+
+  /* PREVIEW SCROLL AREA */
+  #prevContainer { height: 100%; overflow-y: auto; font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+
+  /* --- RESPONSIVE LOGIC (Mobile < 768px) --- */
+  @media (max-width: 768px) {
+    .app-container { flex-direction: column; }
+   
+    /* Toggle Visibility Logic */
+    body.mode-edit .editor-pane { display: flex; width: 100%; height: 100%; }
+    body.mode-edit .preview-pane { display: none; }
+   
+    body.mode-view .editor-pane { display: none; }
+    body.mode-view .preview-pane { display: flex; width: 100%; height: 100%; }
+
+    .preview-wrapper { padding: 0; }
+    .preview-frame { border-radius: 0; border: none; height: 100%; }
+    .toolbar { display: none; } /* No sizing on mobile, it's just mobile */
+
+    /* Mobile Bottom Nav */
+    .mobile-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-around; z-index: 100;
+    }
+    .m-nav-btn { flex: 1; height: 100%; border: none; background: transparent; font-weight: 600; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.75rem; gap: 4px; cursor: pointer; }
+    .m-nav-btn i { font-size: 1.2rem; }
+    .m-nav-btn.active { color: var(--primary); }
+   
+    /* Adjust Editor for small screens */
+    .editor-scroll { padding-bottom: 80px; } /* Space for nav */
+    .editor-footer { display: none; } /* Save button moves to header or auto-save */
+   
+    /* Floating Save for Mobile */
+    .fab-save {
+      position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); z-index: 90; cursor: pointer; border: none;
+    }
+  }
+
+  @media (min-width: 769px) {
+    .mobile-nav { display: none; }
+    .fab-save { display: none; }
+  }
+
+  /* --- GENERATED SITE STYLES (Dark Theme) --- */
   .p-dark { background: #0f172a; color: #cbd5e1; }
-  .p-dark .prev-hero { background: rgba(30, 41, 59, 0.5); border-radius: 20px; margin: 20px; }
-  .p-dark h1, .p-dark h3 { color: white; }
-  .p-dark .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 10px; }
+  .p-dark .nav-bar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(15,23,42,0.95); position: sticky; top:0; z-index:10;}
+  .p-dark h3 { color: white; margin: 0; font-size: 1.2rem; }
+ 
+  .p-dark .hero { padding: 60px 20px; text-align: center; background: linear-gradient(180deg, rgba(30,41,59,0.4) 0%, rgba(15,23,42,0) 100%); margin-bottom: 20px; }
+  .p-dark .hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 15px; color: #fff; line-height: 1.1; }
+  .p-dark .hero p { max-width: 500px; margin: 0 auto 25px; font-size: 1.1rem; }
+  .p-dark .cta-btn { background: #3b82f6; color: white; border: none; padding: 12px 30px; border-radius: 50px; font-weight: 600; font-size: 1rem; cursor: pointer; }
+ 
+  .p-dark .section { padding: 40px 20px; max-width: 1000px; margin: 0 auto; }
+  .p-dark .sec-title { font-size: 1.8rem; color: white; margin-bottom: 20px; border-left: 4px solid #3b82f6; padding-left: 15px; }
+ 
+  .p-dark .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .p-dark .card { background: #1e293b; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; text-align: center; }
+  .p-dark .card-mock { height: 150px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 2rem; }
+ 
+  .p-dark .contact-info p { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .p-dark .contact-info i { color: #3b82f6; width: 20px; }
+
 </style>
 </head>
-<body>
+<body class="mode-edit">
 
   <!-- LOADER -->
-  <div id="loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;background:white">
-    <div>Loading Editor...</div>
+  <div id="loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;background:white;flex-direction:column;gap:10px;">
+    <div style="width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin 1s linear infinite"></div>
+    <div style="font-weight:600;color:#64748b;font-size:0.9rem;">Loading Editor...</div>
+  </div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+  <div class="app-container">
+   
+    <!-- EDITOR PANE -->
+    <aside class="editor-pane">
+      <div class="editor-header">
+        <div class="brand"><i class="fa-solid fa-layer-group"></i> Builder</div>
+        <a class="back-link" href="index.html"><i class="fa-solid fa-arrow-left"></i> Exit</a>
+      </div>
+
+      <div class="editor-scroll">
+        <!-- Tabs -->
+        <div class="editor-tabs">
+          <button class="tab-btn active" onclick="switchEditorTab('content')">Content</button>
+          <button class="tab-btn" onclick="alert('Design settings are auto-managed in this version.')">Design</button>
+        </div>
+
+        <!-- Content Area -->
+        <div id="tab-content">
+          <div class="control-group">
+            <label>Business Name</label>
+            <input id="bizName" type="text" placeholder="e.g. Sagara Motors" oninput="updateBizName()">
+          </div>
+
+          <div class="control-group">
+            <label>Add New Section</label>
+            <div class="btn-group">
+              <select id="addSectionType">
+                <option value="hero">Hero Header</option>
+                <option value="vehicles">Inventory Grid</option>
+                <option value="about">About Us</option>
+                <option value="contact">Contact Info</option>
+              </select>
+              <button class="btn btn-primary" onclick="addSection()"><i class="fa-solid fa-plus"></i> Add</button>
+            </div>
+          </div>
+
+          <hr style="border:0; border-top:1px solid var(--border); margin: 20px 0;">
+          <label style="display:block;margin-bottom:10px;font-weight:600;font-size:0.85rem;color:#64748b;">YOUR SECTIONS</label>
+         
+          <div id="sectionsList"></div>
+
+          <!-- Edit Section Modal/Area -->
+          <div id="sectionEditor" style="display:none;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:15px;align-items:center;">
+              <strong id="editingTitle" style="color:var(--primary);">Edit Section</strong>
+              <button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem;" onclick="removeSection()"><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div id="sectionFields"></div>
+            <button class="btn btn-primary full-width" style="margin-top:15px;" onclick="applySectionChanges()">Apply Changes</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="editor-footer">
+        <button class="btn btn-primary full-width btn-save" onclick="saveChanges()">Save & Publish Site</button>
+      </div>
+    </aside>
+
+    <!-- PREVIEW PANE -->
+    <main class="preview-pane">
+      <div class="toolbar">
+        <div class="device-btn active" onclick="setDevice('100%')"><i class="fa-solid fa-desktop"></i></div>
+        <div class="device-btn" onclick="setDevice('768px')"><i class="fa-solid fa-tablet-screen-button"></i></div>
+        <div class="device-btn" onclick="setDevice('375px')"><i class="fa-solid fa-mobile-screen-button"></i></div>
+        <div class="device-btn" onclick="setDevice('300px')"><i class="fa-solid fa-mobile"></i></div>
+      </div>
+      <div class="preview-wrapper">
+        <div class="preview-frame" id="previewFrame">
+            <div id="prevContainer" class="p-dark">
+                <!-- Preview Content Injected Here -->
+            </div>
+        </div>
+      </div>
+    </main>
+
   </div>
 
-  <aside class="editor-sidebar">
-    <div class="editor-header">
-      <strong>DriveHub Builder</strong>
-      <a class="back-btn" href="index.html">Back to Dash</a>
-    </div>
+  <!-- MOBILE NAVIGATION (Bottom) -->
+  <nav class="mobile-nav">
+    <button class="m-nav-btn active" onclick="setMobileMode('edit')">
+      <i class="fa-solid fa-pen-to-square"></i> Editor
+    </button>
+    <button class="m-nav-btn" onclick="setMobileMode('view')">
+      <i class="fa-solid fa-eye"></i> Preview
+    </button>
+  </nav>
 
-    <div class="editor-tabs">
-      <button class="tab-btn active" data-tab="content" onclick="switchTab('content')">Content</button>
-      <button class="tab-btn" data-tab="design" onclick="switchTab('design')">Design</button>
-    </div>
-
-    <!-- CONTENT TAB -->
-    <div id="tab-content" class="editor-content">
-      <div class="control-group">
-        <label>Business Name</label>
-        <input id="bizName" type="text" oninput="updateBizName()">
-      </div>
-
-      <div class="control-group">
-        <label>Add Section</label>
-        <div style="display:flex;gap:8px">
-          <select id="addSectionType">
-            <option value="hero">Hero Header</option>
-            <option value="vehicles">Inventory Grid (Dynamic)</option>
-            <option value="about">About Text</option>
-            <option value="contact">Contact Info</option>
-          </select>
-          <button class="small-btn" onclick="addSection()">Add</button>
-        </div>
-      </div>
-
-      <div id="sectionsList" style="display:flex;flex-direction:column;gap:8px;margin-top:20px;"></div>
-
-      <div id="sectionEditor" style="display:none;border-top:1px solid #eef2ff;padding-top:12px;margin-top:20px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-          <strong id="editingTitle">Edit Section</strong>
-          <button class="small-btn danger-btn" onclick="removeSection()">Delete</button>
-        </div>
-        <div id="sectionFields"></div>
-        <button class="small-btn mt-2" onclick="applySectionChanges()">Update Preview</button>
-      </div>
-    </div>
-
-    <!-- DESIGN TAB -->
-    <div id="tab-design" class="editor-content" style="display:none">
-       <p>Currently locked to DriveHub Dark Theme for best performance.</p>
-    </div>
-
-    <div class="editor-footer">
-      <button class="btn-save" onclick="saveChanges()">Save & Publish</button>
-    </div>
-  </aside>
-
-  <main class="preview-area">
-    <div class="preview-frame">
-        <div id="prevContainer" class="p-dark"></div>
-    </div>
-  </main>
+  <!-- MOBILE FLOATING SAVE -->
+  <button class="fab-save btn-save" onclick="saveChanges()">
+    <i class="fa-solid fa-save"></i>
+  </button>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -136,33 +295,31 @@ let siteData = { saleName: '', sections: [] };
 let currentUser = null;
 let editingId = null;
 
+// --- INITIALIZATION ---
 auth.onAuthStateChanged(async user => {
     if(!user) return window.location.href = 'index.html';
     currentUser = user;
+   
+    // Load Data
     const doc = await db.collection('sites').doc(user.uid).get();
     if(doc.exists) {
         siteData = doc.data();
         if(!siteData.sections) siteData.sections = [];
     } else {
-        // Defaults
+        // Default Data for New Users
         siteData.sections = [
             { id: 's1', type: 'hero', visible: true, content: { title: 'Welcome', subtitle: 'Best deals in town', cta: 'View Stock' } },
             { id: 's2', type: 'vehicles', visible: true, content: { title: 'Our Inventory' } }
         ];
     }
+   
     document.getElementById('bizName').value = siteData.saleName || '';
     renderSectionsList();
     renderPreview();
     document.getElementById('loader').style.display = 'none';
 });
 
-function switchTab(t) {
-    document.querySelectorAll('.editor-content').forEach(e => e.style.display='none');
-    document.getElementById('tab-'+t).style.display='block';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`[data-tab="${t}"]`).classList.add('active');
-}
-
+// --- EDITOR LOGIC ---
 function updateBizName() {
     siteData.saleName = document.getElementById('bizName').value;
     renderPreview();
@@ -172,22 +329,42 @@ function addSection() {
     const type = document.getElementById('addSectionType').value;
     const id = 's_' + Date.now();
     let content = {};
-    if(type === 'hero') content = { title: 'Headline', subtitle: 'Subtitle', cta: 'Button' };
+   
+    // Default content based on type
+    if(type === 'hero') content = { title: 'Headline', subtitle: 'Subtitle text goes here', cta: 'Action Button' };
     if(type === 'vehicles') content = { title: 'Latest Arrivals' };
-    if(type === 'about') content = { heading: 'About Us', text: 'We are...' };
-    if(type === 'contact') content = { phone: '', email: '', address: '' };
-    
+    if(type === 'about') content = { heading: 'About Us', text: 'Write about your business here...' };
+    if(type === 'contact') content = { phone: '+94 77 123 4567', email: 'contact@example.com', address: 'Colombo, Sri Lanka' };
+   
     siteData.sections.push({ id, type, visible: true, content });
     renderSectionsList();
     renderPreview();
+   
+    // Auto-scroll to bottom of list
+    setTimeout(() => {
+        const list = document.getElementById('sectionsList');
+        list.scrollTop = list.scrollHeight;
+        editSection(id); // Auto-open editor
+    }, 100);
 }
 
 function renderSectionsList() {
     const list = document.getElementById('sectionsList');
     list.innerHTML = '';
+   
+    const icons = { hero: 'fa-image', vehicles: 'fa-car', about: 'fa-circle-info', contact: 'fa-address-book' };
+   
     siteData.sections.forEach((sec, idx) => {
-        list.innerHTML += `<div style="padding:10px; border:1px solid #eee; background:white; cursor:pointer;" onclick="editSection('${sec.id}')">
-            <strong>${idx+1}. ${sec.type.toUpperCase()}</strong>
+        list.innerHTML += `
+        <div class="section-item" onclick="editSection('${sec.id}')">
+            <div class="section-info">
+                <div class="sec-icon"><i class="fa-solid ${icons[sec.type] || 'fa-layer-group'}"></i></div>
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem;">${sec.type.toUpperCase()}</div>
+                    <div style="font-size:0.75rem;color:#94a3b8;">${sec.content.title || sec.content.heading || 'Section'}</div>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="color:#cbd5e1;font-size:0.8rem;"></i>
         </div>`;
     });
 }
@@ -196,23 +373,42 @@ function editSection(id) {
     editingId = id;
     const sec = siteData.sections.find(s => s.id === id);
     document.getElementById('sectionEditor').style.display = 'block';
+   
+    // Highlight active item
+    document.querySelectorAll('.section-item').forEach(el => el.style.borderColor = 'var(--border)');
+    // (In a real app we'd map ID to element, simplified here)
+
     const f = document.getElementById('sectionFields');
     f.innerHTML = '';
-    
     const c = sec.content;
+   
     if(sec.type === 'hero') {
-        f.innerHTML = `<label>Title</label><input id="e_title" value="${c.title}"><label>Sub</label><input id="e_sub" value="${c.subtitle}"><label>Button</label><input id="e_cta" value="${c.cta}">`;
+        f.innerHTML = `
+            <div class="control-group"><label>Title</label><input id="e_title" value="${c.title}"></div>
+            <div class="control-group"><label>Subtitle</label><input id="e_sub" value="${c.subtitle}"></div>
+            <div class="control-group"><label>Button Text</label><input id="e_cta" value="${c.cta}"></div>`;
     } else if(sec.type === 'vehicles') {
-        f.innerHTML = `<label>Section Title</label><input id="e_vtitle" value="${c.title}"><p style="font-size:0.8rem;color:#666">This section will automatically load your active inventory.</p>`;
+        f.innerHTML = `
+            <div class="control-group"><label>Section Title</label><input id="e_vtitle" value="${c.title}"></div>
+            <div style="padding:10px;background:#eff6ff;border-radius:6px;font-size:0.8rem;color:#1e40af;">
+                <i class="fa-solid fa-circle-info"></i> This section automatically pulls from your "My Vehicles" inventory.
+            </div>`;
     } else if(sec.type === 'about') {
-        f.innerHTML = `<label>Heading</label><input id="e_head" value="${c.heading}"><label>Text</label><textarea id="e_text">${c.text}</textarea>`;
+        f.innerHTML = `
+            <div class="control-group"><label>Heading</label><input id="e_head" value="${c.heading}"></div>
+            <div class="control-group"><label>Text</label><textarea id="e_text" rows="4">${c.text}</textarea></div>`;
     } else if(sec.type === 'contact') {
-        f.innerHTML = `<label>Phone</label><input id="e_ph" value="${c.phone||''}"><label>Email</label><input id="e_em" value="${c.email||''}"><label>Address</label><input id="e_ad" value="${c.address||''}">`;
+        f.innerHTML = `
+            <div class="control-group"><label>Phone</label><input id="e_ph" value="${c.phone||''}"></div>
+            <div class="control-group"><label>Email</label><input id="e_em" value="${c.email||''}"></div>
+            <div class="control-group"><label>Address</label><input id="e_ad" value="${c.address||''}"></div>`;
     }
 }
 
 function applySectionChanges() {
     const sec = siteData.sections.find(s => s.id === editingId);
+    if(!sec) return;
+   
     if(sec.type === 'hero') {
         sec.content.title = document.getElementById('e_title').value;
         sec.content.subtitle = document.getElementById('e_sub').value;
@@ -227,43 +423,97 @@ function applySectionChanges() {
         sec.content.email = document.getElementById('e_em').value;
         sec.content.address = document.getElementById('e_ad').value;
     }
+   
+    renderSectionsList(); // Refresh labels
     renderPreview();
-    alert('Preview Updated');
 }
 
 function removeSection() {
-    siteData.sections = siteData.sections.filter(s => s.id !== editingId);
-    document.getElementById('sectionEditor').style.display = 'none';
-    renderSectionsList();
-    renderPreview();
+    if(confirm('Delete this section?')) {
+        siteData.sections = siteData.sections.filter(s => s.id !== editingId);
+        document.getElementById('sectionEditor').style.display = 'none';
+        renderSectionsList();
+        renderPreview();
+    }
 }
 
+// --- PREVIEW LOGIC ---
 function renderPreview() {
     const con = document.getElementById('prevContainer');
-    let html = `<div class="prev-navbar"><h3>${siteData.saleName || 'Brand Name'}</h3><span>Menu</span></div>`;
-    
+    let html = `<div class="nav-bar"><h3>${siteData.saleName || 'Your Brand'}</h3><i class="fa-solid fa-bars" style="color:white"></i></div>`;
+   
     siteData.sections.forEach(sec => {
         if(sec.type === 'hero') {
-            html += `<div class="prev-hero"><h1>${sec.content.title}</h1><p>${sec.content.subtitle}</p><button style="padding:10px 20px; background:#2563eb; color:white; border:none; border-radius:50px;">${sec.content.cta}</button></div>`;
+            html += `<div class="hero">
+                <h1>${sec.content.title}</h1>
+                <p>${sec.content.subtitle}</p>
+                <button class="cta-btn">${sec.content.cta}</button>
+            </div>`;
         } else if(sec.type === 'vehicles') {
-            html += `<div class="prev-section"><h3>${sec.content.title}</h3><div style="display:grid;grid-template-columns:1fr 1fr; gap:10px;"><div class="card">Vehicle 1</div><div class="card">Vehicle 2</div></div></div>`;
+            html += `<div class="section">
+                <div class="sec-title">${sec.content.title}</div>
+                <div class="grid">
+                    <div class="card"><div class="card-mock"><i class="fa-solid fa-car"></i></div><h4>Sample Vehicle 1</h4><p style="color:#3b82f6;font-weight:bold">Rs. 5,000,000</p></div>
+                    <div class="card"><div class="card-mock"><i class="fa-solid fa-car"></i></div><h4>Sample Vehicle 2</h4><p style="color:#3b82f6;font-weight:bold">Rs. 6,500,000</p></div>
+                </div>
+            </div>`;
         } else if(sec.type === 'about') {
-            html += `<div class="prev-section"><h3>${sec.content.heading}</h3><p>${sec.content.text}</p></div>`;
+            html += `<div class="section">
+                <div class="sec-title">${sec.content.heading}</div>
+                <p style="line-height:1.6;color:#94a3b8;">${sec.content.text}</p>
+            </div>`;
         } else if(sec.type === 'contact') {
-            html += `<div class="prev-section"><h3>Contact</h3><p>${sec.content.phone||'Phone'}</p><p>${sec.content.address||'Address'}</p></div>`;
+            html += `<div class="section contact-info">
+                <div class="sec-title">Contact Us</div>
+                <p><i class="fa-solid fa-phone"></i> ${sec.content.phone||''}</p>
+                <p><i class="fa-solid fa-envelope"></i> ${sec.content.email||''}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${sec.content.address||''}</p>
+            </div>`;
         }
     });
+   
+    html += `<div style="text-align:center;padding:20px;color:#64748b;font-size:0.8rem;border-top:1px solid rgba(255,255,255,0.05);margin-top:40px;">© 2025 Powered by DriveHub</div>`;
+   
     con.innerHTML = html;
 }
 
+// --- UI HELPERS ---
+function setDevice(width) {
+    const frame = document.getElementById('previewFrame');
+    frame.style.width = width;
+   
+    // Highlight button
+    document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('active'));
+    // (Simple approximation for highlighting based on width click)
+    event.currentTarget.classList.add('active');
+}
+
+function setMobileMode(mode) {
+    document.body.classList.remove('mode-edit', 'mode-view');
+    document.body.classList.add('mode-' + mode);
+   
+    document.querySelectorAll('.m-nav-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
+function switchEditorTab(tab) {
+    // Only content tab is active in this version
+}
+
 async function saveChanges() {
-    const btn = document.querySelector('.btn-save');
-    btn.innerText = 'Saving...';
+    const btns = document.querySelectorAll('.btn-save');
+    btns.forEach(b => b.innerText = 'Saving...');
+   
     try {
         await db.collection('sites').doc(currentUser.uid).set(siteData, {merge:true});
-        alert('Site Published Successfully!');
-    } catch(e) { alert(e.message); }
-    btn.innerText = 'Save & Publish';
+        btns.forEach(b => { b.innerHTML = '<i class="fa-solid fa-check"></i> Saved'; b.style.background = '#10b981'; });
+        setTimeout(() => {
+            btns.forEach(b => { b.innerHTML = 'Save & Publish'; b.style.background = ''; });
+        }, 2000);
+    } catch(e) {
+        alert(e.message);
+        btns.forEach(b => b.innerText = 'Save');
+    }
 }
 </script>
 </body>
